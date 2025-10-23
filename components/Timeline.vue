@@ -21,9 +21,6 @@
       <div class="relative">
         <div class="overflow-hidden">
           <div class="relative">
-            <!-- weekend removed: use zero-width for Sat/Sun; background bands follow computed widths/offsets -->
-            <div v-for="(day, i) in days" :key="'hbg'+i" class="day-bg" :style="{ left: (dayOffsets[i]||0)+'px', width: view.px_per_day+'px', transform: `translateX(-${scrollLeft}px)` }" />
-
             <!-- Year row -->
             <div class="grid text-[11px] text-slate-500 select-none border-b border-slate-200" :style="{ gridTemplateColumns: yearColumns, transform: `translateX(-${scrollLeft}px)` }">
               <div v-for="seg in yearSegments" :key="seg.key" class="text-center py-1 font-medium">{{ seg.label }}</div>
