@@ -5,6 +5,12 @@ export default defineNuxtConfig({
     shim: false,
     strict: true
   },
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {}
+    }
+  },
   css: ["~/assets/tailwind.css"],
   modules: [
     ["@pinia/nuxt", { autoImports: ["defineStore"] }],

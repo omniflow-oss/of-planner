@@ -12,15 +12,13 @@
 
     <!-- Subrows -->
     <template v-if="expanded" v-for="sr in subrows" :key="sr.key">
-      <!-- Left: label and add button -->
-      <div class="flex items-center gap-2 px-3 text-xs border-b pane-border sticky left-0 z-10 bg-white" :style="{ height: rowHeights.get(sr.key)+'px' }">
-        <template v-if="isAddRow(sr)">
-          <button class="w-6 h-6 grid place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50" @click="$emit('createFromSidebar', sr)">+</button>
-          <span class="text-slate-500">{{ cleanAddLabel(sr.label) }}</span>
-        </template>
-        <template v-else>
-          <span>{{ sr.label }}</span>
-        </template>
+      <!-- Left: label or add row using LeftPaneCell -->
+      <div class="border-b pane-border sticky left-0 z-10 bg-white" :style="{ height: rowHeights.get(sr.key)+'px' }">
+        <LeftPaneCell
+          :is-add="isAddRow(sr)"
+          :title="isAddRow(sr) ? cleanAddLabel(sr.label) : sr.label"
+          @click="isAddRow(sr) && $emit('createFromSidebar', sr)"
+        />
       </div>
 
       <!-- Right: timeline track -->
@@ -62,6 +60,7 @@
 <script setup lang="ts">
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
+import LeftPaneCell from '@/components/internal/LeftPaneCell.vue'
 import { addDaysISO, parseISO } from '@/composables/useDate'
 import { computeLanes } from '@/utils/lanes'
 import { useTimelineGrid } from '@/composables/useTimeline'

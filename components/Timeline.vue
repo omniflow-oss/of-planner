@@ -14,8 +14,19 @@
       </div>
       <div class="relative">
         <div class="overflow-hidden">
-          <TimelineHeader :days="days" :dayColumns="dayColumns" :monthSegments="monthSegments" :monthColumns="monthColumns"
-            :yearSegments="yearSegments" :yearColumns="yearColumns" :scrollLeft="scrollLeft" :todayISO="todayISO" :dayLabel="dayLabel" />
+          <TimelineHeader
+            :days="days"
+            :dayColumns="dayColumns"
+            :monthSegments="monthSegments"
+            :monthColumns="monthColumns"
+            :yearSegments="yearSegments"
+            :yearColumns="yearColumns"
+            :todayISO="todayISO"
+            :dayLabel="dayLabel"
+            :pxPerDay="view.px_per_day"
+            :dayOffsets="dayOffsets"
+            :weekStarts="weekStarts"
+          />
         </div>
       </div>
     </div>
