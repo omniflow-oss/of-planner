@@ -170,18 +170,26 @@ function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
 }
 
 async function prependWeekdays(w: number) {
-  const before = scrollArea.value?.scrollLeft || 0
+  const el = scrollArea.value
+  if (!el) return
+  const half = el.clientWidth / 2
+  const anchor = el.scrollLeft + half
   const cal = calendarSpanForWeekdays(view.value.start, w, -1)
   store.setStart(addDaysISO(view.value.start, -cal))
   store.setDays(view.value.days + cal)
   await nextTick()
-  if (scrollArea.value) scrollArea.value.scrollLeft = before + w * view.value.px_per_day
+  if (scrollArea.value) scrollArea.value.scrollLeft = anchor + w * view.value.px_per_day - half
 }
 async function appendWeekdays(w: number) {
+  const el = scrollArea.value
+  if (!el) return
+  const half = el.clientWidth / 2
+  const anchor = el.scrollLeft + half
   const endISO = addDaysISO(view.value.start, view.value.days - 1)
   const cal = calendarSpanForWeekdays(endISO, w, +1)
   store.setDays(view.value.days + cal)
   await nextTick()
+  if (scrollArea.value) scrollArea.value.scrollLeft = anchor - half
 }
 
 function onScroll() {
