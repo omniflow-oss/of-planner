@@ -32,10 +32,10 @@
             <div class="grid text-[11px] text-slate-600 select-none border-b border-slate-200" :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
               <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1">{{ seg.label }}</div>
             </div>
-            <!-- Day row (dd-mm) -->
+            <!-- Day row (dd-mm) — hide weekends labels -->
             <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
               <div v-for="day in days" :key="day" class="text-center py-1.5">
-                <span :class="['px-1.5 py-0.5 rounded-md', day===todayISO ? 'bg-slate-900 text-white' : '']">{{ dayLabel(day) }}</span>
+                <span v-if="!isWeekend(day)" :class="['px-1.5 py-0.5 rounded-md', day===todayISO ? 'bg-slate-900 text-white' : '']">{{ dayLabel(day) }}</span>
               </div>
             </div>
           </div>
