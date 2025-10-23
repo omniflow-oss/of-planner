@@ -190,7 +190,7 @@ function onScroll() {
   const left = el.scrollLeft
   const right = left + el.clientWidth
   scrollLeft.value = left
-  const chunk = 7 // one work-week sized chunk (approx)
+  const chunk = 5 // expand by one work-week (Mon–Fri)
   const threshold = view.value.px_per_day * 4
   const nearLeft = left < threshold
   const nearRight = right > el.scrollWidth - threshold
@@ -206,12 +206,15 @@ onMounted(async () => {
   const el = scrollArea.value
   if (!el) return
   const px = view.value.px_per_day
-  const visibleDays = Math.ceil(el.clientWidth / px)
-  const buffer = 28
-  const cal = calendarSpanForWeekdays(todayISO, visibleDays + buffer, +1)
-  store.setDays(Math.max(cal, 1))
-  store.setStart(todayISO)
+  const visibleWeekdays = Math.ceil(el.clientWidth / px)
+  const leftBufferW = 14 // start with two weeks available to the left
+  const rightBufferW = 28 // and sufficient buffer to the right
+  const leftCal = calendarSpanForWeekdays(todayISO, leftBufferW, -1)
+  const rightCal = calendarSpanForWeekdays(todayISO, visibleWeekdays + rightBufferW, +1)
+  store.setStart(addDaysISO(todayISO, -leftCal))
+  store.setDays(leftCal + rightCal + 1)
   await nextTick()
-  if (scrollArea.value) scrollArea.value.scrollLeft = 0
+  // Position today at leftBufferW columns from the left edge
+  if (scrollArea.value) scrollArea.value.scrollLeft = leftBufferW * px
 })
 </script>
