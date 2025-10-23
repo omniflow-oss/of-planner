@@ -161,6 +161,7 @@ createAssignment({ person_id, project_id, start, end, allocation });
 
 | Élément                     | Détails                                                                         |
 | --------------------------- | ------------------------------------------------------------------------------- |
+| **En‑tête timeline**        | Deux lignes: `Mois Année` (haut), `D MMM` (bas). Collant et synchronisé au scroll. |
 | **Grille jour**             | Colonne = 1 jour; lignes subtiles `slate-100`, semaine `slate-200`.             |
 | **Today marker**            | Ligne verticale accentuée `amber-500/90`.                                       |
 | **Barres (Assignments)**    | Couleur = projet; nom + badge d’allocation; hauteur 28px; bords arrondis.       |
@@ -174,6 +175,7 @@ createAssignment({ person_id, project_id, start, end, allocation });
 Design condensé (slick & pro)
 - Typo compacte par défaut: base ~13.5px; éléments UI en `text-xs`/`[11px]`.
 - Contrôles compacts: `px-2 py-1` pour inputs/boutons; puces de jour réduites.
+- Zoom par défaut: `56 px/jour`.
 - Ombres légères sur les barres (`.bar-shadow`) et conteneurs importants.
 
 ---
@@ -193,6 +195,7 @@ Design condensé (slick & pro)
 | Shift + flèches       | Déplace de 5 jours            |
 | Suppr                 | Supprime                      |
 | Tab People / Projects | Change vue, garde zoom/scroll |
+| Ouverture par défaut  | Affiche semaine‑2, semaine‑1, semaine courante, 4 prochaines semaines |
 
 ---
 
@@ -285,8 +288,9 @@ Design condensé (slick & pro)
 | 7 | Export / Import conserve tout.                                            |
 | 8 | Aucune erreur console.                                                    |
 | 9 | Colonne gauche collante visible pendant le scroll horizontal.             |
-| 10 | En-tête de l’app collant lors du scroll vertical.                        |
-| 11 | Style condensé appliqué (largeur colonne 240px, barres 28px, lanes 30px).|
+| 10 | En‑têtes collants (app + timeline) synchronisés avec le scroll horizontal. |
+| 11 | Style condensé appliqué (largeur colonne 240px, barres 28px, lanes 30px, zoom 56 px/jour). |
+| 12 | Au chargement: semaine‑2 → semaine courante → 4 semaines suivantes visibles. |
 
 ---
 
