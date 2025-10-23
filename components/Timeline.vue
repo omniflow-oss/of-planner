@@ -23,9 +23,11 @@
             <div class="grid text-[11px] text-slate-600 select-none border-b border-slate-200" :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
               <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1">{{ seg.label }}</div>
             </div>
-            <!-- Week ticks (Mon labels) -->
-            <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: weekColumns, transform: `translateX(-${scrollLeft}px)` }">
-              <div v-for="wk in weekSegments" :key="wk.key" class="text-center py-1.5">{{ wk.label }}</div>
+            <!-- Day row (dd-mm) -->
+            <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
+              <div v-for="day in days" :key="day" class="text-center py-1.5">
+                <span :class="['px-1.5 py-0.5 rounded-md', day===todayISO ? 'bg-slate-900 text-white' : '']">{{ dayLabel(day) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -101,21 +103,7 @@ const yearSegments = computed(() => {
 })
 const yearColumns = computed(() => yearSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
 
-// Week segments (Mondays only)
-const weekSegments = computed(() => {
-  const out: { key:string; label:string }[] = []
-  for (let i=0;i<days.value.length;i++) {
-    const iso = days.value[i]
-    const d = new Date(iso)
-    if (d.getUTCDay() === 1) {
-      const dd = String(d.getUTCDate()).padStart(2,'0')
-      const mon = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
-      out.push({ key: iso, label: `${dd} ${mon}` })
-    }
-  }
-  return out
-})
-const weekColumns = computed(() => weekSegments.value.map(() => `${7 * view.value.px_per_day}px`).join(' '))
+// (Day-by-day display; no week row)
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 
