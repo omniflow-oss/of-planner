@@ -2,12 +2,6 @@
   <div class="h-full flex flex-col gap-2">
     <div class="flex items-center justify-between">
       <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
-      <div class="flex items-center gap-2">
-        <label class="text-[11px] text-slate-500">Start</label>
-        <input class="px-2 py-1 text-xs rounded-md border border-slate-200" style="width: 130px;" type="date" v-model="localStart" @change="onStartChange" />
-        <label class="text-[11px] text-slate-500">Days</label>
-        <input class="px-2 py-1 text-xs rounded-md border border-slate-200 w-16" type="number" min="7" max="90" v-model.number="localDays" @change="onDaysChange" />
-      </div>
     </div>
 
     <!-- Header rows: Year / Month / Day (right only) -->
@@ -69,8 +63,6 @@ import RowGroup from '@/components/internal/RowGroup.vue'
 const store = usePlannerStore()
 const { people, projects, view, assignments } = storeToRefs(store)
 
-const localStart = ref(view.value.start)
-const localDays = ref(view.value.days)
 const allDays = computed(() => eachDay(view.value.start, view.value.days))
 function isWeekend(iso: string) { const d = new Date(iso).getUTCDay(); return d===0 || d===6 }
 const days = computed(() => allDays.value.filter(d => !isWeekend(d)))
@@ -112,9 +104,6 @@ const yearSegments = computed(() => {
 const yearColumns = computed(() => yearSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
-
-function onStartChange() { store.setStart(localStart.value) }
-function onDaysChange() { store.setDays(localDays.value) }
 
 function personProjects(personId: string) {
   const set = new Set(assignments.value.filter(a => a.person_id === personId).map(a => a.project_id))
@@ -196,12 +185,10 @@ onMounted(async () => {
   const px = view.value.px_per_day
   const visibleDays = Math.ceil(el.clientWidth / px)
   const buffer = 28
-  const need = Math.max(view.value.days, visibleDays + buffer)
+  const need = Math.max(visibleDays + buffer, 1)
   store.setDays(need)
-  const start = addDaysISO(todayISO, -Math.floor(need / 2))
-  store.setStart(start)
+  store.setStart(todayISO)
   await nextTick()
-  const todayIndex = Math.floor(need / 2)
-  el.scrollLeft = Math.max(0, todayIndex * px - (el.clientWidth / 2 - px / 2))
+  if (scrollArea.value) scrollArea.value.scrollLeft = 0
 })
 </script>
