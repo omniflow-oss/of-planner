@@ -10,15 +10,29 @@
       </div>
     </div>
 
-    <!-- Header row with days (right only) -->
+    <!-- Header rows: Year / Month / Day (right only) -->
     <div class="grid" style="grid-template-columns: 240px 1fr;">
       <div class="border-b border-slate-200"></div>
       <div class="border-b border-slate-200 relative">
         <div class="overflow-hidden">
-          <div class="grid text-[11px] text-slate-600 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
-          <div v-for="day in days" :key="day" class="text-center py-1.5">
-            <span :class="['px-1.5 py-0.5 rounded-md', day===todayISO ? 'bg-slate-900 text-white' : '']">{{ day }}</span>
-          </div>
+          <div class="relative">
+            <!-- weekend background bands spanning all header rows -->
+            <div v-for="(day, i) in days" :key="'hbg'+i" class="day-bg" :class="isWeekend(day)?'weekend':''" :style="{ left: (i*view.px_per_day)+'px', width: view.px_per_day+'px', transform: `translateX(-${scrollLeft}px)` }" />
+
+            <!-- Year row -->
+            <div class="grid text-[11px] text-slate-500 select-none border-b border-slate-200" :style="{ gridTemplateColumns: yearColumns, transform: `translateX(-${scrollLeft}px)` }">
+              <div v-for="seg in yearSegments" :key="seg.key" class="text-center py-1 font-medium">{{ seg.label }}</div>
+            </div>
+            <!-- Month row -->
+            <div class="grid text-[11px] text-slate-600 select-none border-b border-slate-200" :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
+              <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1">{{ seg.label }}</div>
+            </div>
+            <!-- Day row (dd-mm) -->
+            <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
+              <div v-for="day in days" :key="day" class="text-center py-1.5">
+                <span :class="['px-1.5 py-0.5 rounded-md', day===todayISO ? 'bg-slate-900 text-white' : '']">{{ dayLabel(day) }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -57,6 +71,39 @@ const localStart = ref(view.value.start)
 const localDays = ref(view.value.days)
 const days = computed(() => eachDay(view.value.start, view.value.days))
 const dayColumns = computed(() => days.value.map(() => `${view.value.px_per_day}px`).join(' '))
+
+function monthLabel(iso: string) { const d = new Date(iso); return d.toLocaleString('en-US', { month: 'long' }).toUpperCase() }
+function yearLabel(iso: string) { const d = new Date(iso); return String(d.getUTCFullYear()) }
+function dayLabel(iso: string) { const d = new Date(iso); const dd = String(d.getUTCDate()).padStart(2,'0'); const mm = String(d.getUTCMonth()+1).padStart(2,'0'); return `${dd}-${mm}` }
+function isWeekend(iso: string) { const d = new Date(iso); const wd = d.getUTCDay(); return wd===0 || wd===6 }
+
+const monthSegments = computed(() => {
+  const segs: { key:string; label:string; span:number }[] = []
+  let current: { key:string; label:string; span:number } | null = null
+  for (const iso of days.value) {
+    const key = iso.slice(0,7)
+    const label = monthLabel(iso)
+    if (!current || current.key !== key) { if (current) segs.push(current); current = { key, label, span: 1 } }
+    else current.span += 1
+  }
+  if (current) segs.push(current)
+  return segs
+})
+const monthColumns = computed(() => monthSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
+
+const yearSegments = computed(() => {
+  const segs: { key:string; label:string; span:number }[] = []
+  let current: { key:string; label:string; span:number } | null = null
+  for (const iso of days.value) {
+    const key = iso.slice(0,4)
+    const label = yearLabel(iso)
+    if (!current || current.key !== key) { if (current) segs.push(current); current = { key, label, span: 1 } }
+    else current.span += 1
+  }
+  if (current) segs.push(current)
+  return segs
+})
+const yearColumns = computed(() => yearSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 

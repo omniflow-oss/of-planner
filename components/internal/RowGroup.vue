@@ -6,6 +6,8 @@
       <span>{{ label }}</span>
     </div>
     <div class="relative border-b border-slate-200 bg-blue-50/50" :style="{ height: headerHeight+'px' }">
+      <!-- weekend background bands -->
+      <div v-for="(day, i) in days" :key="'hb'+i" :class="['day-bg', isWeekend(day)?'weekend':'']" :style="{ left: (i*pxPerDay)+'px', width: pxPerDay+'px' }" />
       <div v-for="(day, i) in days" :key="'h'+i" :class="['grid-v', (i%7===0)?'week':'']" :style="{ left: (i*pxPerDay)+'px' }" />
       <div v-if="todayIndex>=0 && todayIndex<days.length" class="today-line" :style="{ left: (todayIndex*pxPerDay)+'px' }" />
       <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
@@ -26,6 +28,8 @@
 
       <!-- Right: timeline track -->
       <div class="relative border-b border-slate-100 bg-slate-50/20" :style="{ height: rowHeights.get(sr.key)+'px' }" @click.self="onEmptyClick($event, sr)">
+        <!-- weekend background bands -->
+        <div v-for="(day, i) in days" :key="'b'+sr.key+i" :class="['day-bg', isWeekend(day)?'weekend':'']" :style="{ left: (i*pxPerDay)+'px', width: pxPerDay+'px' }" />
         <div v-for="(day, i) in days" :key="day + i" :class="['grid-v', (i%7===0)?'week':'']" :style="{ left: (i*pxPerDay)+'px' }" />
         <div v-if="todayIndex>=0 && todayIndex<days.length" class="today-line" :style="{ left: (todayIndex*pxPerDay)+'px' }" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
@@ -63,7 +67,7 @@
 
 <script setup lang="ts">
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
-import { addDaysISO } from '@/composables/useDate'
+import { addDaysISO, parseISO } from '@/composables/useDate'
 import { computeLanes } from '@/utils/lanes'
 
 const props = defineProps<{
@@ -87,6 +91,7 @@ const expanded = ref(true)
 
 function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.person_id === null || sr.project_id === null }
 function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
+function isWeekend(dayISO: string) { const d = parseISO(dayISO).getUTCDay(); return d === 0 || d === 6 }
 function subAssignmentsLaned(sr: { key:string; person_id: string|null; project_id: string|null }) {
   if (isAddRow(sr)) { rowHeights.set(sr.key, baseRowMin); return [] }
   const list = assignmentsRef.value.filter(a => a.person_id === sr.person_id && a.project_id === sr.project_id)
