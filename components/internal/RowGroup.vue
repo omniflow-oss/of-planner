@@ -1,11 +1,11 @@
 <template>
   <div class="grid" style="grid-template-columns: 240px 1fr;">
     <!-- Group header row -->
-    <div class="px-3 py-2 border-b border-slate-200 font-medium flex items-center gap-2 sticky left-0 z-10 bg-white">
+    <div class="px-3 py-2 border-b border-slate-200 font-medium flex items-center gap-2 sticky left-0 z-10 bg-blue-50/50">
       <button class="w-5 h-5 grid place-items-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50" @click="expanded = !expanded">{{ expanded ? '–' : '+' }}</button>
       <span>{{ label }}</span>
     </div>
-    <div class="relative border-b border-slate-200" :style="{ height: headerHeight+'px' }">
+    <div class="relative border-b border-slate-200 bg-blue-50/50" :style="{ height: headerHeight+'px' }">
       <div v-for="(day, i) in days" :key="'h'+i" :class="['grid-v', (i%7===0)?'week':'']" :style="{ left: (i*pxPerDay)+'px' }" />
       <div v-if="todayIndex>=0 && todayIndex<days.length" class="today-line" :style="{ left: (todayIndex*pxPerDay)+'px' }" />
       <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
@@ -14,7 +14,7 @@
     <!-- Subrows -->
     <template v-if="expanded" v-for="sr in subrows" :key="sr.key">
       <!-- Left: label and add button -->
-      <div class="flex items-center gap-2 px-3 text-xs border-b border-slate-100 sticky left-0 z-10 bg-white" :style="{ height: rowHeights.get(sr.key)+'px' }">
+      <div class="flex items-center gap-2 px-3 text-xs border-b border-slate-100 sticky left-0 z-10 bg-slate-50/40" :style="{ height: rowHeights.get(sr.key)+'px' }">
         <template v-if="isAddRow(sr)">
           <button class="w-6 h-6 grid place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50" @click="$emit('createFromSidebar', sr)">+</button>
           <span class="text-slate-500">{{ cleanAddLabel(sr.label) }}</span>
@@ -25,7 +25,7 @@
       </div>
 
       <!-- Right: timeline track -->
-      <div class="relative border-b border-slate-100" :style="{ height: rowHeights.get(sr.key)+'px' }" @click.self="onEmptyClick($event, sr)">
+      <div class="relative border-b border-slate-100 bg-slate-50/20" :style="{ height: rowHeights.get(sr.key)+'px' }" @click.self="onEmptyClick($event, sr)">
         <div v-for="(day, i) in days" :key="day + i" :class="['grid-v', (i%7===0)?'week':'']" :style="{ left: (i*pxPerDay)+'px' }" />
         <div v-if="todayIndex>=0 && todayIndex<days.length" class="today-line" :style="{ left: (todayIndex*pxPerDay)+'px' }" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
