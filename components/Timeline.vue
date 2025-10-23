@@ -129,7 +129,6 @@ provide(assignmentsKey, assignments)
 
 const gridEl = ref<HTMLElement | null>(null)
 const scrollArea = ref<HTMLElement | null>(null)
-const todayISO = (() => { const d = new Date(); d.setUTCHours(0,0,0,0); return d.toISOString().slice(0,10) })()
 const scrollLeft = ref(0)
 
 // Convert a number of weekdays into a calendar-day span starting from a base date (exclusive)
