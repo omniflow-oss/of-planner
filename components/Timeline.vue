@@ -4,7 +4,7 @@
       <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
     </div>
 
-    <!-- Header rows: Year / Month / Day (right only) -->
+    <!-- Header rows: Year / Month / Week (right only) -->
     <div class="grid" style="grid-template-columns: 240px 1fr;">
       <!-- Left placeholders to match 3 header rows: year / month / day -->
       <div class="flex flex-col">
@@ -23,11 +23,9 @@
             <div class="grid text-[11px] text-slate-600 select-none border-b border-slate-200" :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
               <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1">{{ seg.label }}</div>
             </div>
-            <!-- Day row (dd-mm) — hide weekends labels -->
-            <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
-              <div v-for="day in days" :key="day" class="text-center py-1.5">
-                <span v-if="!isWeekend(day)" :class="['px-1.5 py-0.5 rounded-md', day===todayISO ? 'bg-slate-900 text-white' : '']">{{ dayLabel(day) }}</span>
-              </div>
+            <!-- Week ticks (Mon labels) -->
+            <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: weekColumns, transform: `translateX(-${scrollLeft}px)` }">
+              <div v-for="wk in weekSegments" :key="wk.key" class="text-center py-1.5">{{ wk.label }}</div>
             </div>
           </div>
         </div>
@@ -102,6 +100,22 @@ const yearSegments = computed(() => {
   return out
 })
 const yearColumns = computed(() => yearSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
+
+// Week segments (Mondays only)
+const weekSegments = computed(() => {
+  const out: { key:string; label:string }[] = []
+  for (let i=0;i<days.value.length;i++) {
+    const iso = days.value[i]
+    const d = new Date(iso)
+    if (d.getUTCDay() === 1) {
+      const dd = String(d.getUTCDate()).padStart(2,'0')
+      const mon = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
+      out.push({ key: iso, label: `${dd} ${mon}` })
+    }
+  }
+  return out
+})
+const weekColumns = computed(() => weekSegments.value.map(() => `${7 * view.value.px_per_day}px`).join(' '))
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 

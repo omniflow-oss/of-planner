@@ -1,9 +1,9 @@
 <template>
-  <div class="absolute flex items-center overflow-hidden rounded-md bar-shadow border border-slate-200 bg-white/80" :style="barStyle" @mousedown.stop="onDragStart">
-    <div class="h-full w-1" :style="{ background: color }"></div>
-    <div class="flex items-center gap-1.5 px-2 text-[11px] text-slate-800">
+  <div class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-slate-200 bg-white" :style="barStyle" @mousedown.stop="onDragStart">
+    <div class="h-full w-1.5" :style="{ background: color }"></div>
+    <div class="flex items-center gap-2 px-3 text-[12px] text-slate-800">
       <span>{{ project?.name ?? assignment.project_id }}</span>
-      <span class="px-1 rounded border border-slate-200 bg-white/70">{{ allocBadge }}</span>
+      <span class="px-1.5 rounded-full border border-slate-200 bg-white/80 text-[11px]">{{ allocBadge }}</span>
     </div>
     <div class="handle left" @mousedown.stop.prevent="onResizeStart('left', $event)"></div>
     <div class="handle right" @mousedown.stop.prevent="onResizeStart('right', $event)"></div>
@@ -32,7 +32,7 @@ const barStyle = computed(() => ({
   left: (startIndex.value * props.pxPerDay) + 'px',
   width: Math.max(1, lengthDays.value * props.pxPerDay - 2) + 'px',
   top: (props.top ?? 8) + 'px',
-  height: '28px',
+  height: '30px',
   background: '#f9fafb'
 }))
 
