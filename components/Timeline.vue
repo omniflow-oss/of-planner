@@ -14,22 +14,8 @@
       </div>
       <div class="relative">
         <div class="overflow-hidden">
-          <div class="relative">
-            <!-- Year row -->
-            <div class="grid text-[11px] text-slate-500 select-none border-b border-slate-200" :style="{ gridTemplateColumns: yearColumns, transform: `translateX(-${scrollLeft}px)` }">
-              <div v-for="seg in yearSegments" :key="seg.key" class="text-center py-1 font-medium">{{ seg.label }}</div>
-            </div>
-            <!-- Month row -->
-            <div class="grid text-[11px] text-slate-600 select-none border-b border-slate-200" :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
-              <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1">{{ seg.label }}</div>
-            </div>
-            <!-- Day row (dd-mm) -->
-            <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
-              <div v-for="day in days" :key="day" class="text-center py-1.5">
-                <span :class="['px-1.5 py-0.5 rounded-md', day===todayISO ? 'bg-slate-900 text-white' : '']">{{ dayLabel(day) }}</span>
-              </div>
-            </div>
-          </div>
+          <TimelineHeader :days="days" :dayColumns="dayColumns" :monthSegments="monthSegments" :monthColumns="monthColumns"
+            :yearSegments="yearSegments" :yearColumns="yearColumns" :scrollLeft="scrollLeft" :todayISO="todayISO" :dayLabel="dayLabel" />
         </div>
       </div>
     </div>
@@ -60,6 +46,7 @@ import { usePlannerStore } from '@/stores/usePlannerStore'
 import { addDaysISO } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
+import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
 import RowGroup from '@/components/internal/RowGroup.vue'
 
 const store = usePlannerStore()
