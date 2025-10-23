@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { daysBetweenInclusive, parseISO, addDaysISO, toISO } from '@/composables/useDate'
+import { daysBetweenInclusive, parseISO, addDaysISO, toISO, businessDaysBetweenInclusive, businessOffset } from '@/composables/useDate'
 import type { Assignment } from '@/types/planner'
 
 const props = defineProps<{ assignment: Assignment; startISO: string; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; top?: number }>()
@@ -25,8 +25,8 @@ const allocBadge = computed(() => {
   return a === 1 ? '1' : a === 0.75 ? '¾' : a === 0.5 ? '½' : '¼'
 })
 
-const startIndex = computed(() => Math.max(0, Math.round((parseISO(props.assignment.start).getTime() - parseISO(props.startISO).getTime()) / 86400000)))
-const lengthDays = computed(() => daysBetweenInclusive(props.assignment.start, props.assignment.end))
+const startIndex = computed(() => Math.max(0, businessOffset(props.startISO, props.assignment.start)))
+const lengthDays = computed(() => Math.max(1, businessDaysBetweenInclusive(props.assignment.start, props.assignment.end)))
 const barStyle = computed(() => ({
   position: 'absolute',
   left: (startIndex.value * props.pxPerDay) + 'px',

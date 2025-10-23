@@ -21,8 +21,8 @@
       <div class="relative">
         <div class="overflow-hidden">
           <div class="relative">
-            <!-- weekend background bands spanning all header rows -->
-            <div v-for="(day, i) in days" :key="'hbg'+i" class="day-bg" :class="isWeekend(day)?'weekend':''" :style="{ left: (i*view.px_per_day)+'px', width: view.px_per_day+'px', transform: `translateX(-${scrollLeft}px)` }" />
+            <!-- weekend removed: use zero-width for Sat/Sun; background bands follow computed widths/offsets -->
+            <div v-for="(day, i) in days" :key="'hbg'+i" class="day-bg" :style="{ left: (dayOffsets[i]||0)+'px', width: (dayWidths[i]||0)+'px', transform: `translateX(-${scrollLeft}px)` }" />
 
             <!-- Year row -->
             <div class="grid text-[11px] text-slate-500 select-none border-b border-slate-200" :style="{ gridTemplateColumns: yearColumns, transform: `translateX(-${scrollLeft}px)` }">
@@ -49,14 +49,14 @@
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
           :subrows="personSubrows(p.id)" :days="days" :pxPerDay="view.px_per_day"
-          :startISO="view.start" :projectsMap="projectsMap"
+          :startISO="view.start" :projectsMap="projectsMap" :dayOffsets="dayOffsets" :weekStarts="weekStarts"
           @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" />
       </template>
       <template v-else>
         <RowGroup v-for="proj in projects" :key="proj.id" :label="proj.name"
           :groupType="'project'" :groupId="proj.id"
           :subrows="projectSubrows(proj.id)" :days="days" :pxPerDay="view.px_per_day"
-          :startISO="view.start" :projectsMap="projectsMap"
+          :startISO="view.start" :projectsMap="projectsMap" :dayOffsets="dayOffsets" :weekStarts="weekStarts"
           @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" />
       </template>
     </div>
@@ -75,7 +75,16 @@ const { people, projects, view, assignments } = storeToRefs(store)
 const localStart = ref(view.value.start)
 const localDays = ref(view.value.days)
 const days = computed(() => eachDay(view.value.start, view.value.days))
-const dayColumns = computed(() => days.value.map(() => `${view.value.px_per_day}px`).join(' '))
+function isWeekend(iso: string) { const d = new Date(iso).getUTCDay(); return d===0 || d===6 }
+const dayWidths = computed(() => days.value.map(d => isWeekend(d) ? 0 : view.value.px_per_day))
+const dayOffsets = computed(() => {
+  const out:number[] = []
+  let acc = 0
+  for (let i=0;i<days.value.length;i++){ out.push(acc); acc += dayWidths.value[i] }
+  return out
+})
+const weekStarts = computed(() => days.value.map((d,i)=> ({i, wd: new Date(d).getUTCDay()})).filter(e=>e.wd===1).map(e=>e.i))
+const dayColumns = computed(() => dayWidths.value.map(w => `${w}px`).join(' '))
 
 function monthLabel(iso: string) { const d = new Date(iso); return d.toLocaleString('en-US', { month: 'long' }).toUpperCase() }
 function yearLabel(iso: string) { const d = new Date(iso); return String(d.getUTCFullYear()) }
@@ -83,32 +92,34 @@ function dayLabel(iso: string) { const d = new Date(iso); const dd = String(d.ge
 function isWeekend(iso: string) { const d = new Date(iso); const wd = d.getUTCDay(); return wd===0 || wd===6 }
 
 const monthSegments = computed(() => {
-  const segs: { key:string; label:string; span:number }[] = []
-  let current: { key:string; label:string; span:number } | null = null
-  for (const iso of days.value) {
+  const out: { key:string; label:string; width:number }[] = []
+  let current: { key:string; label:string; width:number } | null = null
+  for (let i=0;i<days.value.length;i++) {
+    const iso = days.value[i]
     const key = iso.slice(0,7)
     const label = monthLabel(iso)
-    if (!current || current.key !== key) { if (current) segs.push(current); current = { key, label, span: 1 } }
-    else current.span += 1
+    if (!current || current.key !== key) { if (current) out.push(current); current = { key, label, width: 0 } }
+    current.width += dayWidths.value[i]
   }
-  if (current) segs.push(current)
-  return segs
+  if (current) out.push(current)
+  return out
 })
-const monthColumns = computed(() => monthSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
+const monthColumns = computed(() => monthSegments.value.map(s => `${s.width}px`).join(' '))
 
 const yearSegments = computed(() => {
-  const segs: { key:string; label:string; span:number }[] = []
-  let current: { key:string; label:string; span:number } | null = null
-  for (const iso of days.value) {
+  const out: { key:string; label:string; width:number }[] = []
+  let current: { key:string; label:string; width:number } | null = null
+  for (let i=0;i<days.value.length;i++) {
+    const iso = days.value[i]
     const key = iso.slice(0,4)
     const label = yearLabel(iso)
-    if (!current || current.key !== key) { if (current) segs.push(current); current = { key, label, span: 1 } }
-    else current.span += 1
+    if (!current || current.key !== key) { if (current) out.push(current); current = { key, label, width: 0 } }
+    current.width += dayWidths.value[i]
   }
-  if (current) segs.push(current)
-  return segs
+  if (current) out.push(current)
+  return out
 })
-const yearColumns = computed(() => yearSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
+const yearColumns = computed(() => yearSegments.value.map(s => `${s.width}px`).join(' '))
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 

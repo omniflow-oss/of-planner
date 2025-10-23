@@ -30,3 +30,41 @@ export function clampDateRange(startISO: string, endISO: string) {
   if (e < s) return { start: toISO(e), end: toISO(s) }
   return { start: toISO(s), end: toISO(e) }
 }
+
+// Business day helpers (Mon–Fri)
+export function isWeekendISO(s: string) {
+  const d = parseISO(s).getUTCDay()
+  return d === 0 || d === 6
+}
+
+// Count weekdays between two ISO dates inclusive of both ends (order-agnostic)
+export function businessDaysBetweenInclusive(aISO: string, bISO: string) {
+  let a = parseISO(aISO)
+  let b = parseISO(bISO)
+  let sign = 1
+  if (b < a) { const t = a; a = b; b = t; sign = -1 }
+  let count = 0
+  const cur = new Date(a)
+  while (cur <= b) {
+    const d = cur.getUTCDay()
+    if (d !== 0 && d !== 6) count++
+    cur.setUTCDate(cur.getUTCDate() + 1)
+  }
+  return count * sign
+}
+
+// Offset in business days from base to date (base -> 0). Negative if before.
+export function businessOffset(baseISO: string, dateISO: string) {
+  const base = parseISO(baseISO)
+  const date = parseISO(dateISO)
+  if (date.getTime() === base.getTime()) return 0
+  let count = 0
+  const step = date > base ? 1 : -1
+  const cur = new Date(base)
+  while (cur.getTime() !== date.getTime()) {
+    cur.setUTCDate(cur.getUTCDate() + step)
+    const d = cur.getUTCDay()
+    if (d !== 0 && d !== 6) count += step
+  }
+  return count
+}

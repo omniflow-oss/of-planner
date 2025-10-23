@@ -6,9 +6,9 @@
       <span>{{ label }}</span>
     </div>
     <div class="relative border-b border-slate-200 bg-blue-50/50" :style="{ height: headerHeight+'px' }">
-      <!-- weekend background bands -->
-      <div v-for="(day, i) in days" :key="'hb'+i" :class="['day-bg', isWeekend(day)?'weekend':'']" :style="{ left: (i*pxPerDay)+'px', width: pxPerDay+'px' }" />
-      <div v-for="(day, i) in days" :key="'h'+i" :class="['grid-v', (i%7===0)?'week':'']" :style="{ left: (i*pxPerDay)+'px' }" />
+      <!-- background bands using computed offsets/widths -->
+      <div v-for="(day, i) in days" :key="'hb'+i" class="day-bg" :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }" />
+      <div v-for="(day, i) in days" :key="'h'+i" :class="['grid-v', (isWeekStart(i)?'week':'')]" :style="{ left: lineLeft(i)+'px' }" />
       <div v-if="todayIndex>=0 && todayIndex<days.length" class="today-line" :style="{ left: (todayIndex*pxPerDay)+'px' }" />
       <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
     </div>
@@ -28,9 +28,9 @@
 
       <!-- Right: timeline track -->
       <div class="relative border-b border-slate-100 bg-slate-50/20" :style="{ height: rowHeights.get(sr.key)+'px' }" @click.self="onEmptyClick($event, sr)">
-        <!-- weekend background bands -->
-        <div v-for="(day, i) in days" :key="'b'+sr.key+i" :class="['day-bg', isWeekend(day)?'weekend':'']" :style="{ left: (i*pxPerDay)+'px', width: pxPerDay+'px' }" />
-        <div v-for="(day, i) in days" :key="day + i" :class="['grid-v', (i%7===0)?'week':'']" :style="{ left: (i*pxPerDay)+'px' }" />
+        <!-- background bands using computed offsets/widths -->
+        <div v-for="(day, i) in days" :key="'b'+sr.key+i" class="day-bg" :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }" />
+        <div v-for="(day, i) in days" :key="day + i" :class="['grid-v', (isWeekStart(i)?'week':'')]" :style="{ left: lineLeft(i)+'px' }" />
         <div v-if="todayIndex>=0 && todayIndex<days.length" class="today-line" :style="{ left: (todayIndex*pxPerDay)+'px' }" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
 
@@ -84,6 +84,17 @@ const emit = defineEmits(['create','update','createFromSidebar'])
 
 const pxPerDay = computed(() => props.pxPerDay)
 const days = computed(() => props.days)
+const offsets = computed(() => (props as any).dayOffsets as number[] | undefined)
+function lineLeft(i:number){
+  if (offsets.value && i < offsets.value.length) return offsets.value[i]
+  return i*pxPerDay.value
+}
+function dayWidth(i:number){
+  if (offsets.value){ const next = offsets.value[i+1] ?? (offsets.value[i] + pxPerDay.value); return Math.max(0, next - offsets.value[i]) }
+  return pxPerDay.value
+}
+const weekStartSet = computed(() => new Set(((props as any).weekStarts as number[] | undefined) ?? []))
+function isWeekStart(i:number){ return weekStartSet.value.has(i) }
 const startISO = computed(() => props.startISO)
 const rowHeights = new Map<string, number>()
 const baseRowMin = 44
@@ -113,8 +124,19 @@ const allocation = ref(1 as 1|0.75|0.5|0.25)
 function onEmptyClick(e: MouseEvent, sr: any) {
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
-  const dayIndex = Math.round(x / pxPerDay.value)
-  const start = addDaysISO(props.startISO, dayIndex)
+  // Map x to closest day index based on offsets/widths
+  let idx = 0
+  if (offsets.value) {
+    for (let i=0;i<days.value.length;i++){
+      const left = lineLeft(i)
+      const width = dayWidth(i)
+      if (x < left + width) { idx = i; break }
+      idx = i
+    }
+  } else {
+    idx = Math.round(x / pxPerDay.value)
+  }
+  const start = days.value[Math.max(0, Math.min(days.value.length-1, idx))]
   popover.value = { key: sr.key, x: e.clientX, y: e.clientY, dayISO: start }
 }
 function confirmCreate(sr: any) {
