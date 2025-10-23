@@ -35,7 +35,7 @@
     </div>
 
     <!-- Scrollable content with aligned rows -->
-    <div ref="scrollArea" class="overflow-auto border border-slate-200 rounded-md shadow-sm" @scroll.passive="onScroll" @wheel.prevent="onWheel">
+    <div ref="scrollArea" class="overflow-auto border border-slate-200 rounded-md shadow-sm" @scroll.passive="onScroll">
       <template v-if="view.mode==='person'">
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
@@ -190,26 +190,16 @@ function onScroll() {
   const left = el.scrollLeft
   const right = left + el.clientWidth
   scrollLeft.value = left
-  const nearLeft = left < view.value.px_per_day * 2
-  const nearRight = right > el.scrollWidth - view.value.px_per_day * 2
-  if (nearLeft) prependWeekdays(10)
-  else if (nearRight) appendWeekdays(10)
+  const chunk = 7 // one work-week sized chunk (approx)
+  const threshold = view.value.px_per_day * 4
+  const nearLeft = left < threshold
+  const nearRight = right > el.scrollWidth - threshold
+  if (!extending.value) {
+    if (nearLeft) { extending.value = true; prependWeekdays(chunk).finally(() => { extending.value = false }) }
+    else if (nearRight) { extending.value = true; appendWeekdays(chunk).finally(() => { extending.value = false }) }
+  }
 }
-
-// Wheel paging — behave like next/previous buttons (step by one week)
-function onWheel(e: WheelEvent) {
-  const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
-  if (Math.abs(delta) < 1) return
-  const dir = delta > 0 ? 1 : -1
-  // Step by full calendar week to keep alignment with header controls
-  const newStart = addDaysISO(view.value.start, dir * 7)
-  store.setStart(newStart)
-  // Keep viewport at left (today-origin style)
-  if (scrollArea.value) scrollArea.value.scrollLeft = 0
-  // Proactively extend range to keep a buffer when paging
-  if (dir > 0) appendWeekdays(10)
-  else prependWeekdays(10)
-}
+const extending = ref(false)
 
 onMounted(async () => {
   await nextTick()
