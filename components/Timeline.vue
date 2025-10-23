@@ -40,14 +40,14 @@
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
           :subrows="personSubrows(p.id)" :days="days" :pxPerDay="view.px_per_day"
-          :startISO="view.start" :projectsMap="projectsMap" :dayOffsets="dayOffsets" :weekStarts="weekStarts"
+          :startISO="view.start" :projectsMap="projectsMap"
           @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" />
       </template>
       <template v-else>
         <RowGroup v-for="proj in projects" :key="proj.id" :label="proj.name"
           :groupType="'project'" :groupId="proj.id"
           :subrows="projectSubrows(proj.id)" :days="days" :pxPerDay="view.px_per_day"
-          :startISO="view.start" :projectsMap="projectsMap" :dayOffsets="dayOffsets" :weekStarts="weekStarts"
+          :startISO="view.start" :projectsMap="projectsMap"
           @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" />
       </template>
     </div>
@@ -59,6 +59,7 @@ import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import { addDaysISO } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
+import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import RowGroup from '@/components/internal/RowGroup.vue'
 
 const store = usePlannerStore()
@@ -146,60 +147,7 @@ function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
   return span
 }
 
-async function prependWeekdays(w: number) {
-  const el = scrollArea.value
-  if (!el) return
-  const half = el.clientWidth / 2
-  const anchor = el.scrollLeft + half
-  const cal = calendarSpanForWeekdays(view.value.start, w, -1)
-  store.setStart(addDaysISO(view.value.start, -cal))
-  store.setDays(view.value.days + cal)
-  await nextTick()
-  if (scrollArea.value) scrollArea.value.scrollLeft = anchor + w * view.value.px_per_day - half
-}
-async function appendWeekdays(w: number) {
-  const el = scrollArea.value
-  if (!el) return
-  const half = el.clientWidth / 2
-  const anchor = el.scrollLeft + half
-  const endISO = addDaysISO(view.value.start, view.value.days - 1)
-  const cal = calendarSpanForWeekdays(endISO, w, +1)
-  store.setDays(view.value.days + cal)
-  await nextTick()
-  if (scrollArea.value) scrollArea.value.scrollLeft = anchor - half
-}
+const { onScroll, init } = useTimelineScroll(view, scrollArea)
 
-function onScroll() {
-  const el = scrollArea.value
-  if (!el) return
-  const left = el.scrollLeft
-  const right = left + el.clientWidth
-  scrollLeft.value = left
-  const chunk = 5 // expand by one work-week (Mon–Fri)
-  const threshold = view.value.px_per_day * 4
-  const nearLeft = left < threshold
-  const nearRight = right > el.scrollWidth - threshold
-  if (!extending.value) {
-    if (nearLeft) { extending.value = true; prependWeekdays(chunk).finally(() => { extending.value = false }) }
-    else if (nearRight) { extending.value = true; appendWeekdays(chunk).finally(() => { extending.value = false }) }
-  }
-}
-const extending = ref(false)
-
-onMounted(async () => {
-  await nextTick()
-  const el = scrollArea.value
-  if (!el) return
-  const px = view.value.px_per_day
-  const visibleWeekdays = Math.ceil(el.clientWidth / px)
-  const leftBufferW = 14 // start with two weeks available to the left
-  const rightBufferW = 28 // and sufficient buffer to the right
-  const leftCal = calendarSpanForWeekdays(todayISO, leftBufferW, -1)
-  const rightCal = calendarSpanForWeekdays(todayISO, visibleWeekdays + rightBufferW, +1)
-  store.setStart(addDaysISO(todayISO, -leftCal))
-  store.setDays(leftCal + rightCal + 1)
-  await nextTick()
-  // Position today at leftBufferW columns from the left edge
-  if (scrollArea.value) scrollArea.value.scrollLeft = leftBufferW * px
-})
+onMounted(async () => { await init(todayISO) })
 </script>

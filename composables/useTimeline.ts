@@ -59,3 +59,12 @@ export function useTimeline(view: Ref<{ start:string; days:number; px_per_day:nu
   }
 }
 
+// Lightweight grid helper when you already have an array of days
+export function useTimelineGrid(daysRef: Ref<string[]>, pxPerDayRef: Ref<number>) {
+  const dayOffsets = computed(() => daysRef.value.map((_, i) => i * pxPerDayRef.value))
+  const weekStarts = computed(() => daysRef.value
+    .map((d,i)=> ({i, wd: new Date(d).getUTCDay()}))
+    .filter(e=>e.wd===1)
+    .map(e=>e.i))
+  return { dayOffsets, weekStarts }
+}

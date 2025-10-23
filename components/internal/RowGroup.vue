@@ -69,6 +69,7 @@
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import { addDaysISO, parseISO } from '@/composables/useDate'
 import { computeLanes } from '@/utils/lanes'
+import { useTimelineGrid } from '@/composables/useTimeline'
 
 const props = defineProps<{
   label: string
@@ -84,16 +85,10 @@ const emit = defineEmits(['create','update','createFromSidebar'])
 
 const pxPerDay = computed(() => props.pxPerDay)
 const days = computed(() => props.days)
-const offsets = computed(() => (props as any).dayOffsets as number[] | undefined)
-function lineLeft(i:number){
-  if (offsets.value && i < offsets.value.length) return offsets.value[i]
-  return i*pxPerDay.value
-}
-function dayWidth(i:number){
-  if (offsets.value){ const next = offsets.value[i+1] ?? (offsets.value[i] + pxPerDay.value); return Math.max(0, next - offsets.value[i]) }
-  return pxPerDay.value
-}
-const weekStartSet = computed(() => new Set(((props as any).weekStarts as number[] | undefined) ?? []))
+const { dayOffsets, weekStarts } = useTimelineGrid(days, pxPerDay)
+function lineLeft(i:number){ return dayOffsets.value[i] ?? i*pxPerDay.value }
+function dayWidth(i:number){ const next = dayOffsets.value[i+1] ?? (lineLeft(i) + pxPerDay.value); return Math.max(0, next - lineLeft(i)) }
+const weekStartSet = computed(() => new Set(weekStarts.value))
 function isWeekStart(i:number){ return weekStartSet.value.has(i) }
 const startISO = computed(() => props.startISO)
 const rowHeights = new Map<string, number>()
