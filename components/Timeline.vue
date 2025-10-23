@@ -89,7 +89,7 @@ const dayColumns = computed(() => dayWidths.value.map(w => `${w}px`).join(' '))
 function monthLabel(iso: string) { const d = new Date(iso); return d.toLocaleString('en-US', { month: 'long' }).toUpperCase() }
 function yearLabel(iso: string) { const d = new Date(iso); return String(d.getUTCFullYear()) }
 function dayLabel(iso: string) { const d = new Date(iso); const dd = String(d.getUTCDate()).padStart(2,'0'); const mm = String(d.getUTCMonth()+1).padStart(2,'0'); return `${dd}-${mm}` }
-function isWeekend(iso: string) { const d = new Date(iso); const wd = d.getUTCDay(); return wd===0 || wd===6 }
+// isWeekend already declared above
 
 const monthSegments = computed(() => {
   const out: { key:string; label:string; width:number }[] = []
