@@ -23,13 +23,14 @@
             :pxPerDay="view.px_per_day"
             :dayOffsets="dayOffsets"
             :weekStarts="weekStarts"
+            :scrollLeft="scrollLeft"
           />
         </div>
       </div>
     </div>
 
     <!-- Scrollable content with aligned rows -->
-    <div ref="scrollArea" class="overflow-auto border border-slate-200 rounded-md shadow-sm" @scroll.passive="onScroll">
+    <div ref="scrollArea" class="overflow-auto border border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
       <template v-if="view.mode==='person'">
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
@@ -142,6 +143,13 @@ function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
 }
 
 const { onScroll, init } = useTimelineScroll(view, scrollArea)
+
+function handleScroll() {
+  if (scrollArea.value) {
+    scrollLeft.value = scrollArea.value.scrollLeft
+  }
+  onScroll()
+}
 
 onMounted(async () => { await init(todayISO) })
 </script>
