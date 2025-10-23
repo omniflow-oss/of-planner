@@ -48,16 +48,28 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     await nextTick()
     const el = scrollArea.value
     if (!el) return
-    const px = view.value.px_per_day
-    const visibleWeekdays = Math.ceil(el.clientWidth / px)
-    const leftBufferW = 14
-    const rightBufferW = 28
-    const leftCal = calendarSpanForWeekdays(todayISO, leftBufferW, -1)
-    const rightCal = calendarSpanForWeekdays(todayISO, visibleWeekdays + rightBufferW, +1)
-    view.value.start = addDaysISO(todayISO, -leftCal)
-    view.value.days = leftCal + rightCal + 1
+
+    // Compute Monday of the current week (UTC), then previous week's Monday
+    const today = new Date(todayISO)
+    const dow = today.getUTCDay() // 0..6 (Sun..Sat)
+    const daysFromMonday = (dow + 6) % 7 // 0 if Mon, 6 if Sun
+    const thisMonday = new Date(today)
+    thisMonday.setUTCDate(thisMonday.getUTCDate() - daysFromMonday)
+    const thisMondayISO = thisMonday.toISOString().slice(0, 10)
+
+    // Previous week's Monday: 5 weekdays back from this Monday
+    const toPrevMonCal = calendarSpanForWeekdays(thisMondayISO, 5, -1)
+    const prevMondayISO = addDaysISO(thisMondayISO, -toPrevMonCal)
+
+    // Show: week-1 (prev Mon..Fri), current week, next 3 weeks => 5 weeks total
+    const totalWeekdays = 5 * 5 // 25 weekdays
+    const rightCal = calendarSpanForWeekdays(prevMondayISO, totalWeekdays - 1, +1)
+    view.value.start = prevMondayISO
+    view.value.days = rightCal + 1
+
+    // Start with scrollLeft = 0 so the viewport begins at previous Monday
     await nextTick()
-    if (scrollArea.value) scrollArea.value.scrollLeft = leftBufferW * px
+    if (scrollArea.value) scrollArea.value.scrollLeft = 0
   }
 
   return { onScroll, init }
