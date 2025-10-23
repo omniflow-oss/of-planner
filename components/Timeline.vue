@@ -74,17 +74,12 @@ const { people, projects, view, assignments } = storeToRefs(store)
 
 const localStart = ref(view.value.start)
 const localDays = ref(view.value.days)
-const days = computed(() => eachDay(view.value.start, view.value.days))
+const allDays = computed(() => eachDay(view.value.start, view.value.days))
 function isWeekend(iso: string) { const d = new Date(iso).getUTCDay(); return d===0 || d===6 }
-const dayWidths = computed(() => days.value.map(d => isWeekend(d) ? 0 : view.value.px_per_day))
-const dayOffsets = computed(() => {
-  const out:number[] = []
-  let acc = 0
-  for (let i=0;i<days.value.length;i++){ out.push(acc); acc += dayWidths.value[i] }
-  return out
-})
+const days = computed(() => allDays.value.filter(d => !isWeekend(d)))
+const dayOffsets = computed(() => days.value.map((_, i) => i * view.value.px_per_day))
 const weekStarts = computed(() => days.value.map((d,i)=> ({i, wd: new Date(d).getUTCDay()})).filter(e=>e.wd===1).map(e=>e.i))
-const dayColumns = computed(() => dayWidths.value.map(w => `${w}px`).join(' '))
+const dayColumns = computed(() => days.value.map(() => `${view.value.px_per_day}px`).join(' '))
 
 function monthLabel(iso: string) { const d = new Date(iso); return d.toLocaleString('en-US', { month: 'long' }).toUpperCase() }
 function yearLabel(iso: string) { const d = new Date(iso); return String(d.getUTCFullYear()) }
@@ -92,34 +87,32 @@ function dayLabel(iso: string) { const d = new Date(iso); const dd = String(d.ge
 // isWeekend already declared above
 
 const monthSegments = computed(() => {
-  const out: { key:string; label:string; width:number }[] = []
-  let current: { key:string; label:string; width:number } | null = null
-  for (let i=0;i<days.value.length;i++) {
-    const iso = days.value[i]
+  const out: { key:string; label:string; span:number }[] = []
+  let current: { key:string; label:string; span:number } | null = null
+  for (const iso of days.value) {
     const key = iso.slice(0,7)
     const label = monthLabel(iso)
-    if (!current || current.key !== key) { if (current) out.push(current); current = { key, label, width: 0 } }
-    current.width += dayWidths.value[i]
+    if (!current || current.key !== key) { if (current) out.push(current); current = { key, label, span: 0 } }
+    current.span += 1
   }
   if (current) out.push(current)
   return out
 })
-const monthColumns = computed(() => monthSegments.value.map(s => `${s.width}px`).join(' '))
+const monthColumns = computed(() => monthSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
 
 const yearSegments = computed(() => {
-  const out: { key:string; label:string; width:number }[] = []
-  let current: { key:string; label:string; width:number } | null = null
-  for (let i=0;i<days.value.length;i++) {
-    const iso = days.value[i]
+  const out: { key:string; label:string; span:number }[] = []
+  let current: { key:string; label:string; span:number } | null = null
+  for (const iso of days.value) {
     const key = iso.slice(0,4)
     const label = yearLabel(iso)
-    if (!current || current.key !== key) { if (current) out.push(current); current = { key, label, width: 0 } }
-    current.width += dayWidths.value[i]
+    if (!current || current.key !== key) { if (current) out.push(current); current = { key, label, span: 0 } }
+    current.span += 1
   }
   if (current) out.push(current)
   return out
 })
-const yearColumns = computed(() => yearSegments.value.map(s => `${s.width}px`).join(' '))
+const yearColumns = computed(() => yearSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 
