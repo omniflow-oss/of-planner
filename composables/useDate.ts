@@ -68,3 +68,18 @@ export function businessOffset(baseISO: string, dateISO: string) {
   }
   return count
 }
+
+// Convert a number of weekdays into the equivalent calendar-day span
+// starting from a base date (exclusive), moving forward (dir=+1) or backward (dir=-1).
+export function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
+  let span = 0
+  let counted = 0
+  while (counted < weekdays) {
+    span += 1
+    const d = parseISO(baseISO)
+    d.setUTCDate(d.getUTCDate() + dir * span)
+    const wd = d.getUTCDay()
+    if (wd !== 0 && wd !== 6) counted += 1
+  }
+  return span
+}

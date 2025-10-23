@@ -1,23 +1,9 @@
 import { nextTick, type Ref, ref } from 'vue'
-import { addDaysISO } from '@/composables/useDate'
+import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
 
 // Business-day aware infinite scroll for the timeline
 export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_day:number }>, scrollArea: Ref<HTMLElement | null>) {
   const extending = ref(false)
-
-  function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
-    let span = 0
-    let counted = 0
-    while (counted < weekdays) {
-      span += 1
-      const d = new Date(baseISO)
-      d.setUTCHours(0,0,0,0)
-      d.setUTCDate(d.getUTCDate() + dir * span)
-      const wd = d.getUTCDay()
-      if (wd !== 0 && wd !== 6) counted += 1
-    }
-    return span
-  }
 
   async function prependWeekdays(w: number) {
     const el = scrollArea.value
@@ -76,4 +62,3 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
 
   return { onScroll, init }
 }
-

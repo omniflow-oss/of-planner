@@ -6,10 +6,7 @@
       <span>{{ label }}</span>
     </div>
     <div class="relative border-b pane-border timeline-bg" :style="{ height: headerHeight+'px' }">
-      <!-- background bands using computed offsets/widths -->
-      <div v-for="(day, i) in days" :key="'hb'+i" class="day-bg" :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }" />
-      <div v-for="(day, i) in days" :key="'h'+i" :class="['grid-v', (isWeekStart(i)?'week':'')]" :style="{ left: lineLeft(i)+'px' }" />
-      <div v-if="todayIndex>=0 && todayIndex<days.length" class="today-line" :style="{ left: (todayIndex*pxPerDay)+'px' }" />
+      <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
       <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
     </div>
 
@@ -28,10 +25,7 @@
 
       <!-- Right: timeline track -->
       <div class="relative border-b pane-border timeline-bg" :style="{ height: rowHeights.get(sr.key)+'px' }" @click.self="onEmptyClick($event, sr)">
-        <!-- background bands using computed offsets/widths -->
-        <div v-for="(day, i) in days" :key="'b'+sr.key+i" class="day-bg" :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }" />
-        <div v-for="(day, i) in days" :key="day + i" :class="['grid-v', (isWeekStart(i)?'week':'')]" :style="{ left: lineLeft(i)+'px' }" />
-        <div v-if="todayIndex>=0 && todayIndex<days.length" class="today-line" :style="{ left: (todayIndex*pxPerDay)+'px' }" />
+        <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
 
         <!-- Quick create popover -->
@@ -67,6 +61,7 @@
 
 <script setup lang="ts">
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
+import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import { addDaysISO, parseISO } from '@/composables/useDate'
 import { computeLanes } from '@/utils/lanes'
 import { useTimelineGrid } from '@/composables/useTimeline'
