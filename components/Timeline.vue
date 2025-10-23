@@ -14,11 +14,11 @@
     <div class="grid" style="grid-template-columns: 240px 1fr;">
       <!-- Left placeholders to match 3 header rows: year / month / day -->
       <div class="flex flex-col">
-        <div class="border-b border-slate-200 py-1"></div>
-        <div class="border-b border-slate-200 py-1"></div>
+        <div class="py-1"></div>
+        <div class="py-1"></div>
         <div class="py-1.5"></div>
       </div>
-      <div class="border-b border-slate-200 relative">
+      <div class="relative">
         <div class="overflow-hidden">
           <div class="relative">
             <!-- weekend background bands spanning all header rows -->
