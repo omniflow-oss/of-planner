@@ -154,15 +154,33 @@ const scrollArea = ref<HTMLElement | null>(null)
 const todayISO = (() => { const d = new Date(); d.setUTCHours(0,0,0,0); return d.toISOString().slice(0,10) })()
 const scrollLeft = ref(0)
 
-async function prependDays(n: number) {
-  const before = scrollArea.value?.scrollLeft || 0
-  store.setStart(addDaysISO(view.value.start, -n))
-  store.setDays(view.value.days + n)
-  await nextTick()
-  if (scrollArea.value) scrollArea.value.scrollLeft = before + n * view.value.px_per_day
+// Convert a number of weekdays into a calendar-day span starting from a base date (exclusive)
+function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
+  let span = 0
+  let counted = 0
+  while (counted < weekdays) {
+    span += 1
+    const d = new Date(baseISO)
+    d.setUTCHours(0,0,0,0)
+    d.setUTCDate(d.getUTCDate() + dir * span)
+    const wd = d.getUTCDay()
+    if (wd !== 0 && wd !== 6) counted += 1
+  }
+  return span
 }
-async function appendDays(n: number) {
-  store.setDays(view.value.days + n)
+
+async function prependWeekdays(w: number) {
+  const before = scrollArea.value?.scrollLeft || 0
+  const cal = calendarSpanForWeekdays(view.value.start, w, -1)
+  store.setStart(addDaysISO(view.value.start, -cal))
+  store.setDays(view.value.days + cal)
+  await nextTick()
+  if (scrollArea.value) scrollArea.value.scrollLeft = before + w * view.value.px_per_day
+}
+async function appendWeekdays(w: number) {
+  const endISO = addDaysISO(view.value.start, view.value.days - 1)
+  const cal = calendarSpanForWeekdays(endISO, w, +1)
+  store.setDays(view.value.days + cal)
   await nextTick()
 }
 
@@ -174,8 +192,8 @@ function onScroll() {
   scrollLeft.value = left
   const nearLeft = left < view.value.px_per_day * 2
   const nearRight = right > el.scrollWidth - view.value.px_per_day * 2
-  if (nearLeft) prependDays(14)
-  else if (nearRight) appendDays(14)
+  if (nearLeft) prependWeekdays(10)
+  else if (nearRight) appendWeekdays(10)
 }
 
 onMounted(async () => {
@@ -185,8 +203,8 @@ onMounted(async () => {
   const px = view.value.px_per_day
   const visibleDays = Math.ceil(el.clientWidth / px)
   const buffer = 28
-  const need = Math.max(visibleDays + buffer, 1)
-  store.setDays(need)
+  const cal = calendarSpanForWeekdays(todayISO, visibleDays + buffer, +1)
+  store.setDays(Math.max(cal, 1))
   store.setStart(todayISO)
   await nextTick()
   if (scrollArea.value) scrollArea.value.scrollLeft = 0
