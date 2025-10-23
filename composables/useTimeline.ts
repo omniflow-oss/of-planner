@@ -10,7 +10,11 @@ export function useTimeline(view: Ref<{ start:string; days:number; px_per_day:nu
   const dayOffsets = computed(() => days.value.map((_, i) => i * view.value.px_per_day))
   const dayColumns = computed(() => days.value.map(() => `${view.value.px_per_day}px`).join(' '))
 
-  function monthLabel(iso: string) { const d = new Date(iso); return d.toLocaleString('en-US', { month: 'long' }).toUpperCase() }
+  function monthLabel(iso: string) {
+    const d = new Date(iso)
+    // Title case month (e.g., "September") for Month+Year header
+    return d.toLocaleString('en-US', { month: 'long' })
+  }
   function yearLabel(iso: string) { const d = new Date(iso); return String(d.getUTCFullYear()) }
   function dayLabel(iso: string) { const d = new Date(iso); const dd = String(d.getUTCDate()).padStart(2,'0'); const mm = String(d.getUTCMonth()+1).padStart(2,'0'); return `${dd}-${mm}` }
 

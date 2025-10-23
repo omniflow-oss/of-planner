@@ -4,11 +4,10 @@
       <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
     </div>
 
-    <!-- Header rows: Year / Month / Week (right only) -->
+    <!-- Header rows: Month+Year (top) / Day (bottom) (right only) -->
     <div class="grid" style="grid-template-columns: 240px 1fr;">
-      <!-- Left placeholders to match 3 header rows: year / month / day -->
+      <!-- Left placeholders to match 2 header rows: month+year / day -->
       <div class="flex flex-col">
-        <div class="py-1"></div>
         <div class="py-1"></div>
         <div class="py-1.5"></div>
       </div>
@@ -19,8 +18,6 @@
             :dayColumns="dayColumns"
             :monthSegments="monthSegments"
             :monthColumns="monthColumns"
-            :yearSegments="yearSegments"
-            :yearColumns="yearColumns"
             :todayISO="todayISO"
             :dayLabel="dayLabel"
             :pxPerDay="view.px_per_day"
