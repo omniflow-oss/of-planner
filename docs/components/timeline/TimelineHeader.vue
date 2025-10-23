@@ -1,5 +1,13 @@
 <template>
-  <div class="relative">
+  <!-- Sticky timeline header with optional grid overlay -->
+  <div class="relative sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+    <!-- Grid overlay: vertical day/week lines and today marker -->
+    <GridOverlay
+      class="pointer-events-none absolute inset-0"
+      :days="days"
+      :day-columns="dayColumns"
+      :scroll-left="scrollLeft"
+    />
     <div class="grid text-[11px] text-slate-500 select-none border-b border-slate-200" :style="{ gridTemplateColumns: yearColumns, transform: `translateX(-${scrollLeft}px)` }">
       <div v-for="seg in yearSegments" :key="seg.key" class="text-center py-1 font-medium">{{ seg.label }}</div>
     </div>
@@ -15,6 +23,7 @@
 </template>
 
 <script setup lang="ts">
+import GridOverlay from './GridOverlay.vue'
 defineProps<{
   days: string[]
   dayColumns: string
@@ -27,4 +36,3 @@ defineProps<{
   dayLabel: (iso: string) => string
 }>()
 </script>
-
