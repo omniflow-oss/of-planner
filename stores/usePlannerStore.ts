@@ -29,7 +29,7 @@ export const usePlannerStore = defineStore('planner', {
         return toISO(d)
       })(),
       days: 21,
-      px_per_day: 36,
+      px_per_day: 56,
       selected_id: null
     },
     meta: { version: '2.9.0' }
