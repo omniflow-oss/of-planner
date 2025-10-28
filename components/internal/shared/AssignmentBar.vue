@@ -1,5 +1,12 @@
 <template>
-  <div class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-slate-200 bg-white" :style="barStyle" @mousedown.stop="onDragStart">
+  <div 
+    class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-slate-200 bg-white" 
+    :style="barStyle" 
+    @mousedown.stop="onDragStart"
+    @contextmenu.prevent.stop="onRightClick"
+    @touchstart="onTouchStart"
+    @touchend="onTouchEnd"
+  >
     <div class="h-full w-1.5" :style="{ background: color }"></div>
     <div class="flex items-center gap-2 px-3 text-[12px] text-slate-800">
       <span>{{ project?.name ?? assignment.project_id }}</span>
@@ -16,7 +23,7 @@ import { daysBetweenInclusive, parseISO, addDaysISO, toISO, businessDaysBetweenI
 import type { Assignment } from '@/types/planner'
 
 const props = defineProps<{ assignment: Assignment; startISO: string; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; top?: number }>()
-const emit = defineEmits(['update'])
+const emit = defineEmits(['update', 'edit', 'delete', 'resize'])
 
 const project = computed(() => props.projectsMap[props.assignment.project_id])
 const color = computed(() => project.value?.color ?? '#3a84ff')
@@ -28,7 +35,7 @@ const allocBadge = computed(() => {
 const startIndex = computed(() => Math.max(0, businessOffset(props.startISO, props.assignment.start)))
 const lengthDays = computed(() => Math.max(1, businessDaysBetweenInclusive(props.assignment.start, props.assignment.end)))
 const barStyle = computed(() => ({
-  position: 'absolute',
+  position: 'absolute' as const,
   left: (startIndex.value * props.pxPerDay) + 'px',
   width: Math.max(1, lengthDays.value * props.pxPerDay - 2) + 'px',
   top: (props.top ?? 8) + 'px',
@@ -65,6 +72,7 @@ function onResizeStart(side: 'left'|'right', e: MouseEvent) {
   window.addEventListener('mouseup', onResizeEnd)
 }
 function onResize(e: MouseEvent) {
+  emit('resize', true);
   if (!resizing) return
   const deltaPx = e.clientX - resizing.startX
   const deltaDays = Math.round(deltaPx / props.pxPerDay)
@@ -76,10 +84,74 @@ function onResize(e: MouseEvent) {
     emit('update', { id: props.assignment.id, end: newEnd })
   }
 }
-function onResizeEnd() {
+function onResizeEndEvent() {  
+  setTimeout(() => {
+    emit('resize', false);
+  }, 0);
+}
+
+function onResizeEnd() {  
   resizing = null
   window.removeEventListener('mousemove', onResize)
   window.removeEventListener('mouseup', onResizeEnd)
+  onResizeEndEvent();
+}
+
+// Touch and context menu handling for edit popover
+let touchStartTime = 0
+let touchCount = 0
+let touchTimeout: number | null = null
+
+function onRightClick(e: MouseEvent) {
+  emit('edit', { 
+    assignment: props.assignment, 
+    x: e.clientX, 
+    y: e.clientY 
+  })
+}
+
+function onTouchStart(e: TouchEvent) {
+  touchStartTime = Date.now()
+  touchCount++
+  
+  if (touchTimeout) {
+    clearTimeout(touchTimeout)
+    touchTimeout = null
+  }
+  
+  if (touchCount === 1) {
+    // Start timeout for double-touch detection
+    touchTimeout = window.setTimeout(() => {
+      touchCount = 0
+    }, 300)
+  } else if (touchCount === 2) {
+    // Double touch detected
+    touchCount = 0
+    if (touchTimeout) {
+      clearTimeout(touchTimeout)
+      touchTimeout = null
+    }
+    
+    const touch = e.touches[0] || e.changedTouches[0]
+    emit('edit', { 
+      assignment: props.assignment, 
+      x: touch.clientX, 
+      y: touch.clientY 
+    })
+    e.preventDefault()
+  }
+}
+
+function onTouchEnd(e: TouchEvent) {
+  // Reset if touch was too long (not a tap)
+  const touchDuration = Date.now() - touchStartTime
+  if (touchDuration > 300) {
+    touchCount = 0
+    if (touchTimeout) {
+      clearTimeout(touchTimeout)
+      touchTimeout = null
+    }
+  }
 }
 </script>
 

@@ -7,7 +7,7 @@
     </div>
     <div class="relative border-b pane-border timeline-bg" :style="{ height: headerHeight+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
-      <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
+      <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" />
     </div>
 
     <!-- Subrows -->
@@ -24,34 +24,7 @@
       <!-- Right: timeline track -->
       <div class="relative border-b pane-border timeline-bg" :style="{ height: rowHeights.get(sr.key)+'px' }" @click.self="onEmptyClick($event, sr)">
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
-        <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" />
-
-        <!-- Quick create popover -->
-        <div v-if="popover && popover.key===sr.key" :style="popoverStyle" class="z-20">
-          <div class="bg-white border border-slate-200 rounded-md p-3 shadow-md w-56">
-            <div class="flex items-center justify-between text-xs text-slate-500">
-              <div>Quick create</div>
-              <button class="px-2 py-1 border border-slate-200 rounded" @click.stop="closePopover">✕</button>
-            </div>
-            <div class="mt-2 flex items-center gap-2 text-sm">
-              <label class="w-20 text-slate-500">Durée</label>
-              <input class="px-2 py-1 border border-slate-200 rounded w-full" type="number" v-model.number="duration" min="1" />
-            </div>
-            <div class="mt-2 flex items-center gap-2 text-sm">
-              <label class="w-20 text-slate-500">Allocation</label>
-              <select class="px-2 py-1 border border-slate-200 rounded w-full" v-model.number="allocation">
-                <option :value="1">1</option>
-                <option :value="0.75">0.75</option>
-                <option :value="0.5">0.5</option>
-                <option :value="0.25">0.25</option>
-              </select>
-            </div>
-            <div class="mt-3 flex justify-end gap-2">
-              <button class="px-2 py-1 text-sm border border-slate-200 rounded" @click.stop="closePopover">Cancel</button>
-              <button class="px-2 py-1 text-sm bg-slate-900 text-white rounded" @click.stop="confirmCreate(sr)">Create</button>
-            </div>
-          </div>
-        </div>
+        <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e) => onResizeEvent=e" />
       </div>
     </template>
   </div>
@@ -75,7 +48,7 @@ const props = defineProps<{
   pxPerDay: number
   projectsMap: Record<string, { id: string; name: string; color?: string|null; emoji?: string|null }>
 }>()
-const emit = defineEmits(['create','update','createFromSidebar'])
+const emit = defineEmits(['create','update','createFromSidebar','edit','createPopover'])
 
 const pxPerDay = computed(() => props.pxPerDay)
 const days = computed(() => props.days)
@@ -88,6 +61,7 @@ const startISO = computed(() => props.startISO)
 const rowHeights = new Map<string, number>()
 const baseRowMin = 44
 const expanded = ref(true)
+const onResizeEvent  = ref(false);
 
 function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.person_id === null || sr.project_id === null }
 function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
@@ -105,17 +79,18 @@ function subAssignmentsLaned(sr: { key:string; person_id: string|null; project_i
 function laneTop(lane: number) { const padding = 10; const laneHeight = 30; return padding + lane*laneHeight }
 
 function onUpdate(payload: { id: string; start?: string; end?: string }) { emit('update', payload) }
+function onEdit(payload: { assignment: any; x: number; y: number }) { emit('edit', payload) }
 
-// Empty click popover
-const popover = ref<{ key: string; x: number; y: number; dayISO: string } | null>(null)
-const duration = ref(5)
-const allocation = ref(1 as 1|0.75|0.5|0.25)
+// Empty click to show create popover (now handled by Timeline.vue)
 function onEmptyClick(e: MouseEvent, sr: any) {
+  if(onResizeEvent.value) {
+    return;
+  }
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
   // Map x to closest day index based on offsets/widths
   let idx = 0
-  if (offsets.value) {
+  if (dayOffsets.value) {
     for (let i=0;i<days.value.length;i++){
       const left = lineLeft(i)
       const width = dayWidth(i)
@@ -126,17 +101,10 @@ function onEmptyClick(e: MouseEvent, sr: any) {
     idx = Math.round(x / pxPerDay.value)
   }
   const start = days.value[Math.max(0, Math.min(days.value.length-1, idx))]
-  popover.value = { key: sr.key, x: e.clientX, y: e.clientY, dayISO: start }
+  emit('createPopover', { key: sr.key, x: e.clientX, y: e.clientY, dayISO: start, person_id: sr.person_id, project_id: sr.project_id })
 }
-function confirmCreate(sr: any) {
-  if (!popover.value) return
-  emit('create', { person_id: sr.person_id, project_id: sr.project_id, start: popover.value.dayISO, duration: duration.value, allocation: allocation.value })
-  popover.value = null
-}
-function closePopover() { popover.value = null }
-const popoverStyle = computed(() => popover.value ? ({ position: 'fixed', left: `${popover.value.x + 8}px`, top: `${popover.value.y + 8}px` }) : {})
 
-// Today line
+// Today line - avoid hydration mismatch
 const todayISO = (() => { const d = new Date(); d.setUTCHours(0,0,0,0); return d.toISOString().slice(0,10) })()
 const todayIndex = computed(() => days.value.findIndex(d => d === todayISO))
 
@@ -148,7 +116,7 @@ const assignmentsRef = usePlanner()
 // Header aggregated assignments
 const headerLaneCount = ref(1)
 const headerAssignments = computed(() => {
-  const list = assignmentsRef.value.filter(a => (props.groupType === 'person' ? a.person_id === props.groupId : a.project_id === props.groupId))
+  const list = assignmentsRef.value.filter((a: any) => (props.groupType === 'person' ? a.person_id === props.groupId : a.project_id === props.groupId))
   const { items, laneCount } = computeLanes(props.startISO, list)
   headerLaneCount.value = laneCount
   return items

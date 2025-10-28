@@ -3,7 +3,6 @@
     <div class="flex items-center justify-between">
       <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
     </div>
-
     <!-- Header rows: Month+Year (top) / Day (bottom) (right only) -->
     <div class="grid" style="grid-template-columns: 240px 1fr;">
       <!-- Left placeholders to match 2 header rows: month+year / day -->
@@ -36,23 +35,110 @@
           :groupType="'person'" :groupId="p.id"
           :subrows="personSubrows(p.id)" :days="days" :pxPerDay="view.px_per_day"
           :startISO="view.start" :projectsMap="projectsMap"
-          @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" />
+          @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" @edit="onEdit" @createPopover="onCreatePopover" />
       </template>
       <template v-else>
         <RowGroup v-for="proj in projects" :key="proj.id" :label="proj.name"
           :groupType="'project'" :groupId="proj.id"
           :subrows="projectSubrows(proj.id)" :days="days" :pxPerDay="view.px_per_day"
           :startISO="view.start" :projectsMap="projectsMap"
-          @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" />
+          @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" @edit="onEdit" @createPopover="onCreatePopover" />
       </template>
     </div>
+
+
+      <div v-if="editPopover" data-popover="edit" :style="{ position: 'fixed', left: editPopover?.x + 8 + 'px', top: editPopover?.y + 8 + 'px', zIndex: 50 }" class="bg-white border border-slate-200 rounded-md p-4 shadow-lg w-72">
+        <div class="flex items-center justify-between text-sm font-medium text-slate-700 mb-3">
+          <div>Edit Assignment</div>
+          <button class="text-slate-400 hover:text-slate-600" @click="closeEditPopover">✕</button>
+        </div>
+        
+        <div class="space-y-3">
+          <div class="flex items-center gap-2 text-sm">
+            <label class="w-20 text-slate-600">Start</label>
+            <input 
+              class="px-2 py-1 border border-slate-200 rounded flex-1 text-sm" 
+              type="date" 
+              v-model="editPopover.editedStart" 
+            />
+          </div>
+          
+          <div class="flex items-center gap-2 text-sm">
+            <label class="w-20 text-slate-600">End</label>
+            <input 
+              class="px-2 py-1 border border-slate-200 rounded flex-1 text-sm" 
+              type="date" 
+              v-model="editPopover.editedEnd" 
+            />
+          </div>
+          
+          <div class="flex items-center gap-2 text-sm">
+            <label class="w-20 text-slate-600">Allocation</label>
+            <select class="px-2 py-1 border border-slate-200 rounded flex-1 text-sm" v-model.number="editPopover.editedAllocation">
+              <option :value="1">100% (1)</option>
+              <option :value="0.75">75% (¾)</option>
+              <option :value="0.5">50% (½)</option>
+              <option :value="0.25">25% (¼)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="flex justify-between mt-4 pt-3 border-t border-slate-200">
+          <button 
+            class="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700" 
+            @click="deleteAssignment"
+          >
+            Delete
+          </button>
+          <div class="flex gap-2">
+            <button 
+              class="px-3 py-1.5 text-sm border border-slate-200 rounded hover:bg-slate-50" 
+              @click="closeEditPopover"
+            >
+              Cancel
+            </button>
+            <button 
+              class="px-3 py-1.5 text-sm bg-slate-900 text-white rounded hover:bg-slate-800" 
+              @click="saveAssignmentChanges"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+
+    <!-- Create popover (moved from RowGroup.vue) -->
+    <div v-if="createPopover" data-popover="create" :style="{ position: 'fixed', left: createPopover.x + 8 + 'px', top: createPopover.y + 8 + 'px', zIndex: 50 }" class="bg-white border border-slate-200 rounded-md p-3 shadow-md w-56">
+      <div class="flex items-center justify-between text-xs text-slate-500">
+        <div>Quick create</div>
+        <button class="px-2 py-1 border border-slate-200 rounded" @click.stop="closeCreatePopover">✕</button>
+      </div>
+      <div class="mt-2 flex items-center gap-2 text-sm">
+        <label class="w-20 text-slate-500">Durée</label>
+        <input class="px-2 py-1 border border-slate-200 rounded w-full" type="number" v-model.number="duration" min="1" />
+      </div>
+      <div class="mt-2 flex items-center gap-2 text-sm">
+        <label class="w-20 text-slate-500">Allocation</label>
+        <select class="px-2 py-1 border border-slate-200 rounded w-full" v-model.number="allocation">
+          <option :value="1">1</option>
+          <option :value="0.75">0.75</option>
+          <option :value="0.5">0.5</option>
+          <option :value="0.25">0.25</option>
+        </select>
+      </div>
+      <div class="mt-3 flex justify-end gap-2">
+        <button class="px-2 py-1 text-sm border border-slate-200 rounded" @click.stop="closeCreatePopover">Cancel</button>
+        <button class="px-2 py-1 text-sm bg-slate-900 text-white rounded" @click.stop="confirmCreate">Create</button>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
-import { addDaysISO } from '@/composables/useDate'
+import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
@@ -110,13 +196,94 @@ function onCreate(payload: { person_id: string|null; project_id: string|null; st
   store.createAssignment({ person_id: person_id!, project_id: project_id!, start, end, allocation })
 }
 
-function onUpdate(payload: { id: string; start?: string; end?: string }) {
+function onUpdate(payload: { id: string; start?: string; end?: string }) {  
   store.updateAssignment(payload.id, payload)
+  closeCreatePopover();
 }
 
 function onAddFromSidebar(sr: { person_id: string|null; project_id: string|null }) {
   // Default create from start date with duration 5, allocation 1
   onCreate({ person_id: sr.person_id, project_id: sr.project_id, start: view.value.start, duration: 5, allocation: 1 })
+}
+
+// Edit popover state
+const editPopover = ref<{ 
+  visible: boolean; 
+  assignment: any; 
+  x: number; 
+  y: number;
+  editedStart: string;
+  editedEnd: string;
+  editedAllocation: 1 | 0.75 | 0.5 | 0.25;
+} | null>(null)
+
+// Create popover state (moved from RowGroup.vue)
+const createPopover = ref<{ 
+  key: string; 
+  x: number; 
+  y: number; 
+  dayISO: string;
+  person_id: string|null;
+  project_id: string|null;
+} | null>(null)
+const duration = ref(5)
+const allocation = ref(1 as 1|0.75|0.5|0.25)
+
+function onEdit(payload: { assignment: any; x: number; y: number }) {
+  const { assignment, x, y } = payload
+  editPopover.value = {
+    visible: true,
+    assignment,
+    x,
+    y,
+    editedStart: assignment.start,
+    editedEnd: assignment.end,
+    editedAllocation: assignment.allocation
+  }
+}
+
+function onCreatePopover(payload: { key: string; x: number; y: number; dayISO: string; person_id: string|null; project_id: string|null }) {
+  createPopover.value = payload
+}
+
+function closeEditPopover() {
+  editPopover.value = null
+}
+
+function saveAssignmentChanges() {
+  if (!editPopover.value) return
+  
+  const { assignment, editedStart, editedEnd, editedAllocation } = editPopover.value
+  store.updateAssignment(assignment.id, {
+    start: editedStart,
+    end: editedEnd,
+    allocation: editedAllocation
+  })
+  closeEditPopover()
+}
+
+function deleteAssignment() {
+  if (!editPopover.value) return
+  
+  store.deleteAssignment(editPopover.value.assignment.id)
+  closeEditPopover()
+}
+
+// Create popover functions
+function confirmCreate() {
+  if (!createPopover.value) return
+  onCreate({ 
+    person_id: createPopover.value.person_id, 
+    project_id: createPopover.value.project_id, 
+    start: createPopover.value.dayISO, 
+    duration: duration.value, 
+    allocation: allocation.value 
+  })
+  createPopover.value = null
+}
+
+function closeCreatePopover() {
+  createPopover.value = null
 }
 
 // Provide assignments ref to children (RowGroup) for lane computation
@@ -127,20 +294,7 @@ const gridEl = ref<HTMLElement | null>(null)
 const scrollArea = ref<HTMLElement | null>(null)
 const scrollLeft = ref(0)
 
-// Convert a number of weekdays into a calendar-day span starting from a base date (exclusive)
-function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
-  let span = 0
-  let counted = 0
-  while (counted < weekdays) {
-    span += 1
-    const d = new Date(baseISO)
-    d.setUTCHours(0,0,0,0)
-    d.setUTCDate(d.getUTCDate() + dir * span)
-    const wd = d.getUTCDay()
-    if (wd !== 0 && wd !== 6) counted += 1
-  }
-  return span
-}
+
 
 const { onScroll, init } = useTimelineScroll(view, scrollArea)
 
@@ -151,5 +305,40 @@ function handleScroll() {
   onScroll()
 }
 
-onMounted(async () => { await init(todayISO) })
+  // Listen for today button clicks to reinitialize timeline
+  const handleGoToToday = (event: Event) => {
+    const customEvent = event as CustomEvent<string>
+    const eventTodayISO = customEvent.detail 
+    init(eventTodayISO)
+  }
+  
+  // Handle clicks outside of popovers to close them
+  const handleClickOutside = (event: MouseEvent) => {
+    if (editPopover.value && event.target) {
+      const editPopoverElement = document.querySelector('[data-popover="edit"]')
+      if (editPopoverElement && !editPopoverElement.contains(event.target as Node)) {
+        closeEditPopover()
+      }
+    }
+    if (createPopover.value && event.target) {
+      const createPopoverElement = document.querySelector('[data-popover="create"]')
+      if (createPopoverElement && !createPopoverElement.contains(event.target as Node) && !event.target.classList.contains('timeline-bg')) {
+        closeCreatePopover()
+      }
+    }
+  }
+
+// Listen for "go to today" events from the ViewSwitcher
+onMounted(async () => { 
+  // Ensure we have a valid todayISO before calling init
+  await init(todayISO);
+  
+  document.addEventListener('timeline:goToToday', handleGoToToday as EventListener)
+  document.addEventListener('click', handleClickOutside)
+  
+})
+onUnmounted(() => {
+    document.removeEventListener('timeline:goToToday', handleGoToToday as EventListener)
+    document.removeEventListener('click', handleClickOutside)
+  })
 </script>

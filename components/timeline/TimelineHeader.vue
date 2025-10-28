@@ -13,7 +13,7 @@
     <!-- Bottom: Day (D MMM) -->
     <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
       <div v-for="day in days" :key="day" class="text-center py-1.5">
-        <span :class="['px-1.5 py-0.5 rounded-md', day===todayISO ? 'bg-slate-900 text-white' : '']">{{ dayShort(day) }}</span>
+        <span :class="['px-1.5 py-0.5 rounded-md', isToday(day) ? 'bg-slate-900 text-white' : '']">{{ dayShort(day) }}</span>
       </div>
     </div>
   </div>
@@ -47,5 +47,11 @@ function dayShort(iso: string) {
   const day = d.getUTCDate()
   const mon = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
   return `${day} ${mon}`
+}
+
+function isToday(day: string) {
+  // Only highlight today on client side to avoid hydration mismatch
+  if (typeof window === 'undefined') return false
+  return day === props.todayISO
 }
 </script>

@@ -31,7 +31,10 @@ const mode = computed(() => view.value.mode)
 function setMode(m: 'person' | 'project') { store.switchMode(m) }
 function today() {
   const d = new Date(); d.setUTCHours(0,0,0,0)
-  store.setStart(d.toISOString().slice(0,10))
+  const todayISO = d.toISOString().slice(0,10)
+  store.setStart(todayISO)
+  // Emit event to reinitialize timeline scroll position
+  document.dispatchEvent(new CustomEvent('timeline:goToToday', { detail: todayISO }))
 }
 function zoom(delta: number) { store.setPxPerDay(view.value.px_per_day + delta * 4) }
 
