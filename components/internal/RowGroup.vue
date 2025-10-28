@@ -5,7 +5,7 @@
       <button class="w-5 h-5 grid place-items-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50" @click="expanded = !expanded">{{ expanded ? '–' : '+' }}</button>
       <span>{{ label }}</span>
     </div>
-    <div class="relative border-b pane-border timeline-bg" :style="{ height: headerHeight+'px' }">
+    <div class="relative border-b pane-border timeline-bg" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
       <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" />
     </div>
@@ -22,7 +22,7 @@
       </div>
 
       <!-- Right: timeline track -->
-      <div class="relative border-b pane-border timeline-bg" :style="{ height: rowHeights.get(sr.key)+'px' }" @click.self="onEmptyClick($event, sr)">
+      <div class="relative border-b pane-border timeline-bg" :style="{ height: rowHeights.get(sr.key)+'px', width: timelineWidth+'px' }" @click.self="onEmptyClick($event, sr)">
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e) => onResizeEvent=e" />
       </div>
@@ -57,6 +57,9 @@ function lineLeft(i:number){ return dayOffsets.value[i] ?? i*pxPerDay.value }
 function dayWidth(i:number){ const next = dayOffsets.value[i+1] ?? (lineLeft(i) + pxPerDay.value); return Math.max(0, next - lineLeft(i)) }
 const weekStartSet = computed(() => new Set(weekStarts.value))
 function isWeekStart(i:number){ return weekStartSet.value.has(i) }
+
+// Calculate total timeline width to ensure timeline-bg resizes properly when scrolling
+const timelineWidth = computed(() => days.value.length * pxPerDay.value)
 const startISO = computed(() => props.startISO)
 const rowHeights = new Map<string, number>()
 const baseRowMin = 44
@@ -68,7 +71,7 @@ function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
 function isWeekend(dayISO: string) { const d = parseISO(dayISO).getUTCDay(); return d === 0 || d === 6 }
 function subAssignmentsLaned(sr: { key:string; person_id: string|null; project_id: string|null }) {
   if (isAddRow(sr)) { rowHeights.set(sr.key, baseRowMin); return [] }
-  const list = assignmentsRef.value.filter(a => a.person_id === sr.person_id && a.project_id === sr.project_id)
+  const list = assignmentsRef.value.filter((a: any) => a.person_id === sr.person_id && a.project_id === sr.project_id)
   const { items, laneCount } = computeLanes(props.startISO, list)
   const laneHeight = 30
   const padding = 10
