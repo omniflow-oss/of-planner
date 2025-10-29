@@ -305,11 +305,28 @@ function handleScroll() {
   onScroll()
 }
 
-  // Listen for today button clicks to reinitialize timeline
+  // Listen for today button clicks to scroll to today
   const handleGoToToday = (event: Event) => {
     const customEvent = event as CustomEvent<string>
     const eventTodayISO = customEvent.detail 
-    init(eventTodayISO)
+    //init(eventTodayISO)
+    // Find today's index in the current days array
+    const todayIndex = days.value.findIndex(d => d === eventTodayISO)
+    
+    if (todayIndex >= 0 && scrollArea.value) {
+      // Calculate scroll position to center today on screen
+      const todayPosition = todayIndex * view.value.px_per_day
+      const containerWidth = scrollArea.value.clientWidth
+      const sidebarWidth = 240 // Left column width for labels
+      const timelineVisibleWidth = containerWidth - sidebarWidth
+      const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
+      
+      scrollArea.value.scrollTo({
+        left: Math.max(0, scrollPosition),
+        behavior: 'smooth',
+      })
+    }
+
   }
   
   // Handle clicks outside of popovers to close them
@@ -322,7 +339,8 @@ function handleScroll() {
     }
     if (createPopover.value && event.target) {
       const createPopoverElement = document.querySelector('[data-popover="create"]')
-      if (createPopoverElement && !createPopoverElement.contains(event.target as Node) && !event.target.classList.contains('timeline-bg')) {
+      const target = event.target as HTMLElement
+      if (createPopoverElement && !createPopoverElement.contains(event.target as Node) && !target.classList.contains('timeline-bg')) {
         closeCreatePopover()
       }
     }

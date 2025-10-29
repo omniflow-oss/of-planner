@@ -32,7 +32,7 @@ function setMode(m: 'person' | 'project') { store.switchMode(m) }
 function today() {
   const d = new Date(); d.setUTCHours(0,0,0,0)
   const todayISO = d.toISOString().slice(0,10)
-  store.setStart(todayISO)
+  // store.setStart(todayISO)
   // Emit event to reinitialize timeline scroll position
   document.dispatchEvent(new CustomEvent('timeline:goToToday', { detail: todayISO }))
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="grid" style="grid-template-columns: 240px 1fr;">
+  <div class="grid" style="grid-template-columns: 240px 1fr;" :style="{ width: timelineWidth+'px' }">
     <!-- Group header row -->
     <div class="px-3 py-2 border-b pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-white">
       <button class="w-5 h-5 grid place-items-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50" @click="expanded = !expanded">{{ expanded ? '–' : '+' }}</button>
