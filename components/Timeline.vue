@@ -33,14 +33,14 @@
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
           :subrows="personSubrows(p.id)" :days="days" :pxPerDay="view.px_per_day"
-          :startISO="view.start" :projectsMap="projectsMap"
+          :startISO="view.start" :projectsMap="projectsMap" :peopleMap="peopleMap"
           @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" @edit="onEdit" @createPopover="onCreatePopover" />
       </template>
       <template v-else>
         <RowGroup v-for="proj in projects" :key="proj.id" :label="proj.name"
           :groupType="'project'" :groupId="proj.id"
           :subrows="projectSubrows(proj.id)" :days="days" :pxPerDay="view.px_per_day"
-          :startISO="view.start" :projectsMap="projectsMap"
+          :startISO="view.start" :projectsMap="projectsMap" :peopleMap="peopleMap"
           @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" @edit="onEdit" @createPopover="onCreatePopover" />
       </template>
     </div>
@@ -163,6 +163,7 @@ const {
 // (Day-by-day display; no week row)
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
+const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
 
 function personProjects(personId: string) {
   const set = new Set(assignments.value.filter(a => a.person_id === personId).map(a => a.project_id))
