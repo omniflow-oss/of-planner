@@ -3,7 +3,8 @@
     <!-- Group header row -->
     <div class="px-3 py-2 border-b border-r pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-white">
       <button class="w-5 h-5 grid place-items-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50" @click="expanded = !expanded">{{ expanded ? '–' : '+' }}</button>
-      <span>{{ label }}</span>
+      <span>{{ label }}  </span>
+      <span class="ml-auto inline-flex items-center rounded-xl bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 inset-ring inset-ring-indigo-700/10">{{ itemCount }}</span>
     </div>
     <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
@@ -16,7 +17,7 @@
       <div class="border-b border-r pane-border sticky left-0 z-10 bg-white" :style="{ height: rowHeights.get(sr.key)+'px' }">
         <LeftPaneCell
           :is-add="isAddRow(sr)"
-          :title="isAddRow(sr) ? cleanAddLabel(sr.label) : sr.label"
+          :title="isAddRow(sr) ? cleanAddLabel(sr.label) : '-- ' + sr.label"
           @click="isAddRow(sr) && $emit('createFromSidebar', sr)"
         />
       </div>
@@ -126,6 +127,11 @@ const headerAssignments = computed(() => {
   return items
 })
 const headerHeight = computed(() => Math.max(baseRowMin, 16 + headerLaneCount.value*30))
+
+// Count of projects or people (excluding the "add" row)
+const itemCount = computed(() => {
+  return props.subrows.filter(sr => !isAddRow(sr)).length
+})
 
 defineExpose({ rowHeights })
 </script>

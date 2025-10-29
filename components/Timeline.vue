@@ -1,13 +1,12 @@
 <template>
   <div class="flex-1 w-full flex flex-col">
-    <div class="flex items-center justify-between">
-      <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
-    </div>
     <!-- Header rows: Month+Year (top) / Day (bottom) (right only) -->
     <div class="grid" style="grid-template-columns: 240px 1fr;">
       <!-- Left placeholders to match 2 header rows: month+year / day -->
       <div class="flex flex-col border-r">
-        <div class="py-1"></div>
+        <div class="py-3 px-3 text-center">
+          <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
+        </div>
         <div class="py-1.5"></div>
       </div>
       <div class="relative">
