@@ -6,7 +6,7 @@
     ]"
     @click="$emit('click')"
   >
-    <div v-if="isAdd" class="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded border border-slate-300 text-slate-700">+</div>
+    <!-- <div v-if="isAdd" class="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded border border-slate-300 text-slate-700">+</div> -->
     <div class="min-w-0">
       <div class="truncate font-medium">{{ title }}</div>
       <div v-if="subtitle" class="truncate text-[11px] text-slate-500">{{ subtitle }}</div>

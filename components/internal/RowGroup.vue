@@ -7,7 +7,7 @@
     </div>
     <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
-      <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" />
+      <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
     </div>
 
     <!-- Subrows -->
