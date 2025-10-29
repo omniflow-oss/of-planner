@@ -1,6 +1,7 @@
 // Nuxt 3 configuration for Capacity Planner
 export default defineNuxtConfig({
   devtools: { enabled: true },
+  ssr: false,
   typescript: {
     shim: false,
     strict: true
