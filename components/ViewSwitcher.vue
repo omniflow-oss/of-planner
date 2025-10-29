@@ -42,5 +42,13 @@ const todayLabel = computed(() => {
   const d = new Date(); d.setUTCHours(0,0,0,0)
   return d.toISOString().slice(8,10) + ' ' + d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
 })
-function shift(delta: number) { store.setStart(addDaysISO(view.value.start, delta * 7)) }
+function shift(delta: number) { 
+  if (delta < 0) {
+    // Add previous weeks without losing current data
+    document.dispatchEvent(new CustomEvent('timeline:addWeeks', { detail: { direction: 'previous', weeks: Math.abs(delta) } }))
+  } else {
+    // Add next weeks without losing current data  
+    document.dispatchEvent(new CustomEvent('timeline:addWeeks', { detail: { direction: 'next', weeks: delta } }))
+  }
+}
 </script>

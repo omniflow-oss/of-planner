@@ -238,6 +238,7 @@ const duration = ref(5)
 const allocation = ref(1 as 1|0.75|0.5|0.25)
 
 function onEdit(payload: { assignment: any; x: number; y: number }) {
+  closeCreatePopover();
   const { assignment, x, y } = payload
   editPopover.value = {
     visible: true,
@@ -251,6 +252,7 @@ function onEdit(payload: { assignment: any; x: number; y: number }) {
 }
 
 function onCreatePopover(payload: { key: string; x: number; y: number; dayISO: string; person_id: string|null; project_id: string|null }) {
+  closeEditPopover();
   createPopover.value = payload
 }
 
@@ -304,7 +306,7 @@ const scrollLeft = ref(0)
 
 
 
-const { onScroll, init } = useTimelineScroll(view, scrollArea)
+const { onScroll, init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
   if (scrollArea.value) {
@@ -312,6 +314,26 @@ function handleScroll() {
   }
   onScroll()
 }
+
+  // Handle timeline scroll trigger from ViewSwitcher shift
+  const handleScrollTrigger = () => {
+    handleScroll()
+  }
+
+  // Handle adding weeks to timeline from ViewSwitcher shift
+  const handleAddWeeks = (event: Event) => {
+    const customEvent = event as CustomEvent<{ direction: 'previous' | 'next', weeks: number }>
+    const { direction, weeks } = customEvent.detail
+    
+    // Convert weeks to weekdays (5 working days per week)
+    const weekdays = weeks * 5
+    
+    if (direction === 'previous') {
+      prependWeekdays(weekdays, true)
+    } else {
+      appendWeekdays(weekdays, true)
+    }
+  }
 
   // Listen for today button clicks to scroll to today
   const handleGoToToday = (event: Event) => {
@@ -348,7 +370,7 @@ function handleScroll() {
     if (createPopover.value && event.target) {
       const createPopoverElement = document.querySelector('[data-popover="create"]')
       const target = event.target as HTMLElement
-      if (createPopoverElement && !createPopoverElement.contains(event.target as Node) && !target.classList.contains('timeline-bg')) {
+      if (createPopoverElement && !createPopoverElement.contains(event.target as Node) ) {
         closeCreatePopover()
       }
     }
@@ -360,11 +382,13 @@ onMounted(async () => {
   await init(todayISO);
   
   document.addEventListener('timeline:goToToday', handleGoToToday as EventListener)
+  document.addEventListener('timeline:addWeeks', handleAddWeeks as EventListener)
   document.addEventListener('click', handleClickOutside)
   
 })
 onUnmounted(() => {
     document.removeEventListener('timeline:goToToday', handleGoToToday as EventListener)
+    document.removeEventListener('timeline:addWeeks', handleAddWeeks as EventListener)
     document.removeEventListener('click', handleClickOutside)
   })
 </script>

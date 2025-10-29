@@ -6,7 +6,7 @@
       <span>{{ label }}  </span>
       <span class="ml-auto inline-flex items-center rounded-xl bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 inset-ring inset-ring-indigo-700/10">{{ itemCount }}</span>
     </div>
-    <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
+    <div class="relative border-b border-r pane-border timeline-bg disabled-rows" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
       <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
     </div>
@@ -23,7 +23,7 @@
       </div>
 
       <!-- Right: timeline track -->
-      <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: rowHeights.get(sr.key)+'px', width: timelineWidth+'px' }" @click.self="onEmptyClick($event, sr)">
+      <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: rowHeights.get(sr.key)+'px', width: timelineWidth+'px' }" @contextmenu.prevent.stop="onEmptyClick($event, sr)">
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e) => onResizeEvent=e" />
       </div>
@@ -71,7 +71,6 @@ function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.pers
 function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
 function isWeekend(dayISO: string) { const d = parseISO(dayISO).getUTCDay(); return d === 0 || d === 6 }
 function subAssignmentsLaned(sr: { key:string; person_id: string|null; project_id: string|null }) {
-  console.log('submissionslaned called')
   if (isAddRow(sr)) { rowHeights.set(sr.key, baseRowMin); return [] }
   const list = assignmentsRef.value.filter((a: any) => a.person_id === sr.person_id && a.project_id === sr.project_id)
   const { items, laneCount } = computeLanes(props.startISO, list)
@@ -135,3 +134,10 @@ const itemCount = computed(() => {
 
 defineExpose({ rowHeights })
 </script>
+<style scoped>
+.disabled-rows {
+  pointer-events: none;
+  background-color: transparent;
+} 
+
+</style>
