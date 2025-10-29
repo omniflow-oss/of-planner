@@ -36,7 +36,15 @@ function today() {
   // Emit event to reinitialize timeline scroll position
   document.dispatchEvent(new CustomEvent('timeline:goToToday', { detail: todayISO }))
 }
-function zoom(delta: number) { store.setPxPerDay(view.value.px_per_day + delta * 4) }
+function zoom(delta: number) { 
+  const zoomLevel = view.value.px_per_day + delta * 4;
+  if(zoomLevel < 48){
+    document.body.classList.add('cell-small');
+  }else {
+    document.body.classList.remove('cell-small');
+  }
+  store.setPxPerDay(zoomLevel) 
+}
 
 const todayLabel = computed(() => {
   const d = new Date(); d.setUTCHours(0,0,0,0)

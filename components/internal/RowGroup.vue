@@ -129,20 +129,17 @@ const headerAssignments = computed(() => {
 
 // Force recalculation by triggering subAssignmentsLaned for all subrows
 function recalculateAllHeights() {
-  console.log('Recalculating heights for subrows:', props.subrows.length)
   // Clear existing heights to force recalculation
   rowHeights.value = {}
   
   // Trigger subAssignmentsLaned for each subrow to recalculate heights
   props.subrows.forEach(sr => {
     subAssignmentsLaned(sr)
-    console.log(`Set height for ${sr.key}:`, rowHeights.value[sr.key])
   })
 }
 
 // Watch for subrows changes (which happens when switching views)
 watch(() => props.subrows, () => {
-  console.log('Subrows changed, recalculating heights')
   nextTick(() => {
     recalculateAllHeights()
   })
