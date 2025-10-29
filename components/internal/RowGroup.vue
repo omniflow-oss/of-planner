@@ -25,7 +25,7 @@
       <!-- Right: timeline track -->
       <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" @contextmenu.prevent.stop="onEmptyClick($event, sr)">
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
-        <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e) => onResizeEvent=e" />
+        <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :peopleMap="peopleMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e: any) => onResizeEvent=e" />
       </div>
     </template>
   </div>
@@ -49,6 +49,7 @@ const props = defineProps<{
   days: string[]
   pxPerDay: number
   projectsMap: Record<string, { id: string; name: string; color?: string|null; emoji?: string|null }>
+  peopleMap?: Record<string, { id: string; name: string }>
 }>()
 const emit = defineEmits(['create','update','createFromSidebar','edit','createPopover'])
 
