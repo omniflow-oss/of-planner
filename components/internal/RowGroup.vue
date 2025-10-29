@@ -6,7 +6,7 @@
       <span>{{ label }}  </span>
       <span class="ml-auto inline-flex items-center rounded-xl bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 inset-ring inset-ring-indigo-700/10">{{ itemCount }}</span>
     </div>
-    <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
+    <div class="relative border-b border-r pane-border timeline-bg disabled-rows" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
       <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
     </div>
@@ -14,7 +14,7 @@
     <!-- Subrows -->
     <template v-if="expanded" v-for="sr in subrows" :key="sr.key">
       <!-- Left: label or add row using LeftPaneCell -->
-      <div class="border-b border-r pane-border sticky left-0 z-10 bg-white" :style="{ height: rowHeights.get(sr.key)+'px' }">
+      <div class="border-b border-r pane-border sticky left-0 z-10 bg-white" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }">
         <LeftPaneCell
           :is-add="isAddRow(sr)"
           :title="isAddRow(sr) ? cleanAddLabel(sr.label) : '-- ' + sr.label"
@@ -23,7 +23,7 @@
       </div>
 
       <!-- Right: timeline track -->
-      <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: rowHeights.get(sr.key)+'px', width: timelineWidth+'px' }" @click.self="onEmptyClick($event, sr)">
+      <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" @contextmenu.prevent.stop="onEmptyClick($event, sr)">
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e) => onResizeEvent=e" />
       </div>
@@ -32,6 +32,7 @@
 </template>
 
 <script setup lang="ts">
+import { nextTick } from 'vue'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import LeftPaneCell from '@/components/internal/LeftPaneCell.vue'
@@ -62,7 +63,7 @@ function isWeekStart(i:number){ return weekStartSet.value.has(i) }
 // Calculate total timeline width to ensure timeline-bg resizes properly when scrolling
 const timelineWidth = computed(() => days.value.length * pxPerDay.value)
 const startISO = computed(() => props.startISO)
-const rowHeights = new Map<string, number>()
+const rowHeights = ref<Record<string, number>>({})
 const baseRowMin = 44
 const expanded = ref(true)
 const onResizeEvent  = ref(false);
@@ -71,14 +72,13 @@ function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.pers
 function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
 function isWeekend(dayISO: string) { const d = parseISO(dayISO).getUTCDay(); return d === 0 || d === 6 }
 function subAssignmentsLaned(sr: { key:string; person_id: string|null; project_id: string|null }) {
-  console.log('submissionslaned called')
-  if (isAddRow(sr)) { rowHeights.set(sr.key, baseRowMin); return [] }
+  if (isAddRow(sr)) { rowHeights.value[sr.key] = baseRowMin; return [] }
   const list = assignmentsRef.value.filter((a: any) => a.person_id === sr.person_id && a.project_id === sr.project_id)
   const { items, laneCount } = computeLanes(props.startISO, list)
   const laneHeight = 30
   const padding = 10
   const totalH = padding*2 + laneCount*laneHeight
-  rowHeights.set(sr.key, Math.max(baseRowMin, totalH))
+  rowHeights.value[sr.key] = Math.max(baseRowMin, totalH)
   return items
 }
 function laneTop(lane: number) { const padding = 10; const laneHeight = 30; return padding + lane*laneHeight }
@@ -126,6 +126,25 @@ const headerAssignments = computed(() => {
   headerLaneCount.value = laneCount
   return items
 })
+
+// Force recalculation by triggering subAssignmentsLaned for all subrows
+function recalculateAllHeights() {
+  // Clear existing heights to force recalculation
+  rowHeights.value = {}
+  
+  // Trigger subAssignmentsLaned for each subrow to recalculate heights
+  props.subrows.forEach(sr => {
+    subAssignmentsLaned(sr)
+  })
+}
+
+// Watch for subrows changes (which happens when switching views)
+watch(() => props.subrows, () => {
+  nextTick(() => {
+    recalculateAllHeights()
+  })
+}, { immediate: true })
+
 const headerHeight = computed(() => Math.max(baseRowMin, 16 + headerLaneCount.value*30))
 
 // Count of projects or people (excluding the "add" row)
@@ -135,3 +154,10 @@ const itemCount = computed(() => {
 
 defineExpose({ rowHeights })
 </script>
+<style scoped>
+.disabled-rows {
+  pointer-events: none;
+  background-color: transparent;
+} 
+
+</style>

@@ -13,3 +13,4 @@
 .day-bg { @apply absolute top-0 bottom-0; }
 .day-bg.weekend { @apply bg-slate-50; }
 body{  overflow-x: hidden; }
+.cell-text {background-color: #f7f8fb;}

@@ -2,7 +2,7 @@
   <div
     :class="[
       'flex items-center gap-2 h-full px-3 pl-8 py-2 text-sm',
-      isAdd ? 'text-slate-600 bg-slate-50 hover:bg-slate-100 cursor-pointer' : 'text-slate-800'
+      isAdd ? 'text-slate-600 bg-slate-50 hover:bg-slate-100 cursor-pointer' : 'text-slate-800 cell-text'
     ]"
     @click="$emit('click')"
   >

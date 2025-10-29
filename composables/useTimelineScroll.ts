@@ -1,11 +1,12 @@
 import { nextTick, type Ref, ref } from 'vue'
 import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
+import type { B } from 'vitest/dist/reporters-w_64AS5f.js';
 
 // Business-day aware infinite scroll for the timeline
 export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_day:number }>, scrollArea: Ref<HTMLElement | null>) {
   const extending = ref(false)
 
-  async function prependWeekdays(w: number) {
+  async function prependWeekdays(w: number, nextPrev:Boolean=false) {
     const el = scrollArea.value
     if (!el) return
     const half = el.clientWidth / 2
@@ -13,12 +14,18 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     const cal = calendarSpanForWeekdays(view.value.start, w, -1)
     view.value.start = addDaysISO(view.value.start, -cal)
     view.value.days = view.value.days + cal
-    await nextTick()
-    if (scrollArea.value) scrollArea.value.scrollLeft = anchor + w * view.value.px_per_day - half
+    await nextTick();
+    if (scrollArea.value) {
+      if(!nextPrev){
+        scrollArea.value.scrollLeft = anchor + w * view.value.px_per_day - half
+      }else{
+        scrollArea.value.scrollLeft = el.scrollLeft - (w * view.value.px_per_day);
+      }
+    }
   }
 
-  async function appendWeekdays(w: number) {
-    const el = scrollArea.value
+  async function appendWeekdays(w: number, nextPrev:Boolean=false) {
+    const el = scrollArea.value;
     if (!el) return
     const half = el.clientWidth / 2
     const anchor = el.scrollLeft + half
@@ -26,7 +33,14 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     const cal = calendarSpanForWeekdays(endISO, w, +1)
     view.value.days = view.value.days + cal
     await nextTick()
-    if (scrollArea.value) scrollArea.value.scrollLeft = anchor - half
+
+    if (scrollArea.value) {  
+      if(!nextPrev){
+        scrollArea.value.scrollLeft = anchor - half;
+      }else{
+        scrollArea.value.scrollLeft =  el.scrollLeft + (w * view.value.px_per_day);
+      }
+    }
   }
 
   function onScroll() {
@@ -72,5 +86,5 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     if (scrollArea.value) scrollArea.value.scrollLeft = 0
   }
 
-  return { onScroll, init }
+  return { onScroll, init, prependWeekdays, appendWeekdays }
 }

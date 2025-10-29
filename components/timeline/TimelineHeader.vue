@@ -8,12 +8,12 @@
 
     <!-- Top: Month + Year -->
     <div class="grid text-[12px] text-slate-700 select-none border-b border-slate-200" :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
-      <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium">{{ monthWithYear(seg) }}</div>
+      <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium"> <span class="month-year">{{ monthWithYear(seg) }}</span></div>
     </div>
     <!-- Bottom: Day (D MMM) -->
     <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
       <div v-for="day in days" :key="day" class="text-center py-1.5">
-        <span :class="['px-1.5 py-0.5 rounded-md', isToday(day) ? 'bg-slate-900 text-white' : '']">{{ dayShort(day) }}</span>
+        <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-slate-900 text-white' : '']" v-html="dayShort(day)"></span>
       </div>
     </div>
   </div>
@@ -46,7 +46,8 @@ function dayShort(iso: string) {
   const d = new Date(iso)
   const day = d.getUTCDate()
   const mon = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
-  return `${day} ${mon}`
+  const monNumeric = d.toLocaleString('en-US', { month: 'numeric' })
+  return `${day} <span class="month-txt">${mon}</span> <span class="month-numeric">${monNumeric}</span>`
 }
 
 function isToday(day: string) {
@@ -55,3 +56,28 @@ function isToday(day: string) {
   return day === props.todayISO
 }
 </script>
+<style>
+.month-numeric {
+  display: none;
+}
+.month-numeric::before {
+  content: '';
+  display: block;
+  width: 15px;
+  height: 1px;
+  margin: auto;
+  background-color: rgb(51 65 85);
+}
+.bg-slate-900 .month-numeric::before {
+  background-color: white;
+}
+.cell-small  .month-txt {
+  display: none;
+}
+.cell-small  .month-numeric {
+  display: block;
+}
+.month-year{
+  background-color: white;
+}
+</style>
