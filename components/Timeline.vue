@@ -385,6 +385,9 @@ onMounted(async () => {
   document.addEventListener('timeline:addWeeks', handleAddWeeks as EventListener)
   document.addEventListener('click', handleClickOutside)
   
+  // Auto-scroll to today on app initialization
+  await nextTick()
+  document.dispatchEvent(new CustomEvent('timeline:goToToday', { detail: todayISO }))
 })
 onUnmounted(() => {
     document.removeEventListener('timeline:goToToday', handleGoToToday as EventListener)
