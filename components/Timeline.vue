@@ -1,12 +1,12 @@
 <template>
-  <div class="h-full flex flex-col gap-2">
+  <div class="flex-1 w-full flex flex-col">
     <div class="flex items-center justify-between">
       <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
     </div>
     <!-- Header rows: Month+Year (top) / Day (bottom) (right only) -->
     <div class="grid" style="grid-template-columns: 240px 1fr;">
       <!-- Left placeholders to match 2 header rows: month+year / day -->
-      <div class="flex flex-col">
+      <div class="flex flex-col border-r">
         <div class="py-1"></div>
         <div class="py-1.5"></div>
       </div>
@@ -29,7 +29,7 @@
     </div>
 
     <!-- Scrollable content with aligned rows -->
-    <div ref="scrollArea" class="overflow-auto border border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
+    <div ref="scrollArea" class="overflow-auto h-full flex-1  border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
       <template v-if="view.mode==='person'">
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
@@ -177,7 +177,7 @@ function projectPeople(projectId: string) {
 function personSubrows(personId: string) {
   const projIds = personProjects(personId)
   const rows = projIds.map(pid => ({ key: `${personId}:${pid}`, label: projectName(pid), person_id: personId, project_id: pid }))
-  return [...rows, { key: `${personId}:__add__`, label: '➕ Ajouter un projet', person_id: personId, project_id: null }]
+  return [...rows, { key: `${personId}:__add__`, label: '➕ Assigner un projet', person_id: personId, project_id: null }]
 }
 function projectSubrows(projectId: string) {
   const peopleIds = projectPeople(projectId)
@@ -189,9 +189,18 @@ function personName(id: string) { return people.value.find(p => p.id === id)?.na
 
 function onCreate(payload: { person_id: string|null; project_id: string|null; start: string; duration: number; allocation: 1|0.75|0.5|0.25 }) {
   let { person_id, project_id, start, duration, allocation } = payload
+  
   // If missing complementary entity ask user via prompt (simple fallback)
-  if (!person_id) person_id = window.prompt('Select person id', people.value[0]?.id) || people.value[0]?.id
-  if (!project_id) project_id = window.prompt('Select project id', projects.value[0]?.id) || projects.value[0]?.id
+  if (!person_id) {
+    person_id = window.prompt('Select person id', people.value[0]?.id)
+    if (!person_id) return // User cancelled, abort creation
+  }
+  
+  if (!project_id) {
+    project_id = window.prompt('Select project id', projects.value[0]?.id)
+    if (!project_id) return // User cancelled, abort creation
+  }
+  
   const end = addDaysISO(start, Math.max(1, duration) - 1)
   store.createAssignment({ person_id: person_id!, project_id: project_id!, start, end, allocation })
 }

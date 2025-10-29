@@ -1,7 +1,7 @@
 <template>
-  <main class="flex-1 p-3">
+  <!-- <main class="flex-1 p-3"> -->
     <Timeline />
-  </main>
+  <!-- </main> -->
 </template>
 
 <script setup lang="ts">
