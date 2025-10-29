@@ -2,24 +2,27 @@
   <div 
     class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-slate-200 bg-white" 
     :style="barStyle" 
-    @mousedown.stop="onDragStart"
+    :class="{ 'dragging': isDragging }"
+    draggable="true"
+    @dragstart="onDragStart"
+    @drag="onDrag"
+    @dragend="onDragEnd"
     @contextmenu.prevent.stop="onRightClick"
-    @touchstart="onTouchStart"
-    @touchend="onTouchEnd"
+
   >
     <div class="h-full w-1.5" :style="{ background: color }"></div>
     <div class="flex items-center gap-2 px-3 text-[12px] text-slate-800">
       <span>{{ project?.name ?? assignment.project_id }}</span>
       <span class="px-1.5 rounded-full border border-slate-200 bg-white/80 text-[11px]">{{ allocBadge }}</span>
     </div>
-    <div class="handle left" @mousedown.stop.prevent="onResizeStart('left', $event)"></div>
-    <div class="handle right" @mousedown.stop.prevent="onResizeStart('right', $event)"></div>
+    <div class="handle left" @mousedown.stop.prevent="onResizeStart('left', $event)" draggable="false"></div>
+    <div class="handle right" @mousedown.stop.prevent="onResizeStart('right', $event)" draggable="false"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { daysBetweenInclusive, parseISO, addDaysISO, toISO, businessDaysBetweenInclusive, businessOffset } from '@/composables/useDate'
+import { computed, ref } from 'vue'
+import { daysBetweenInclusive, parseISO, addDaysISO, toISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import type { Assignment } from '@/types/planner'
 
 const props = defineProps<{ assignment: Assignment; startISO: string; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; top?: number }>()
@@ -43,27 +46,73 @@ const barStyle = computed(() => ({
   background: '#f9fafb'
 }))
 
-let dragging: { startX: number; startIndex: number } | null = null
+// Dragging state
+const isDragging = ref(false)
+let dragging: { startX: number; startIndex: number; initialStart: string; initialEnd: string } | null = null
 let resizing: { side: 'left'|'right'; startX: number; startStart: string; startEnd: string } | null = null
 
-function onDragStart(e: MouseEvent) {
-  dragging = { startX: e.clientX, startIndex: startIndex.value }
-  window.addEventListener('mousemove', onDrag)
-  window.addEventListener('mouseup', onDragEnd)
+function onDragStart(e: DragEvent) {
+  isDragging.value = true
+  dragging = { 
+    startX: e.clientX, 
+    startIndex: startIndex.value,
+    initialStart: props.assignment.start,
+    initialEnd: props.assignment.end
+  }
+  
+  // Set drag effect and create a transparent drag image
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', '')
+    
+    // Create invisible drag image to prevent default ghost
+    const dragImage = document.createElement('div')
+    dragImage.style.opacity = '0'
+    document.body.appendChild(dragImage)
+    e.dataTransfer.setDragImage(dragImage, 0, 0)
+    setTimeout(() => document.body.removeChild(dragImage), 0)
+  }
 }
-function onDrag(e: MouseEvent) {
-  if (!dragging) return
-  const deltaPx = e.clientX - dragging.startX
+
+function onDrag(e: DragEvent) {
+  if (!dragging || e.clientX === 0) return // clientX is 0 during drag end
+  
+  const deltaPx = e.clientX - dragging.startX 
   const deltaDays = Math.round(deltaPx / props.pxPerDay)
-  const newStart = addDaysISO(props.startISO, dragging.startIndex + deltaDays)
-  const len = daysBetweenInclusive(props.assignment.start, props.assignment.end)
-  const newEnd = addDaysISO(newStart, len - 1)
+  
+  // Calculate new start position by adding business days from the timeline start
+  const newStartIndex = dragging.startIndex + deltaDays
+  let newStart = props.startISO
+  let businessDaysToAdd = newStartIndex
+  
+  // Move forward/backward to reach the target business day
+  while (businessDaysToAdd !== 0) {
+    if (businessDaysToAdd > 0) {
+      newStart = addDaysISO(newStart, 1)
+      if (!isWeekendISO(newStart)) businessDaysToAdd--
+    } else {
+      newStart = addDaysISO(newStart, -1)
+      if (!isWeekendISO(newStart)) businessDaysToAdd++
+    }
+  }
+  
+  // Use business days for length calculation to match the display
+  const lengthBusinessDays = businessDaysBetweenInclusive(dragging.initialStart, dragging.initialEnd)
+  
+  // Calculate end date by adding business days to start
+  let newEnd = newStart
+  let businessDaysLeft = lengthBusinessDays - 1
+  while (businessDaysLeft > 0) {
+    newEnd = addDaysISO(newEnd, 1)
+    if (!isWeekendISO(newEnd)) businessDaysLeft--
+  }
+  
   emit('update', { id: props.assignment.id, start: newStart, end: newEnd })
 }
-function onDragEnd() {
+
+function onDragEnd(e: DragEvent) {
+  isDragging.value = false
   dragging = null
-  window.removeEventListener('mousemove', onDrag)
-  window.removeEventListener('mouseup', onDragEnd)
 }
 
 function onResizeStart(side: 'left'|'right', e: MouseEvent) {
@@ -156,7 +205,37 @@ function onTouchEnd(e: TouchEvent) {
 </script>
 
 <style scoped>
-.handle { position:absolute; top:0; width:8px; height:100%; background: transparent; cursor: ew-resize; }
+.handle { 
+  position: absolute; 
+  top: 0; 
+  width: 8px; 
+  height: 100%; 
+  background: transparent; 
+  cursor: ew-resize; 
+  z-index: 10;
+}
 .left { left: -2px; }
 .right { right: -2px; }
+
+/* Dragging states */
+.dragging {
+  opacity: 0.7;
+  transform: rotate(2deg);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+/* Make the entire bar draggable by default */
+div[draggable="true"] {
+  cursor: move;
+}
+
+div[draggable="true"]:hover {
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Prevent drag on resize handles */
+.handle[draggable="false"] {
+  cursor: ew-resize;
+}
 </style>
