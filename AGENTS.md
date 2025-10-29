@@ -64,7 +64,7 @@ Notes: Node 18+ recommended; use npm (this repo tracks `package-lock.json`).
   - Uses `internal/shared/GridOverlay.vue` for lines/today marker. Sticky at `top-0`.
   - Props: `days`, `dayColumns`, `monthSegments`, `monthColumns`, `todayISO`, `pxPerDay`, `dayOffsets`, `weekStarts`, `scrollLeft?`.
 
-- `components/internal/RowGroup.vue`
+- `components/internal/LeftSidebarPane.vue` and `components/internal/RightTracksPane.vue`
   - Group header lane + subrows. Left sticky column uses `internal/LeftPaneCell.vue`.
   - Right track: `internal/shared/GridOverlay.vue` + `AssignmentBar.vue`; lanes computed via `utils/lanes.ts`.
 

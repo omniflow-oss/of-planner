@@ -30,11 +30,13 @@ A lightweight, single‑page capacity planner to schedule people on projects day
   - `Timeline.vue` — header row + scroll area with rows (syncs header/body scroll)
   - `timeline/TimelineHeader.vue` — two‑line header (Month Year / D MMM) + GridOverlay
   - `ViewSwitcher.vue` — mode, date and zoom controls
-  - `internal/RowGroup.vue` — group header + subrows (left labels + right track)
-  - `internal/RowTracks.vue` — track renderer (alternate minimal variant)
+  - `internal/LeftSidebarPane.vue` — group header + subrows labels, left sticky pane
+  - `internal/RightTracksPane.vue` — group header track + subrows tracks using GridOverlay
+  
   - `internal/shared/AssignmentBar.vue` — draggable/resizable bar
-  - `internal/shared/GridOverlay.vue` — vertical grid + today marker (shared with header)
+  - `internal/shared/GridOverlay.vue` — vertical grid + today marker (shared with header), accepts optional `scrollLeft`
   - `internal/LeftPaneCell.vue` — left pane cell for labels and “Add …” row
+  - `internal/CreatePopover.vue` — quick-create popover used on empty click
   - `shell/AppHeader.vue`, `shell/AppFooter.vue` — app chrome
 - `stores/usePlannerStore.ts` — Pinia store (people, projects, assignments, view)
 - `types/planner.ts` — domain types (Assignment, Person, Project, ViewState)
@@ -71,7 +73,7 @@ Nuxt dev server runs with HMR; open the printed localhost URL.
 - Tune initial window: `composables/useTimelineScroll.ts` (init to 7 weeks)
 - Add initial data: edit `stores/usePlannerStore.ts` arrays for `people`, `projects`, `assignments`.
 - Modify lane stacking: see `utils/lanes.ts` (returns `items[]` with `_lane` plus `laneCount`).
-- Update quick create defaults: handled in `components/Timeline.vue` and `internal/RowGroup.vue` (`onAddFromSidebar`, empty click popover).
+- Update quick create defaults: handled in `components/Timeline.vue`, `internal/RightTracksPane.vue` (`onAddFromSidebar`, empty click popover).
 - Styling: prefer Tailwind utility classes; shared utilities are in `assets/tailwind.css` (`.today-line`, `.grid-v`, `.bar-shadow`).
 
 ## Data Model (essentials)
@@ -93,7 +95,8 @@ This prototype keeps state in memory (Pinia). Add your own persistence later (AP
 ## Component & Composable Reference (short)
 - `Timeline.vue` — Shell for header + scroll area; wires `useTimeline`, `useTimelineScroll` and syncs `scrollLeft`.
 - `timeline/TimelineHeader.vue` — 2‑row header; accepts `scrollLeft` and uses shared `GridOverlay`.
-- `internal/RowGroup.vue` — Group header + subrows; left pane via `LeftPaneCell`; right track with `GridOverlay` and bars.
+- `internal/LeftSidebarPane.vue` — Group header + subrows; left pane via `LeftPaneCell`.
+- `internal/RightTracksPane.vue` — Header track and subrows; uses `GridOverlay` and `AssignmentBar`.
 - `internal/LeftPaneCell.vue` — Label cell and “Add …”; emits `click`.
 - `internal/shared/GridOverlay.vue` — Day/week grid and today marker using offsets/pxPerDay.
 - `internal/shared/AssignmentBar.vue` — Drag/resize interactions; reads `pxPerDay`.

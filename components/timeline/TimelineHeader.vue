@@ -2,13 +2,13 @@
   <!-- Sticky timeline header with grid overlay -->
   <div class="relative sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
     <!-- Grid overlay aligned with days (uses shared GridOverlay for consistency) -->
-    <div class="absolute inset-0 pointer-events-none" :style="{ transform: `translateX(-${scrollLeft}px)` }">
-      <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
+    <div class="absolute inset-0 pointer-events-none">
+      <GridOverlay :days="days" :weekStarts="weekStarts" :geometry="geometry" :scrollLeft="scrollLeft || 0" />
     </div>
 
     <!-- Top: Month + Year -->
     <div class="grid text-[12px] text-slate-700 select-none border-b border-slate-200" :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
-      <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium">{{ monthWithYear(seg) }}</div>
+      <div v-for="(seg, idx) in monthSegments" :key="seg.key" :class="['text-center py-1 font-medium', idx>0 ? 'border-l-2 border-slate-300' : '']">{{ monthWithYear(seg) }}</div>
     </div>
     <!-- Bottom: Day (D MMM) -->
     <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
@@ -21,6 +21,8 @@
 
 <script setup lang="ts">
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
+import { useTimelineGeometry } from '@/composables/useTimelineGeometry'
+import { computed } from 'vue'
 
 const props = defineProps<{
   days: string[]
@@ -35,6 +37,8 @@ const props = defineProps<{
   weekStarts: number[]
   scrollLeft?: number
 }>()
+
+const geometry = useTimelineGeometry(computed(()=>props.days), computed(()=>props.pxPerDay), computed(()=>props.dayOffsets))
 
 function monthWithYear(seg: { key:string; label:string }) {
   // seg.key is YYYY-MM

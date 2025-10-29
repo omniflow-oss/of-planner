@@ -32,20 +32,6 @@ export function useTimeline(view: Ref<{ start:string; days:number; px_per_day:nu
   })
   const monthColumns = computed(() => monthSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
 
-  const yearSegments = computed(() => {
-    const out: { key:string; label:string; span:number }[] = []
-    let current: { key:string; label:string; span:number } | null = null
-    for (const iso of days.value) {
-      const key = iso.slice(0,4)
-      const label = yearLabel(iso)
-      if (!current || current.key !== key) { if (current) out.push(current); current = { key, label, span: 0 } }
-      current.span += 1
-    }
-    if (current) out.push(current)
-    return out
-  })
-  const yearColumns = computed(() => yearSegments.value.map(s => `${s.span * view.value.px_per_day}px`).join(' '))
-
   const weekStarts = computed(() => days.value.map((d,i)=> ({i, wd: new Date(d).getUTCDay()})).filter(e=>e.wd===1).map(e=>e.i))
 
   return {
@@ -57,8 +43,6 @@ export function useTimeline(view: Ref<{ start:string; days:number; px_per_day:nu
     dayLabel,
     monthSegments,
     monthColumns,
-    yearSegments,
-    yearColumns,
     weekStarts,
   }
 }
