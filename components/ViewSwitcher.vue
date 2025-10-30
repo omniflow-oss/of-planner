@@ -28,13 +28,16 @@ const store = usePlannerStore()
 const { view } = storeToRefs(store)
 const mode = computed(() => view.value.mode)
 
+const emit = defineEmits<{
+  'go-to-today': [todayISO: string]
+  'add-weeks': [{ direction: 'previous' | 'next', weeks: number }]
+}>()
+
 function setMode(m: 'person' | 'project') { store.switchMode(m) }
 function today() {
   const d = new Date(); d.setUTCHours(0,0,0,0)
   const todayISO = d.toISOString().slice(0,10)
-  // store.setStart(todayISO)
-  // Emit event to reinitialize timeline scroll position
-  document.dispatchEvent(new CustomEvent('timeline:goToToday', { detail: todayISO }))
+  emit('go-to-today', todayISO)
 }
 function zoom(delta: number) { 
   const zoomLevel = view.value.px_per_day + delta * 4;
@@ -53,10 +56,10 @@ const todayLabel = computed(() => {
 function shift(delta: number) { 
   if (delta < 0) {
     // Add previous weeks without losing current data
-    document.dispatchEvent(new CustomEvent('timeline:addWeeks', { detail: { direction: 'previous', weeks: Math.abs(delta) } }))
+    emit('add-weeks', { direction: 'previous', weeks: Math.abs(delta) })
   } else {
     // Add next weeks without losing current data  
-    document.dispatchEvent(new CustomEvent('timeline:addWeeks', { detail: { direction: 'next', weeks: delta } }))
+    emit('add-weeks', { direction: 'next', weeks: delta })
   }
 }
 </script>

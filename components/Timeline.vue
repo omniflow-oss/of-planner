@@ -136,6 +136,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
+import { inject, type Ref } from 'vue'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
@@ -145,6 +146,12 @@ import RowGroup from '@/components/internal/RowGroup.vue'
 
 const store = usePlannerStore()
 const { people, projects, view, assignments } = storeToRefs(store)
+
+// Inject timeline events from app.vue
+const timelineEvents = inject<{
+  goToToday: Ref<string | null>
+  addWeeks: Ref<{ direction: 'previous' | 'next', weeks: number } | null>
+}>('timelineEvents')
 
 const {
   todayISO,
@@ -322,9 +329,8 @@ function handleScroll() {
   }
 
   // Handle adding weeks to timeline from ViewSwitcher shift
-  const handleAddWeeks = (event: Event) => {
-    const customEvent = event as CustomEvent<{ direction: 'previous' | 'next', weeks: number }>
-    const { direction, weeks } = customEvent.detail
+  function handleAddWeeks(data: { direction: 'previous' | 'next', weeks: number }) {
+    const { direction, weeks } = data
     
     // Convert weeks to weekdays (5 working days per week)
     const weekdays = weeks * 5
@@ -336,13 +342,10 @@ function handleScroll() {
     }
   }
 
-  // Listen for today button clicks to scroll to today
-  const handleGoToToday = (event: Event) => {
-    const customEvent = event as CustomEvent<string>
-    const eventTodayISO = customEvent.detail 
-    //init(eventTodayISO)
+  // Handle go to today functionality
+  function handleGoToToday(todayISO: string) {
     // Find today's index in the current days array
-    const todayIndex = days.value.findIndex(d => d === eventTodayISO)
+    const todayIndex = days.value.findIndex(d => d === todayISO)
     
     if (todayIndex >= 0 && scrollArea.value) {
       // Calculate scroll position to center today on screen
@@ -357,7 +360,6 @@ function handleScroll() {
         behavior: 'smooth',
       })
     }
-
   }
   
   // Handle clicks outside of popovers to close them
@@ -377,22 +379,32 @@ function handleScroll() {
     }
   }
 
-// Listen for "go to today" events from the ViewSwitcher
+// Watch for timeline events from ViewSwitcher (via provide/inject)
+watch(() => timelineEvents?.goToToday.value, (todayISO) => {
+  if (todayISO) {
+    handleGoToToday(todayISO)
+  }
+})
+
+watch(() => timelineEvents?.addWeeks.value, (data) => {
+  if (data) {
+    handleAddWeeks(data)
+  }
+})
+
+// Initialize timeline and setup click listener
 onMounted(async () => { 
   // Ensure we have a valid todayISO before calling init
   await init(todayISO);
   
-  document.addEventListener('timeline:goToToday', handleGoToToday as EventListener)
-  document.addEventListener('timeline:addWeeks', handleAddWeeks as EventListener)
   document.addEventListener('click', handleClickOutside)
   
   // Auto-scroll to today on app initialization
   await nextTick()
-  document.dispatchEvent(new CustomEvent('timeline:goToToday', { detail: todayISO }))
+  handleGoToToday(todayISO)
 })
+
 onUnmounted(() => {
-    document.removeEventListener('timeline:goToToday', handleGoToToday as EventListener)
-    document.removeEventListener('timeline:addWeeks', handleAddWeeks as EventListener)
-    document.removeEventListener('click', handleClickOutside)
-  })
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
