@@ -468,10 +468,18 @@ const timelineEvents = inject<{
 }>('timelineEvents')
 
 // Watch for go to today events
-watch(() => timelineEvents?.goToTodayEvent.value, (todayISO) => {
+watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
   if (todayISO) {
     // Find today's index in the current days array
-    const todayIndex = days.value.findIndex(d => d === todayISO)
+    let todayIndex = days.value.findIndex(d => d === todayISO)
+    
+    // If today's index is too high (suggesting timeline has expanded too much), 
+    // or if today is not found, reinitialize the timeline
+    if (todayIndex < 0 || todayIndex > 25) { // 25 is roughly where today should be in a 35-day range
+      await init(todayISO)
+      await nextTick()
+      todayIndex = days.value.findIndex(d => d === todayISO)
+    }
     
     if (todayIndex >= 0 && scrollArea.value) {
       // Calculate scroll position to center today on screen
