@@ -14,6 +14,38 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: [],
-    include: ['tests/**/*.spec.ts']
+    include: ['tests/**/*.spec.ts'],
+    coverage: {
+      provider: 'v8',
+      reports: ['text', 'text-summary', 'html', 'lcov'],
+      reporter: ['text', 'text-summary', 'html', 'lcov'],
+      include: [
+        'stores/**/*.ts',
+        'utils/**/*.ts',
+        'composables/**/*.ts'
+      ],
+      exclude: [
+        'app.vue',
+        'nuxt.config.ts',
+        'tailwind.config.ts',
+        '**/*.vue',
+        'components/**',
+        'pages/**',
+        'assets/**',
+        'public/**',
+        'types/**',
+        'docs/**',
+        '.nuxt/**',
+        'node_modules/**',
+        'tests/**',
+        '**/*.d.ts'
+      ],
+      thresholds: {
+        statements: 0.8,
+        branches: 0.8,
+        functions: 0.8,
+        lines: 0.8
+      }
+    }
   }
 })

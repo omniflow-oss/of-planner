@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
 
 function makeScrollArea(width = 1120) {
@@ -34,5 +34,65 @@ describe('useTimelineScroll', () => {
     // Converted to calendar span; for this fixed date, it should include weekends so days > 35
     expect(view.value.days).toBeGreaterThanOrEqual(35)
     expect(scrollArea.value!.scrollLeft).toBe(0)
+  })
+
+  it('prepends weekdays and updates start, days and scrollLeft', async () => {
+    const view = ref({ start: '2025-01-13', days: 14, px_per_day: 40 }) // Mon
+    const el = makeScrollArea(400)
+    const scrollArea = ref<HTMLElement | null>(el)
+    const { prependWeekdays } = useTimelineScroll(view as any, scrollArea)
+
+    await prependWeekdays(5)
+    await nextTick()
+    // 5 business days back from Mon spans 7 calendar days to previous Mon
+    expect(view.value.start).toBe('2025-01-06')
+    expect(view.value.days).toBe(21)
+    // scrollLeft anchored by ~w*px
+    expect(scrollArea.value!.scrollLeft).toBe(200)
+  })
+
+  it('appends weekdays with and without nextPrev adjustment', async () => {
+    const view = ref({ start: '2025-01-06', days: 21, px_per_day: 40 })
+    const el = makeScrollArea(400)
+    const scrollArea = ref<HTMLElement | null>(el)
+    const { appendWeekdays } = useTimelineScroll(view as any, scrollArea)
+
+    // set current scrollLeft so anchor math is deterministic
+    ;(scrollArea.value as any).scrollLeft = 200
+    await appendWeekdays(5)
+    await nextTick()
+    // anchor - half = 200
+    expect(scrollArea.value!.scrollLeft).toBe(200)
+
+    await appendWeekdays(5, true)
+    await nextTick()
+    // nextPrev=true moves by +w*px
+    expect(scrollArea.value!.scrollLeft).toBe(400)
+  })
+
+  it('onScroll triggers prepend near left edge', async () => {
+    const view = ref({ start: '2025-01-13', days: 14, px_per_day: 40 }) // Mon
+    const el = makeScrollArea(400)
+    const scrollArea = ref<HTMLElement | null>(el)
+    const { onScroll } = useTimelineScroll(view as any, scrollArea)
+
+    ;(scrollArea.value as any).scrollLeft = 100 // threshold = 160
+    const startBefore = view.value.start
+    onScroll()
+    await nextTick()
+    expect(view.value.start).not.toBe(startBefore)
+  })
+
+  it('onScroll triggers append near right edge', async () => {
+    const view = ref({ start: '2025-01-13', days: 14, px_per_day: 40 })
+    const el = makeScrollArea(400)
+    const scrollArea = ref<HTMLElement | null>(el)
+    const { onScroll } = useTimelineScroll(view as any, scrollArea)
+
+    ;(scrollArea.value as any).scrollLeft = 500 // right = 900 > 640
+    const daysBefore = view.value.days
+    onScroll()
+    await nextTick()
+    expect(view.value.days).toBeGreaterThan(daysBefore)
   })
 })
