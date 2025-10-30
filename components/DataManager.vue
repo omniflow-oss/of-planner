@@ -1,13 +1,17 @@
 <template>
   <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border">
-    <!-- File Input -->
-    <input
-      ref="fileInput"
-      type="file"
-      accept=".json"
-      @change="handleFileSelect"
-      class="text-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-    />
+   
+
+    <!-- File Input Container -->
+    <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+      <input
+        ref="fileInput"
+        type="file"
+        accept=".json"
+        @change="handleFileSelect"
+        class="text-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+      />
+    </div>
 
     <!-- Load Sample Data Button (only show when no data exists) -->
     <button 
@@ -20,17 +24,16 @@
       📊 Load Sample
     </button>
 
-    <!-- Clear Data Button (only show when data exists) -->
+     <!-- Reset Data Button (only show when data can be reset) -->
     <button 
-      v-if="store.hasData"
-      @click="clearAllData"
+      v-if="store.canReset"
+      @click="resetData"
       :disabled="loading"
-      class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      title="Clear all data (people, projects, assignments)"
+      class="px-3 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Reset all changes back to initially loaded data"
     >
-      🗑️ Clear
+      🔄 Reset
     </button>
-
     <!-- Download Button (only show when data is modified) -->
     <button 
       v-if="store.shouldShowDownload"
@@ -38,7 +41,7 @@
       class="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
       title="Download modified data as JSON"
     >
-      Download
+      📥 Download
     </button>
 
     <!-- Loading State -->
@@ -117,6 +120,14 @@ const loadSampleData = async () => {
     alert('Failed to load sample data. Please check if planner-data.json exists in the public folder.')
   } finally {
     loading.value = false
+  }
+}
+
+const resetData = () => {
+  const confirmed = confirm('Reset all changes back to the initially loaded data?')
+  if (confirmed) {
+    store.resetToInitialData()
+    console.log('Data reset to initial state')
   }
 }
 

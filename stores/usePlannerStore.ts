@@ -40,13 +40,16 @@ export const usePlannerStore = defineStore('planner', {
       selected_id: null
     },
     meta: { version: '2.9.0' },
-    isDataModified: false
+    isDataModified: false,
+    // Store initial data for reset functionality
+    _initialData: null
   }),
   getters: {
     byPerson: (s) => (personId: string) => s.assignments.filter(a => a.person_id === personId),
     byProject: (s) => (projectId: string) => s.assignments.filter(a => a.project_id === projectId),
     hasData: (s) => s.people.length > 0 || s.projects.length > 0 || s.assignments.length > 0,
     shouldShowDownload: (s) => (s.people.length > 0 || s.projects.length > 0 || s.assignments.length > 0) && s.isDataModified,
+    canReset: (s) => s._initialData !== null && s.isDataModified,
   },
   actions: {
     switchMode(mode: ViewMode) { this.view.mode = mode },
@@ -111,11 +114,44 @@ export const usePlannerStore = defineStore('planner', {
       this.projects = []
       this.assignments = []
       this.view.selected_id = null
+      this._initialData = null
+      this.isDataModified = false
       console.log('PlannerState cleared - all data emptied')
+    },
+
+    // Reset data to initial loaded state
+    resetToInitialData() {
+      if (!this._initialData) {
+        console.warn('No initial data available to reset to')
+        return
+      }
+
+      // Clear existing data first
+      this.people = []
+      this.projects = []
+      this.assignments = []
+      this.view.selected_id = null
+      
+      // Restore initial data
+      if (this._initialData.people) this.people = [...this._initialData.people]
+      if (this._initialData.projects) this.projects = [...this._initialData.projects]
+      if (this._initialData.assignments) this.assignments = [...this._initialData.assignments]
+      
+      // Reset modified flag
+      this.isDataModified = false
+      
+      console.log('Data reset to initial state:', {
+        people: this.people.length,
+        projects: this.projects.length,
+        assignments: this.assignments.length
+      })
     },
 
     // Load data from external JSON data object (for local file loading)
     loadDataFromObject(data: ExternalPlannerData) {
+      // Store initial data for reset functionality
+      this._initialData = JSON.parse(JSON.stringify(data))
+      
       // Clear existing data first
       this.people = []
       this.projects = []
@@ -123,9 +159,9 @@ export const usePlannerStore = defineStore('planner', {
       this.view.selected_id = null
       
       // Load new data
-      if (data.people) this.people = data.people
-      if (data.projects) this.projects = data.projects  
-      if (data.assignments) this.assignments = data.assignments
+      if (data.people) this.people = [...data.people]
+      if (data.projects) this.projects = [...data.projects]
+      if (data.assignments) this.assignments = [...data.assignments]
       
       // Reset modified flag after loading
       this.isDataModified = false
@@ -146,10 +182,13 @@ export const usePlannerStore = defineStore('planner', {
         }
         const data: ExternalPlannerData = await response.json()
         
+        // Store initial data for reset functionality
+        this._initialData = JSON.parse(JSON.stringify(data))
+        
         // Update store data with loaded JSON
-        if (data.people) this.people = data.people
-        if (data.projects) this.projects = data.projects  
-        if (data.assignments) this.assignments = data.assignments
+        if (data.people) this.people = [...data.people]
+        if (data.projects) this.projects = [...data.projects]
+        if (data.assignments) this.assignments = [...data.assignments]
         
         // Reset modified flag after loading
         this.isDataModified = false
