@@ -12,6 +12,13 @@
       <span>{{ label }}  </span>
       <span class="ml-auto inline-flex items-center rounded-xl bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 inset-ring inset-ring-indigo-700/10">{{ itemCount }}</span>
       <span class="ml-2 inline-flex items-center rounded-xl bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700 border border-slate-200" :title="'Total man-days (visible window)'">{{ totalMDBadge }}</span>
+      <button
+        @click="handleAddClick"
+        class="ml-2 w-6 h-6 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-colors"
+        :title="groupType === 'person' ? 'Assigner un projet' : 'Ajouter une personne'"
+      >
+        ➕
+      </button>
     </div>
     <div class="relative border-b border-r pane-border timeline-bg disabled-rows" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
@@ -30,14 +37,12 @@
     </div>
 
     <!-- Subrows -->
-    <template v-if="expanded" v-for="sr in subrows" :key="sr.key">
-      <!-- Left: label or add row using LeftPaneCell -->
+    <template v-if="expanded" v-for="sr in filteredSubrows" :key="sr.key">
+      <!-- Left: label -->
       <div class="border-b border-r pane-border sticky left-0 z-10 bg-white" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }">
-        <LeftPaneCell
-          :is-add="isAddRow(sr)"
-          :title="isAddRow(sr) ? cleanAddLabel(sr.label) : '-- ' + sr.label"
-          @click="isAddRow(sr) && $emit('createFromSidebar', sr)"
-        />
+        <div class="flex items-center h-full px-3 pl-8 py-2 text-sm text-slate-800">
+          <div class="truncate font-medium">-- {{ sr.label }}</div>
+        </div>
       </div>
 
       <!-- Right: timeline track -->
@@ -132,7 +137,7 @@ const autoScrollState = ref({
 function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.person_id === null || sr.project_id === null }
 function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
 function subAssignmentsLaned(sr: { key:string; person_id: string|null; project_id: string|null }) {
-  if (isAddRow(sr)) { rowHeights.value[sr.key] = baseRowMin; return [] }
+  // Since we filtered out add rows, all rows here should have assignments
   const list = assignmentsRef.value.filter((a: any) => a.person_id === sr.person_id && a.project_id === sr.project_id)
   const { items, laneCount } = computeLanes(props.startISO, list)
   const laneHeight = 30
@@ -146,9 +151,28 @@ function laneTop(lane: number) { const padding = 10; const laneHeight = 30; retu
 function onUpdate(payload: { id: string; start?: string; end?: string }) { emit('update', payload) }
 function onEdit(payload: { assignment: any; x: number; y: number }) { emit('edit', payload) }
 
+// Filter out the add rows since we now have the + button in the header
+const filteredSubrows = computed(() => {
+  return props.subrows.filter(sr => !isAddRow(sr))
+})
+
+// Handle the + button click in the header
+function handleAddClick() {
+  // Create a synthetic add row object to maintain compatibility with existing logic
+  const addRowData = {
+    key: `${props.groupId}:__add__`,
+    label: props.groupType === 'person' ? '➕ Assigner un projet' : '➕ Ajouter une personne',
+    person_id: props.groupType === 'person' ? props.groupId : null,
+    project_id: props.groupType === 'project' ? props.groupId : null
+  }
+  
+  console.log('RowGroup: Add button clicked for', props.label, 'creating synthetic add row:', addRowData)
+  emit('createFromSidebar', addRowData)
+}
+
 // Drag-to-create functions
 function startDragCreate(e: MouseEvent, sr: any) {
-  if (isAddRow(sr) || onResizeEvent.value) return
+  if (onResizeEvent.value) return
   
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
@@ -204,7 +228,7 @@ function endDragCreate(e: MouseEvent, sr: any) {
   // If we have a saved rowKey but mouse ended on different row, still create assignment on original row
   if (dragState.value.rowKey && dragState.value.rowKey !== sr.key) {
     // Find the original subrow data using the saved rowKey
-    const originalSubrow = props.subrows.find(subrow => subrow.key === dragState.value.rowKey)
+    const originalSubrow = filteredSubrows.value.find(subrow => subrow.key === dragState.value.rowKey)
     if (originalSubrow) {
       sr = originalSubrow // Use the original subrow for assignment creation
     }
@@ -371,8 +395,8 @@ function recalculateAllHeights() {
   // Clear existing heights to force recalculation
   rowHeights.value = {}
   
-  // Trigger subAssignmentsLaned for each subrow to recalculate heights
-  props.subrows.forEach(sr => {
+  // Trigger subAssignmentsLaned for each filtered subrow to recalculate heights
+  filteredSubrows.value.forEach(sr => {
     subAssignmentsLaned(sr)
   })
 }
@@ -389,7 +413,7 @@ const headerHeight = computed(() => baseRowMin)
 
 // Count of projects or people (excluding the "add" row)
 const itemCount = computed(() => {
-  return props.subrows.filter(sr => !isAddRow(sr)).length
+  return filteredSubrows.value.length
 })
 
 // Capacity per group in visible window (header overlays and total MD badge)
@@ -414,7 +438,7 @@ const handleGlobalMouseUp = (e: MouseEvent) => {
     console.log('RowGroup: Global mouseup with active drag, completing assignment creation')
     
     // Find the original subrow data using the saved rowKey
-    const originalSubrow = props.subrows.find(subrow => subrow.key === dragState.value.rowKey)
+    const originalSubrow = filteredSubrows.value.find(subrow => subrow.key === dragState.value.rowKey)
     if (originalSubrow) {
       // Calculate assignment details using business days logic
       const startIndex = Math.min(dragState.value.startDayIndex, dragState.value.endDayIndex)
