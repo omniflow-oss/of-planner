@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { daysBetweenInclusive, parseISO, addDaysISO, toISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
+import { generateUserColor } from '@/utils/colors'
 import type { Assignment } from '@/types/planner'
 
 const props = defineProps<{ assignment: Assignment; startISO: string; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
@@ -31,25 +32,7 @@ const project = computed(() => props.projectsMap[props.assignment.project_id])
 const person = computed(() => props.peopleMap?.[props.assignment.person_id])
 
 // Generate unique color per user based on their person_id
-const color = computed(() => {
-  const personId = props.assignment.person_id
-  
-  // Better hash function using djb2 algorithm
-  let hash = 5381
-  for (let i = 0; i < personId.length; i++) {
-    hash = ((hash << 5) + hash) + personId.charCodeAt(i)
-  }
-  
-  // Use golden ratio to distribute colors more evenly
-  const goldenRatio = 0.618033988749
-  const hue = ((Math.abs(hash) * goldenRatio) % 1) * 360
-  
-  // Vary saturation and lightness slightly for more distinction
-  const saturation = 65 + ((Math.abs(hash) >> 8) % 20) // 65-84%
-  const lightness = 45 + ((Math.abs(hash) >> 16) % 20)  // 45-64%
-  
-  return `hsl(${Math.round(hue)}, ${saturation}%, ${lightness}%)`
-})
+const color = computed(() => generateUserColor(props.assignment.person_id))
 const allocBadge = computed(() => {
   const a = props.assignment.allocation
   return a === 1 ? '1' : a === 0.75 ? '¾' : a === 0.5 ? '½' : '¼'
