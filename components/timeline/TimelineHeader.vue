@@ -7,8 +7,8 @@
     </div>
 
     <!-- Top: Month + Year -->
-    <div class="grid text-[12px] text-slate-700 select-none border-b border-slate-200" :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
-      <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium"> <span class="month-year">{{ monthWithYear(seg) }}</span></div>
+    <div class="grid text-[12px] text-slate-700 select-none border-b border-slate-200 bg-white " :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
+      <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium border-x border-slate-300 " style="transform: translateX(1px);"> <span class="month-year">{{ monthWithYear(seg) }}</span></div>
     </div>
     <!-- Bottom: Day (D MMM) -->
     <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
@@ -76,8 +76,5 @@ function isToday(day: string) {
 }
 .cell-small  .month-numeric {
   display: block;
-}
-.month-year{
-  background-color: white;
 }
 </style>
