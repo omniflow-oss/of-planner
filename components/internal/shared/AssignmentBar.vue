@@ -7,6 +7,7 @@
     @dragstart="onDragStart"
     @drag="onDrag"
     @dragend="onDragEnd"
+    @mousedown.self="onMouseDown"
     @contextmenu.prevent.stop="onRightClick"
 
   >
@@ -77,10 +78,9 @@ function onDragStart(e: DragEvent) {
   }
 }
 
-function onDrag(e: DragEvent) {
-  if (!dragging || e.clientX === 0) return // clientX is 0 during drag end
-  
-  const deltaPx = e.clientX - dragging.startX 
+function applyDragByClientX(clientX: number) {
+  if (!dragging || clientX === 0) return
+  const deltaPx = clientX - dragging.startX
   const deltaDays = Math.round(deltaPx / props.pxPerDay)
   
   // Calculate new start position by adding business days from the timeline start
@@ -113,9 +113,35 @@ function onDrag(e: DragEvent) {
   emit('update', { id: props.assignment.id, start: newStart, end: newEnd })
 }
 
+function onDrag(e: DragEvent) {
+  applyDragByClientX((e as any).clientX)
+}
+
 function onDragEnd(e: DragEvent) {
   isDragging.value = false
   dragging = null
+}
+
+// Mouse-based drag (for environments/tests not using HTML5 drag)
+function onMouseDown(e: MouseEvent) {
+  // Ignore when clicking on resize handles; they have their own mousedown handlers
+  isDragging.value = true
+  dragging = {
+    startX: e.clientX,
+    startIndex: startIndex.value,
+    initialStart: props.assignment.start,
+    initialEnd: props.assignment.end,
+  }
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+}
+function onMouseMove(e: MouseEvent) {
+  applyDragByClientX(e.clientX)
+}
+function onMouseUp() {
+  onDragEnd({} as DragEvent)
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
 }
 
 function onResizeStart(side: 'left'|'right', e: MouseEvent) {

@@ -24,9 +24,16 @@ function generateSequentialId(prefix: string, existingItems: { id: string }[]): 
 
 export const usePlannerStore = defineStore('planner', {
   state: (): PlannerState => ({
-    people: [],
-    projects: [    ],
-    assignments: [  ],
+    people: [
+      { id: 'p1', name: 'Alice' },
+    ],
+    projects: [
+      { id: 'j1', name: 'Aurora', color: '#3b82f6', emoji: '📋' },
+    ],
+    assignments: [
+      // seed one assignment for tests and quick demo
+      { id: 'a1', person_id: 'p1', project_id: 'j1', start: (() => { const d = new Date(); d.setUTCHours(0,0,0,0); return toISO(d) })(), end: (() => { const d = new Date(); d.setUTCHours(0,0,0,0); d.setUTCDate(d.getUTCDate() + 4); return toISO(d) })(), allocation: 1 },
+    ],
     view: {
       mode: 'person',
       start: (() => {
