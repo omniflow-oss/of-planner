@@ -1,7 +1,13 @@
 <template>
-  <div class="grid" style="grid-template-columns: 240px 1fr;" :style="{ width: timelineWidth+'px' }">
+  <div class="grid" style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;" :style="{ width: timelineWidth+'px' }"
+  draggable="false"
+  >
     <!-- Group header row -->
-    <div class="px-3 py-2 border-b border-r pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-white">
+    <div 
+      class="px-3 py-2 border-b border-r pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-white"
+      draggable="false"
+      style="-webkit-user-select: none; user-select: none;"
+    >
       <button class="w-5 h-5 grid place-items-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50" @click="expanded = !expanded">{{ expanded ? '–' : '+' }}</button>
       <span>{{ label }}  </span>
       <span class="ml-auto inline-flex items-center rounded-xl bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 inset-ring inset-ring-indigo-700/10">{{ itemCount }}</span>
@@ -30,7 +36,8 @@
            @mousedown="startDragCreate($event, sr)"
            @mousemove="updateDragCreate($event, sr)"
            @mouseup="endDragCreate($event, sr)"
-           @mouseleave="cancelDragCreate">
+           @dragstart="cancelDragCreate"
+           >
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :peopleMap="peopleMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e: any) => onResizeEvent=e" />
         
@@ -128,22 +135,32 @@ function startDragCreate(e: MouseEvent, sr: any) {
   
   console.log('RowGroup: Starting drag create for row:', sr.key)
   
-  // Start long click timer
+  // Save all critical state immediately before any mouse movement
+  dragState.value.rowKey = sr.key
+  dragState.value.startX = x
+  dragState.value.currentX = x
+  dragState.value.startDayIndex = getDayIndexFromX(x)
+  dragState.value.endDayIndex = dragState.value.startDayIndex
+  // Set active and isLongClick immediately to ensure they persist
+  
+  
+  // Start long click timer (now just for preview display timing)
   dragState.value.longClickTimer = window.setTimeout(() => {
-    console.log('RowGroup: Long click activated')
-    dragState.value.isLongClick = true
     dragState.value.active = true
-    dragState.value.rowKey = sr.key
-    dragState.value.startX = x
-    dragState.value.currentX = x
-    dragState.value.startDayIndex = getDayIndexFromX(x)
-    dragState.value.endDayIndex = dragState.value.startDayIndex
+    dragState.value.isLongClick = true
+    console.log('RowGroup: Long click timer completed, showing preview')
     updatePreviewBar()
-  }, 300) // 300ms for long click
+  }, 200) // 200ms for preview display
 }
 
 function updateDragCreate(e: MouseEvent, sr: any) {
-  if (!dragState.value.active || dragState.value.rowKey !== sr.key) return
+  // Only process if drag is active and this is the correct row, or if rowKey matches but sr.key is different (mouse moved outside)
+  if (!dragState.value.active) return
+  if (dragState.value.rowKey && dragState.value.rowKey !== sr.key) {
+    // Mouse moved outside the original row, but we still want to update if we have a saved rowKey
+    console.log('RowGroup: Mouse outside original row, preserving rowKey:', dragState.value.rowKey)
+    return
+  }
   
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
@@ -167,14 +184,22 @@ function endDragCreate(e: MouseEvent, sr: any) {
     dragState.value.longClickTimer = null
   }
   
-  if (!dragState.value.active || dragState.value.rowKey !== sr.key) {
-    // If not a long click, handle as regular click
-    if (!dragState.value.isLongClick) {
-      console.log('RowGroup: Not a long click, handling as regular click')
-      onEmptyClick(e, sr)
-    }
+  // If drag is not active, handle as regular click
+  if (!dragState.value.active) {
+    console.log('RowGroup: Drag not active, handling as regular click')
+    onEmptyClick(e, sr)
     resetDragState()
     return
+  }
+  
+  // If we have a saved rowKey but mouse ended on different row, still create assignment on original row
+  if (dragState.value.rowKey && dragState.value.rowKey !== sr.key) {
+    console.log('RowGroup: Mouse ended on different row, using saved rowKey:', dragState.value.rowKey)
+    // Find the original subrow data using the saved rowKey
+    const originalSubrow = props.subrows.find(subrow => subrow.key === dragState.value.rowKey)
+    if (originalSubrow) {
+      sr = originalSubrow // Use the original subrow for assignment creation
+    }
   }
   
   // Calculate assignment details using business days logic (same as AssignmentBar)
@@ -219,6 +244,7 @@ function cancelDragCreate() {
 }
 
 function resetDragState() {
+  console.log('RowGroup: Resetting drag state, clearing rowKey:', dragState.value.rowKey)
   dragState.value.active = false
   dragState.value.isLongClick = false
   dragState.value.rowKey = ''
@@ -338,14 +364,51 @@ const itemCount = computed(() => {
 
 // Global mouse event handlers for drag operations
 const handleGlobalMouseUp = (e: MouseEvent) => {
-  if (dragState.value.active) {
+  if (dragState.value.active && dragState.value.rowKey) {
+    console.log('RowGroup: Global mouseup with active drag, completing assignment creation')
+    
+    // Find the original subrow data using the saved rowKey
+    const originalSubrow = props.subrows.find(subrow => subrow.key === dragState.value.rowKey)
+    if (originalSubrow) {
+      // Calculate assignment details using business days logic
+      const startIndex = Math.min(dragState.value.startDayIndex, dragState.value.endDayIndex)
+      const endIndex = Math.max(dragState.value.startDayIndex, dragState.value.endDayIndex)
+      
+      if (startIndex >= 0 && endIndex >= 0 && startIndex < days.value.length && endIndex < days.value.length) {
+        const startDay = days.value[startIndex]
+        const endDay = days.value[endIndex]
+        
+        // Calculate duration using business days
+        const duration = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
+        
+        console.log('RowGroup: Creating assignment from global mouseup', { 
+          person_id: originalSubrow.person_id, 
+          project_id: originalSubrow.project_id, 
+          start: startDay, 
+          duration: duration 
+        })
+        
+        // Emit create event
+        emit('create', {
+          person_id: originalSubrow.person_id,
+          project_id: originalSubrow.project_id,
+          start: startDay,
+          duration: duration,
+          allocation: 1
+        })
+      }
+    }
+    
+    resetDragState()
+  } else if (dragState.value.active) {
+    // Just cancel if no rowKey saved
     cancelDragCreate()
   }
 }
 
 const handleGlobalMouseMove = (e: MouseEvent) => {
   // This allows dragging to continue even when mouse leaves the row area
-  if (dragState.value.active) {
+  if (dragState.value.active && dragState.value.rowKey) {
     // Find the active timeline track element
     const activeRow = document.querySelector(`[data-row-key="${dragState.value.rowKey}"]`)
     if (activeRow) {
@@ -354,6 +417,11 @@ const handleGlobalMouseMove = (e: MouseEvent) => {
       dragState.value.currentX = x
       dragState.value.endDayIndex = getDayIndexFromX(x)
       updatePreviewBar()
+    } else {
+      // If activeRow is not found, still update currentX based on the original startX position
+      // This prevents losing the drag state when mouse goes far outside
+      console.log('RowGroup: Active row not found, preserving rowKey:', dragState.value.rowKey)
+      dragState.value.currentX = e.clientX - dragState.value.startX
     }
   }
 }
