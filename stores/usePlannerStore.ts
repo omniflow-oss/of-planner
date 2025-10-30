@@ -2,7 +2,26 @@ import { defineStore } from 'pinia'
 import type { PlannerState, Assignment, Person, Project, Allocation, ViewMode, ExternalPlannerData } from '@/types/planner'
 import { addDaysISO, clampDateRange, parseISO, toISO } from '@/composables/useDate'
 
-function uid(prefix = 'id') { return `${prefix}_${Math.random().toString(36).slice(2, 9)}` }
+// Generate sequential IDs based on existing data
+function generateSequentialId(prefix: string, existingItems: { id: string }[]): string {
+  // Find the highest number for this prefix
+  let maxNumber = 0
+  const regex = new RegExp(`^${prefix}(\\d+)$`)
+  
+  for (const item of existingItems) {
+    const match = item.id.match(regex)
+    if (match) {
+      const number = parseInt(match[1], 10)
+      if (number > maxNumber) {
+        maxNumber = number
+      }
+    }
+  }
+  
+  const newId = `${prefix}${maxNumber + 1}`
+  console.log(`Generated sequential ID: ${newId} (previous max: ${prefix}${maxNumber})`)
+  return newId
+}
 
 export const usePlannerStore = defineStore('planner', {
   state: (): PlannerState => ({
@@ -38,7 +57,8 @@ export const usePlannerStore = defineStore('planner', {
 
     createAssignment(input: { person_id: string; project_id: string; start: string; end: string; allocation: Allocation; subtitle?: string | null }) {
       const { start, end } = clampDateRange(input.start, input.end)
-      const a: Assignment = { id: uid('a'), ...input, start, end }
+      const id = generateSequentialId('a', this.assignments)
+      const a: Assignment = { id, ...input, start, end }
       this.assignments.push(a)
       this.view.selected_id = a.id
       this.isDataModified = true
@@ -65,15 +85,17 @@ export const usePlannerStore = defineStore('planner', {
     },
 
     createPerson(input: { name: string }) {
-      const p: Person = { id: uid('p'), name: input.name }
+      const id = generateSequentialId('p', this.people)
+      const p: Person = { id, name: input.name }
       this.people.push(p)
       this.isDataModified = true
       return p
     },
 
     createProject(input: { name: string; color?: string; emoji?: string }) {
+      const id = generateSequentialId('j', this.projects)
       const p: Project = { 
-        id: uid('j'), 
+        id, 
         name: input.name, 
         color: input.color || '#3b82f6', 
         emoji: input.emoji || '📋' 
@@ -118,7 +140,7 @@ export const usePlannerStore = defineStore('planner', {
     // Load data from external JSON file
     async loadDataFromJSON(filename = 'planner-data.json'): Promise<ExternalPlannerData> {
       try {
-        const response = await fetch(`/${filename}`)
+        const response = await fetch(`${filename}`)
         if (!response.ok) {
           throw new Error(`Failed to load ${filename}: ${response.status}`)
         }
