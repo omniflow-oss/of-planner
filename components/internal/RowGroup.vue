@@ -23,20 +23,38 @@
       </div>
 
       <!-- Right: timeline track -->
-      <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" @contextmenu.prevent.stop="onEmptyClick($event, sr)">
+      <div class="relative border-b border-r pane-border timeline-bg" 
+           :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" 
+           :data-row-key="sr.key"
+           @contextmenu.prevent.stop="onEmptyClick($event, sr)"
+           @mousedown="startDragCreate($event, sr)"
+           @mousemove="updateDragCreate($event, sr)"
+           @mouseup="endDragCreate($event, sr)"
+           @mouseleave="cancelDragCreate">
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :peopleMap="peopleMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e: any) => onResizeEvent=e" />
+        
+        <!-- Drag-to-create preview bar -->
+        <div v-if="dragState.active && dragState.rowKey === sr.key" 
+             class="absolute bg-blue-500/30 border border-blue-500 rounded-sm pointer-events-none"
+             :style="{
+               left: dragState.previewLeft + 'px',
+               top: '10px',
+               width: dragState.previewWidth + 'px',
+               height: '28px'
+             }">
+        </div>
       </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { nextTick } from 'vue'
+import { nextTick, onMounted, onUnmounted } from 'vue'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import LeftPaneCell from '@/components/internal/LeftPaneCell.vue'
-import { addDaysISO, parseISO } from '@/composables/useDate'
+import { addDaysISO, parseISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import { computeLanes } from '@/utils/lanes'
 import { useTimelineGrid } from '@/composables/useTimeline'
 
@@ -67,7 +85,21 @@ const startISO = computed(() => props.startISO)
 const rowHeights = ref<Record<string, number>>({})
 const baseRowMin = 44
 const expanded = ref(true)
-const onResizeEvent  = ref(false);
+const onResizeEvent = ref(false)
+
+// Drag-to-create state
+const dragState = ref({
+  active: false,
+  rowKey: '',
+  startX: 0,
+  currentX: 0,
+  startDayIndex: 0,
+  endDayIndex: 0,
+  previewLeft: 0,
+  previewWidth: 0,
+  longClickTimer: null as number | null,
+  isLongClick: false
+})
 
 function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.person_id === null || sr.project_id === null }
 function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
@@ -86,6 +118,157 @@ function laneTop(lane: number) { const padding = 10; const laneHeight = 30; retu
 
 function onUpdate(payload: { id: string; start?: string; end?: string }) { emit('update', payload) }
 function onEdit(payload: { assignment: any; x: number; y: number }) { emit('edit', payload) }
+
+// Drag-to-create functions
+function startDragCreate(e: MouseEvent, sr: any) {
+  if (isAddRow(sr) || onResizeEvent.value) return
+  
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = e.clientX - rect.left
+  
+  console.log('RowGroup: Starting drag create for row:', sr.key)
+  
+  // Start long click timer
+  dragState.value.longClickTimer = window.setTimeout(() => {
+    console.log('RowGroup: Long click activated')
+    dragState.value.isLongClick = true
+    dragState.value.active = true
+    dragState.value.rowKey = sr.key
+    dragState.value.startX = x
+    dragState.value.currentX = x
+    dragState.value.startDayIndex = getDayIndexFromX(x)
+    dragState.value.endDayIndex = dragState.value.startDayIndex
+    updatePreviewBar()
+  }, 300) // 300ms for long click
+}
+
+function updateDragCreate(e: MouseEvent, sr: any) {
+  if (!dragState.value.active || dragState.value.rowKey !== sr.key) return
+  
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = e.clientX - rect.left
+  
+  dragState.value.currentX = x
+  dragState.value.endDayIndex = getDayIndexFromX(x)
+  updatePreviewBar()
+}
+
+function endDragCreate(e: MouseEvent, sr: any) {
+  console.log('RowGroup: End drag create', { 
+    active: dragState.value.active, 
+    isLongClick: dragState.value.isLongClick,
+    rowKey: dragState.value.rowKey,
+    srKey: sr.key
+  })
+  
+  // Clear long click timer
+  if (dragState.value.longClickTimer) {
+    clearTimeout(dragState.value.longClickTimer)
+    dragState.value.longClickTimer = null
+  }
+  
+  if (!dragState.value.active || dragState.value.rowKey !== sr.key) {
+    // If not a long click, handle as regular click
+    if (!dragState.value.isLongClick) {
+      console.log('RowGroup: Not a long click, handling as regular click')
+      onEmptyClick(e, sr)
+    }
+    resetDragState()
+    return
+  }
+  
+  // Calculate assignment details using business days logic (same as AssignmentBar)
+  const startIndex = Math.min(dragState.value.startDayIndex, dragState.value.endDayIndex)
+  const endIndex = Math.max(dragState.value.startDayIndex, dragState.value.endDayIndex)
+  
+  if (startIndex >= 0 && endIndex >= 0 && startIndex < days.value.length && endIndex < days.value.length) {
+    const startDay = days.value[startIndex]
+    const endDay = days.value[endIndex]
+    
+    // Calculate duration using business days (matching Timeline's onCreate expectation)
+    const duration = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
+    
+    console.log('RowGroup: Creating assignment', { 
+      person_id: sr.person_id, 
+      project_id: sr.project_id, 
+      start: startDay, 
+      duration: duration 
+    })
+    
+    // Emit create event with duration (as expected by Timeline.onCreate)
+    emit('create', {
+      person_id: sr.person_id,
+      project_id: sr.project_id,
+      start: startDay,
+      duration: duration,
+      allocation: 1 // Default allocation
+    })
+  }
+  
+  resetDragState()
+}
+
+function cancelDragCreate() {
+  // Clear long click timer
+  if (dragState.value.longClickTimer) {
+    clearTimeout(dragState.value.longClickTimer)
+    dragState.value.longClickTimer = null
+  }
+  
+  resetDragState()
+}
+
+function resetDragState() {
+  dragState.value.active = false
+  dragState.value.isLongClick = false
+  dragState.value.rowKey = ''
+  dragState.value.startX = 0
+  dragState.value.currentX = 0
+  dragState.value.startDayIndex = 0
+  dragState.value.endDayIndex = 0
+  dragState.value.previewLeft = 0
+  dragState.value.previewWidth = 0
+}
+
+function getDayIndexFromX(x: number): number {
+  let idx = 0
+  if (dayOffsets.value) {
+    for (let i = 0; i < days.value.length; i++) {
+      const left = lineLeft(i)
+      const width = dayWidth(i)
+      if (x < left + width) {
+        idx = i
+        break
+      }
+      idx = i
+    }
+  } else {
+    idx = Math.round(x / pxPerDay.value)
+  }
+  return Math.max(0, Math.min(days.value.length - 1, idx))
+}
+
+function updatePreviewBar() {
+  const startIndex = Math.min(dragState.value.startDayIndex, dragState.value.endDayIndex)
+  const endIndex = Math.max(dragState.value.startDayIndex, dragState.value.endDayIndex)
+  
+  if (startIndex >= 0 && endIndex >= 0 && startIndex < days.value.length && endIndex < days.value.length) {
+    // Calculate preview bar using the same positioning logic as AssignmentBar
+    const startDay = days.value[startIndex]
+    const endDay = days.value[endIndex]
+    
+    // Use business day offset from timeline start (same as AssignmentBar)
+    const businessStartIndex = Math.max(0, businessOffset(props.startISO, startDay))
+    const businessDayCount = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
+    
+    // Position and width calculation (matching AssignmentBar logic)
+    const left = businessStartIndex * pxPerDay.value
+    const width = Math.max(1, businessDayCount * pxPerDay.value - 2)  // -2 for border like AssignmentBar
+    
+    dragState.value.previewLeft = left
+    dragState.value.previewWidth = width
+  }
+}
 
 // Empty click to show create popover (now handled by Timeline.vue)
 function onEmptyClick(e: MouseEvent, sr: any) {
@@ -151,6 +334,43 @@ const headerHeight = computed(() => Math.max(baseRowMin, 16 + headerLaneCount.va
 // Count of projects or people (excluding the "add" row)
 const itemCount = computed(() => {
   return props.subrows.filter(sr => !isAddRow(sr)).length
+})
+
+// Global mouse event handlers for drag operations
+const handleGlobalMouseUp = (e: MouseEvent) => {
+  if (dragState.value.active) {
+    cancelDragCreate()
+  }
+}
+
+const handleGlobalMouseMove = (e: MouseEvent) => {
+  // This allows dragging to continue even when mouse leaves the row area
+  if (dragState.value.active) {
+    // Find the active timeline track element
+    const activeRow = document.querySelector(`[data-row-key="${dragState.value.rowKey}"]`)
+    if (activeRow) {
+      const rect = activeRow.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      dragState.value.currentX = x
+      dragState.value.endDayIndex = getDayIndexFromX(x)
+      updatePreviewBar()
+    }
+  }
+}
+
+// Setup global listeners
+onMounted(() => {
+  document.addEventListener('mouseup', handleGlobalMouseUp)
+  document.addEventListener('mousemove', handleGlobalMouseMove)
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (dragState.value.longClickTimer) {
+    clearTimeout(dragState.value.longClickTimer)
+  }
+  document.removeEventListener('mouseup', handleGlobalMouseUp)
+  document.removeEventListener('mousemove', handleGlobalMouseMove)
 })
 
 defineExpose({ rowHeights })
