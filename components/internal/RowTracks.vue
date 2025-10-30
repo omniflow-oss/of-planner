@@ -95,7 +95,28 @@ function onEmptyClick(e: MouseEvent, sr: any) {
   const x = e.clientX - rect.left
   const dayIndex = Math.round(x / pxPerDay.value)
   const start = addDaysISO(props.startISO, dayIndex)
-  popover.value = { key: sr.key, x: e.clientX, y: e.clientY, dayISO: start }
+  
+  // Calculate better positioning to avoid viewport edges
+  const popoverWidth = 220
+  const popoverHeight = 150
+  let adjustedX = e.clientX + 8
+  let adjustedY = e.clientY + 8
+  
+  // Adjust if popover would go off right edge
+  if (adjustedX + popoverWidth > window.innerWidth) {
+    adjustedX = e.clientX - popoverWidth - 8
+  }
+  
+  // Adjust if popover would go off bottom edge
+  if (adjustedY + popoverHeight > window.innerHeight) {
+    adjustedY = e.clientY - popoverHeight - 8
+  }
+  
+  // Ensure popover doesn't go off top or left edges
+  adjustedX = Math.max(8, adjustedX)
+  adjustedY = Math.max(8, adjustedY)
+  
+  popover.value = { key: sr.key, x: adjustedX, y: adjustedY, dayISO: start }
 }
 function confirmCreate(sr: any) {
   if (!popover.value) return
@@ -103,7 +124,7 @@ function confirmCreate(sr: any) {
   popover.value = null
 }
 function closePopover() { popover.value = null }
-const popoverStyle = computed(() => popover.value ? ({ position: 'fixed', left: `${popover.value.x + 8}px`, top: `${popover.value.y + 8}px`, zIndex: 10 }) : {})
+const popoverStyle = computed(() => popover.value ? ({ position: 'fixed', left: `${popover.value.x}px`, top: `${popover.value.y}px`, zIndex: 9999 }) : {})
 
 function onUpdate(payload: { id: string; start?: string; end?: string }) { emit('update', payload) }
 

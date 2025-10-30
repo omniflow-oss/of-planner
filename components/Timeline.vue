@@ -4,10 +4,10 @@
     <div class="grid" style="grid-template-columns: 240px 1fr;">
       <!-- Left placeholders to match 2 header rows: month+year / day -->
       <div class="flex flex-col border-r">
-        <div class="py-3 px-3 text-center">
+        <div class="py-3 px-3 text-center my-auto">
           <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
         </div>
-        <div class="py-1.5"></div>
+     
       </div>
       <div class="relative">
         <div class="overflow-hidden">
@@ -46,7 +46,7 @@
     </div>
 
 
-      <div v-if="editPopover" data-popover="edit" :style="{ position: 'fixed', left: editPopover?.x + 8 + 'px', top: editPopover?.y + 8 + 'px', zIndex: 50 }" class="bg-white border border-slate-200 rounded-md p-4 shadow-lg w-72">
+      <div v-if="editPopover" data-popover="edit" :style="{ position: 'fixed', left: editPopover?.x + 'px', top: editPopover?.y + 'px', zIndex: 9999 }" class="bg-white border border-slate-200 rounded-md p-4 shadow-lg w-72">
         <div class="flex items-center justify-between text-sm font-medium text-slate-700 mb-3">
           <div>Edit Assignment</div>
           <button class="text-slate-400 hover:text-slate-600" @click="closeEditPopover">✕</button>
@@ -107,7 +107,7 @@
       </div>
 
     <!-- Create popover (moved from RowGroup.vue) -->
-    <div v-if="createPopover" data-popover="create" :style="{ position: 'fixed', left: createPopover.x + 8 + 'px', top: createPopover.y + 8 + 'px', zIndex: 50 }" class="bg-white border border-slate-200 rounded-md p-3 shadow-md w-56">
+    <div v-if="createPopover" data-popover="create" :style="{ position: 'fixed', left: createPopover.x + 'px', top: createPopover.y + 'px', zIndex: 9999 }" class="bg-white border border-slate-200 rounded-md p-3 shadow-md w-56">
       <div class="flex items-center justify-between text-xs text-slate-500">
         <div>Quick create</div>
         <button class="px-2 py-1 border border-slate-200 rounded" @click.stop="closeCreatePopover">✕</button>
@@ -190,15 +190,60 @@ function personName(id: string) { return people.value.find(p => p.id === id)?.na
 function onCreate(payload: { person_id: string|null; project_id: string|null; start: string; duration: number; allocation: 1|0.75|0.5|0.25 }) {
   let { person_id, project_id, start, duration, allocation } = payload
   
-  // If missing complementary entity ask user via prompt (simple fallback)
+  // If missing person, create a new one or select existing
   if (!person_id) {
-    person_id = window.prompt('Select person id', people.value[0]?.id)
-    if (!person_id) return // User cancelled, abort creation
+    if (people.value.length === 0) {
+      // No people exist, create a new one
+      const personName = window.prompt('Enter person name:', '')
+      if (!personName) return // User cancelled, abort creation
+      
+      const newPerson = store.createPerson({ name: personName })
+      person_id = newPerson.id
+    } else {
+      // People exist, offer to create new or select existing
+      const createNew = window.confirm('Create a new person?\n\nClick OK to create new person, Cancel to select existing person.')
+      if (createNew) {
+        const personName = window.prompt('Enter person name:', '')
+        if (!personName) return // User cancelled, abort creation
+        
+        const newPerson = store.createPerson({ name: personName })
+        person_id = newPerson.id
+      } else {
+        // Show existing people
+        const peopleList = people.value.map(p => `${p.id}: ${p.name}`).join('\n')
+        const selectedId = window.prompt(`Select person ID:\n\n${peopleList}`, people.value[0]?.id)
+        if (!selectedId) return // User cancelled
+        person_id = selectedId
+      }
+    }
   }
   
+  // If missing project, create a new one or select existing
   if (!project_id) {
-    project_id = window.prompt('Select project id', projects.value[0]?.id)
-    if (!project_id) return // User cancelled, abort creation
+    if (projects.value.length === 0) {
+      // No projects exist, create a new one
+      const projectName = window.prompt('Enter project name:', '')
+      if (!projectName) return // User cancelled, abort creation
+      
+      const newProject = store.createProject({ name: projectName })
+      project_id = newProject.id
+    } else {
+      // Projects exist, offer to create new or select existing
+      const createNew = window.confirm('Create a new project?\n\nClick OK to create new project, Cancel to select existing project.')
+      if (createNew) {
+        const projectName = window.prompt('Enter project name:', '')
+        if (!projectName) return // User cancelled, abort creation
+        
+        const newProject = store.createProject({ name: projectName })
+        project_id = newProject.id
+      } else {
+        // Show existing projects
+        const projectsList = projects.value.map(p => `${p.id}: ${p.name}`).join('\n')
+        const selectedId = window.prompt(`Select project ID:\n\n${projectsList}`, projects.value[0]?.id)
+        if (!selectedId) return // User cancelled
+        project_id = selectedId
+      }
+    }
   }
   
   const end = addDaysISO(start, Math.max(1, duration) - 1)
@@ -241,11 +286,32 @@ const allocation = ref(1 as 1|0.75|0.5|0.25)
 function onEdit(payload: { assignment: any; x: number; y: number }) {
   closeCreatePopover();
   const { assignment, x, y } = payload
+  
+  // Calculate better positioning to avoid viewport edges
+  const popoverWidth = 290 // 72 * 4 = 288px + padding
+  const popoverHeight = 200 // Approximate height
+  let adjustedX = x + 8
+  let adjustedY = y + 8
+  
+  // Adjust if popover would go off right edge
+  if (adjustedX + popoverWidth > window.innerWidth) {
+    adjustedX = x - popoverWidth - 8
+  }
+  
+  // Adjust if popover would go off bottom edge
+  if (adjustedY + popoverHeight > window.innerHeight) {
+    adjustedY = y - popoverHeight - 8
+  }
+  
+  // Ensure popover doesn't go off top or left edges
+  adjustedX = Math.max(8, adjustedX)
+  adjustedY = Math.max(8, adjustedY)
+  
   editPopover.value = {
     visible: true,
     assignment,
-    x,
-    y,
+    x: adjustedX,
+    y: adjustedY,
     editedStart: assignment.start,
     editedEnd: assignment.end,
     editedAllocation: assignment.allocation
@@ -254,7 +320,32 @@ function onEdit(payload: { assignment: any; x: number; y: number }) {
 
 function onCreatePopover(payload: { key: string; x: number; y: number; dayISO: string; person_id: string|null; project_id: string|null }) {
   closeEditPopover();
-  createPopover.value = payload
+  
+  // Calculate better positioning to avoid viewport edges
+  const popoverWidth = 224 // 56 * 4 = 224px
+  const popoverHeight = 150 // Approximate height
+  let adjustedX = payload.x + 8
+  let adjustedY = payload.y + 8
+  
+  // Adjust if popover would go off right edge
+  if (adjustedX + popoverWidth > window.innerWidth) {
+    adjustedX = payload.x - popoverWidth - 8
+  }
+  
+  // Adjust if popover would go off bottom edge
+  if (adjustedY + popoverHeight > window.innerHeight) {
+    adjustedY = payload.y - popoverHeight - 8
+  }
+  
+  // Ensure popover doesn't go off top or left edges
+  adjustedX = Math.max(8, adjustedX)
+  adjustedY = Math.max(8, adjustedY)
+  
+  createPopover.value = {
+    ...payload,
+    x: adjustedX,
+    y: adjustedY
+  }
 }
 
 function closeEditPopover() {
@@ -313,6 +404,11 @@ function handleScroll() {
   if (scrollArea.value) {
     scrollLeft.value = scrollArea.value.scrollLeft
   }
+  
+  // Hide popovers when scrolling to prevent positioning issues
+  closeEditPopover()
+  closeCreatePopover()
+  
   onScroll()
 }
 
@@ -377,12 +473,19 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
     }
   }
 
+// Handle window scroll to hide popovers (prevents positioning issues)
+const handleWindowScroll = () => {
+  closeEditPopover()
+  closeCreatePopover()
+}
+
 // Initialize timeline and auto-scroll to today
 onMounted(async () => { 
   // Ensure we have a valid todayISO before calling init
   await init(todayISO);
   
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('scroll', handleWindowScroll, { passive: true })
   
   // Auto-scroll to today on app initialization
   await nextTick()
@@ -398,5 +501,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('scroll', handleWindowScroll)
 })
 </script>

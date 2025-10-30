@@ -64,6 +64,25 @@ export const usePlannerStore = defineStore('planner', {
       this.isDataModified = true
     },
 
+    createPerson(input: { name: string }) {
+      const p: Person = { id: uid('p'), name: input.name }
+      this.people.push(p)
+      this.isDataModified = true
+      return p
+    },
+
+    createProject(input: { name: string; color?: string; emoji?: string }) {
+      const p: Project = { 
+        id: uid('j'), 
+        name: input.name, 
+        color: input.color || '#3b82f6', 
+        emoji: input.emoji || '📋' 
+      }
+      this.projects.push(p)
+      this.isDataModified = true
+      return p
+    },
+
     // Clear all data to empty state
     clearState() {
       this.people = []
