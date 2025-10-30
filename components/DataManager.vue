@@ -9,6 +9,16 @@
       class="text-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
     />
 
+    <!-- Load Sample Data Button -->
+    <button 
+      @click="loadSampleData"
+      :disabled="loading"
+      class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Load sample data from /public/planner-data.json (5 people, 5 projects, 6 assignments)"
+    >
+      📊 Load Sample
+    </button>
+
     <!-- Download Button (only show when data is modified) -->
     <button 
       v-if="store.shouldShowDownload"
@@ -75,6 +85,26 @@ const handleFileSelect = async (event: Event) => {
     if (fileInput.value) {
       fileInput.value.value = ''
     }
+  }
+}
+
+const loadSampleData = async () => {
+  // Show confirmation if there's existing data
+  if (store.hasData) {
+    const confirmed = confirm('Loading sample data will replace all current data. Continue?')
+    if (!confirmed) return
+  }
+  
+  loading.value = true
+  
+  try {
+    await store.loadDataFromJSON('planner-data.json')
+    console.log('Successfully loaded sample data from planner-data.json')
+  } catch (error) {
+    console.error('Error loading sample data:', error)
+    alert('Failed to load sample data. Please check if planner-data.json exists in the public folder.')
+  } finally {
+    loading.value = false
   }
 }
 
