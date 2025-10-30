@@ -156,7 +156,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
-import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
+import { addDaysISO, addBusinessDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
@@ -265,7 +265,8 @@ function onCreate(payload: { person_id: string|null; project_id: string|null; st
     }
   }
   
-  const end = addDaysISO(start, Math.max(1, duration) - 1)
+  // Duration represents business days, so calculate end date by adding business days
+  const end = addBusinessDaysISO(start, Math.max(1, duration) - 1)
   store.createAssignment({ person_id: person_id!, project_id: project_id!, start, end, allocation })
 }
 

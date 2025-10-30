@@ -83,3 +83,19 @@ export function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 
   }
   return span
 }
+
+// Add business days to a date (skipping weekends)
+export function addBusinessDaysISO(startISO: string, businessDays: number) {
+  if (businessDays <= 0) return startISO
+  
+  const d = parseISO(startISO)
+  let added = 0
+  
+  while (added < businessDays) {
+    d.setUTCDate(d.getUTCDate() + 1)
+    const wd = d.getUTCDay()
+    if (wd !== 0 && wd !== 6) added += 1
+  }
+  
+  return toISO(d)
+}
