@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { daysBetweenInclusive, parseISO, addDaysISO, toISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
+import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import { generateUserColor } from '@/utils/colors'
 import type { Assignment } from '@/types/planner'
 
@@ -148,11 +148,6 @@ function onResizeEnd() {
   window.removeEventListener('mouseup', onResizeEnd)
   onResizeEndEvent();
 }
-
-// Touch and context menu handling for edit popover
-let touchStartTime = 0
-let touchCount = 0
-let touchTimeout: number | null = null
 
 function onRightClick(e: MouseEvent) {
   emit('edit', { 

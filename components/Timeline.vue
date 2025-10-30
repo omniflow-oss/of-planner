@@ -156,7 +156,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
-import { addDaysISO, addBusinessDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
+import { addBusinessDaysISO } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
@@ -167,15 +167,12 @@ const { people, projects, view, assignments } = storeToRefs(store)
 
 const {
   todayISO,
-  isWeekend,
   days,
   dayOffsets,
   dayColumns,
   dayLabel,
   monthSegments,
   monthColumns,
-  yearSegments,
-  yearColumns,
   weekStarts
 } = useTimeline(view)
 
@@ -442,7 +439,6 @@ function addNewPerson() {
 const assignmentsKey = Symbol.for('assignmentsRef')
 provide(assignmentsKey, assignments)
 
-const gridEl = ref<HTMLElement | null>(null)
 const scrollArea = ref<HTMLElement | null>(null)
 const scrollLeft = ref(0)
 
