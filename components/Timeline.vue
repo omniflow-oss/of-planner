@@ -5,9 +5,28 @@
       <!-- Left placeholders to match 2 header rows: month+year / day -->
       <div class="flex flex-col border-r">
         <div class="py-3 px-3 text-center my-auto">
-          <div class="text-xs text-slate-500 tracking-tight">{{ view.mode === 'person' ? 'People View' : 'Project View' }}</div>
-        </div>
-     
+          <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">
+            {{ view.mode === 'person' ? 'People View' : 'Project View' }} 
+              <!-- Add Project Button (only show in project view) -->
+              <button 
+              v-if="view.mode === 'project'"
+              @click="addNewProject"
+              class="px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors shadow-sm font-medium"
+              title="Add a new project to the timeline"
+            >
+              ➕ Add Project
+            </button>
+            <!-- Add Person Button (only show in people view) -->
+            <button 
+              v-if="view.mode === 'person'"
+              @click="addNewPerson"
+              class="px-3 py-1 text-xs bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors shadow-sm font-medium"
+              title="Add a new person to the timeline"
+            >
+              ➕ Add Person
+            </button>
+          </div>          
+        </div>     
       </div>
       <div class="relative">
         <div class="overflow-hidden">
@@ -386,6 +405,38 @@ function confirmCreate() {
 
 function closeCreatePopover() {
   createPopover.value = null
+}
+
+// Add new project function
+function addNewProject() {
+  const projectName = window.prompt('Enter project name:', '')
+  if (!projectName?.trim()) return // User cancelled or entered empty name
+  
+  // Check if project name already exists
+  const exists = projects.value.some(p => p.name.toLowerCase() === projectName.trim().toLowerCase())
+  if (exists) {
+    alert('A project with this name already exists!')
+    return
+  }
+  
+  const newProject = store.createProject({ name: projectName.trim() })
+  console.log(`Created new project: ${newProject.name} (${newProject.id})`)
+}
+
+// Add new person function
+function addNewPerson() {
+  const personName = window.prompt('Enter person name:', '')
+  if (!personName?.trim()) return // User cancelled or entered empty name
+  
+  // Check if person name already exists
+  const exists = people.value.some(p => p.name.toLowerCase() === personName.trim().toLowerCase())
+  if (exists) {
+    alert('A person with this name already exists!')
+    return
+  }
+  
+  const newPerson = store.createPerson({ name: personName.trim() })
+  console.log(`Created new person: ${newPerson.name} (${newPerson.id})`)
 }
 
 // Provide assignments ref to children (RowGroup) for lane computation

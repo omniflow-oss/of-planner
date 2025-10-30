@@ -44,7 +44,7 @@ export function useDataLoader() {
    */
   const checkFileExists = async (filename: string) => {
     try {
-      const response = await fetch(`/${filename}`, { method: 'HEAD' })
+      const response = await fetch(`${filename}`, { method: 'HEAD' })
       return response.ok
     } catch {
       return false
