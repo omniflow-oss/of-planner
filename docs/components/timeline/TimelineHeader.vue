@@ -1,6 +1,6 @@
 <template>
   <!-- Sticky timeline header with optional grid overlay -->
-  <div class="relative sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+  <div class="relative sticky top-0 z-25 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
     <!-- Grid overlay: vertical day/week lines and today marker -->
     <GridOverlay
       class="pointer-events-none absolute inset-0"

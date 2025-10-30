@@ -1,26 +1,14 @@
 import { defineStore } from 'pinia'
-import type { PlannerState, Assignment, Person, Project, Allocation, ViewMode } from '@/types/planner'
+import type { PlannerState, Assignment, Person, Project, Allocation, ViewMode, ExternalPlannerData } from '@/types/planner'
 import { addDaysISO, clampDateRange, parseISO, toISO } from '@/composables/useDate'
 
 function uid(prefix = 'id') { return `${prefix}_${Math.random().toString(36).slice(2, 9)}` }
 
 export const usePlannerStore = defineStore('planner', {
   state: (): PlannerState => ({
-    people: [
-      { id: 'p1', name: 'Alice' },
-      { id: 'p2', name: 'Bob' },
-      { id: 'p3', name: 'Chloé' }
-    ],
-    projects: [
-      { id: 'j1', name: 'Aurora', color: '#6bc6ff', emoji: '🟦' },
-      { id: 'j2', name: 'Nebula', color: '#ffd166', emoji: '🟨' },
-      { id: 'j3', name: 'Helios', color: '#ff7e6b', emoji: '🟥' }
-    ],
-    assignments: [
-      { id: 'a1', person_id: 'p1', project_id: 'j1', start: toISO(new Date()), end: addDaysISO(toISO(new Date()), 4), allocation: 1 },
-      { id: 'a2', person_id: 'p1', project_id: 'j2', start: addDaysISO(toISO(new Date()), 7), end: addDaysISO(toISO(new Date()), 10), allocation: 0.5 },
-      { id: 'a3', person_id: 'p2', project_id: 'j2', start: addDaysISO(toISO(new Date()), 2), end: addDaysISO(toISO(new Date()), 8), allocation: 0.75 }
-    ],
+    people: [],
+    projects: [    ],
+    assignments: [  ],
     view: {
       mode: 'person',
       start: (() => {
@@ -32,11 +20,14 @@ export const usePlannerStore = defineStore('planner', {
       px_per_day: 56,
       selected_id: null
     },
-    meta: { version: '2.9.0' }
+    meta: { version: '2.9.0' },
+    isDataModified: false
   }),
   getters: {
     byPerson: (s) => (personId: string) => s.assignments.filter(a => a.person_id === personId),
     byProject: (s) => (projectId: string) => s.assignments.filter(a => a.project_id === projectId),
+    hasData: (s) => s.people.length > 0 || s.projects.length > 0 || s.assignments.length > 0,
+    shouldShowDownload: (s) => (s.people.length > 0 || s.projects.length > 0 || s.assignments.length > 0) && s.isDataModified,
   },
   actions: {
     switchMode(mode: ViewMode) { this.view.mode = mode },
@@ -50,6 +41,7 @@ export const usePlannerStore = defineStore('planner', {
       const a: Assignment = { id: uid('a'), ...input, start, end }
       this.assignments.push(a)
       this.view.selected_id = a.id
+      this.isDataModified = true
       return a
     },
 
@@ -64,8 +56,114 @@ export const usePlannerStore = defineStore('planner', {
         next.end = clamped.end
       }
       this.assignments[idx] = next
+      this.isDataModified = true
     },
 
-    deleteAssignment(id: string) { this.assignments = this.assignments.filter(a => a.id !== id) }
+    deleteAssignment(id: string) { 
+      this.assignments = this.assignments.filter(a => a.id !== id) 
+      this.isDataModified = true
+    },
+
+    createPerson(input: { name: string }) {
+      const p: Person = { id: uid('p'), name: input.name }
+      this.people.push(p)
+      this.isDataModified = true
+      return p
+    },
+
+    createProject(input: { name: string; color?: string; emoji?: string }) {
+      const p: Project = { 
+        id: uid('j'), 
+        name: input.name, 
+        color: input.color || '#3b82f6', 
+        emoji: input.emoji || '📋' 
+      }
+      this.projects.push(p)
+      this.isDataModified = true
+      return p
+    },
+
+    // Clear all data to empty state
+    clearState() {
+      this.people = []
+      this.projects = []
+      this.assignments = []
+      this.view.selected_id = null
+      console.log('PlannerState cleared - all data emptied')
+    },
+
+    // Load data from external JSON data object (for local file loading)
+    loadDataFromObject(data: ExternalPlannerData) {
+      // Clear existing data first
+      this.people = []
+      this.projects = []
+      this.assignments = []
+      this.view.selected_id = null
+      
+      // Load new data
+      if (data.people) this.people = data.people
+      if (data.projects) this.projects = data.projects  
+      if (data.assignments) this.assignments = data.assignments
+      
+      // Reset modified flag after loading
+      this.isDataModified = false
+      
+      console.log('Data refreshed from local file:', {
+        people: this.people.length,
+        projects: this.projects.length,
+        assignments: this.assignments.length
+      })
+    },
+
+    // Load data from external JSON file
+    async loadDataFromJSON(filename = 'planner-data.json'): Promise<ExternalPlannerData> {
+      try {
+        const response = await fetch(`/${filename}`)
+        if (!response.ok) {
+          throw new Error(`Failed to load ${filename}: ${response.status}`)
+        }
+        const data: ExternalPlannerData = await response.json()
+        
+        // Update store data with loaded JSON
+        if (data.people) this.people = data.people
+        if (data.projects) this.projects = data.projects  
+        if (data.assignments) this.assignments = data.assignments
+        
+        // Reset modified flag after loading
+        this.isDataModified = false
+        
+        console.log(`Successfully loaded data from ${filename}`)
+        return data
+      } catch (error) {
+        console.error('Error loading JSON data:', error)
+        throw error
+      }
+    },
+
+    // Download current planner data as JSON file
+    downloadPlannerData(filename = 'planner-data.json') {
+      const data: ExternalPlannerData = {
+        people: this.people,
+        projects: this.projects,
+        assignments: this.assignments
+      }
+
+      const jsonString = JSON.stringify(data, null, 2)
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      
+      // Mark as not modified after download
+      this.isDataModified = false
+      
+      console.log(`Downloaded planner data as ${filename}`)
+    }
   }
 })

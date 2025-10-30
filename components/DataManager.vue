@@ -1,0 +1,116 @@
+<template>
+  <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+    <!-- File Input -->
+    <input
+      ref="fileInput"
+      type="file"
+      accept=".json"
+      @change="handleFileSelect"
+      class="text-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+    />
+
+    <!-- Load Sample Data Button -->
+    <button 
+      @click="loadSampleData"
+      :disabled="loading"
+      class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Load sample data from /public/planner-data.json (5 people, 5 projects, 6 assignments)"
+    >
+      📊 Load Sample
+    </button>
+
+    <!-- Download Button (only show when data is modified) -->
+    <button 
+      v-if="store.shouldShowDownload"
+      @click="downloadData" 
+      class="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+      title="Download modified data as JSON"
+    >
+      Download
+    </button>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="text-sm text-blue-600">
+      Loading...
+    </div>
+
+    <!-- Status Display -->
+    <div class="text-sm text-gray-600">
+      People: {{ store.people.length }} | 
+      Projects: {{ store.projects.length }} | 
+      Assignments: {{ store.assignments.length }}
+      <span v-if="store.isDataModified" class="text-orange-600 ml-2">●</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { usePlannerStore } from '@/stores/usePlannerStore'
+import type { ExternalPlannerData } from '@/types/planner'
+
+const store = usePlannerStore()
+const fileInput = ref<HTMLInputElement>()
+const loading = ref(false)
+
+const handleFileSelect = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  
+  if (!file) return
+  
+  // Validate file type
+  if (!file.name.endsWith('.json')) {
+    alert('Please select a JSON file')
+    return
+  }
+  
+  loading.value = true
+  
+  try {
+    // Read file content
+    const text = await file.text()
+    const data: ExternalPlannerData = JSON.parse(text)
+    
+    // Load data using store method (automatically refreshes)
+    store.loadDataFromObject(data)
+    
+    console.log(`Successfully loaded data from ${file.name}`)
+    
+  } catch (error) {
+    console.error('Error loading JSON file:', error)
+    alert('Failed to load JSON file. Please check the file format.')
+  } finally {
+    loading.value = false
+    // Clear the input so the same file can be selected again
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+  }
+}
+
+const loadSampleData = async () => {
+  // Show confirmation if there's existing data
+  if (store.hasData) {
+    const confirmed = confirm('Loading sample data will replace all current data. Continue?')
+    if (!confirmed) return
+  }
+  
+  loading.value = true
+  
+  try {
+    await store.loadDataFromJSON('planner-data.json')
+    console.log('Successfully loaded sample data from planner-data.json')
+  } catch (error) {
+    console.error('Error loading sample data:', error)
+    alert('Failed to load sample data. Please check if planner-data.json exists in the public folder.')
+  } finally {
+    loading.value = false
+  }
+}
+
+const downloadData = () => {
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')
+  const filename = `planner-data-${timestamp}.json`
+  store.downloadPlannerData(filename)
+}
+</script>

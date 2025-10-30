@@ -7,7 +7,7 @@
     <div class="w-px h-6 bg-slate-200/70 mx-2" />
     <div class="inline-flex items-center gap-1">
       <button class="px-2 py-1 text-xs rounded-md border border-slate-200 hover:bg-slate-50" @click="shift(-1)">‹</button>
-      <div class="px-2.5 py-1 text-xs rounded-full bg-slate-900 text-white tracking-tight">{{ todayLabel }}</div>
+      <div class="px-2.5 py-1 text-xs rounded-full bg-slate-900 text-white tracking-tight whitespace-nowrap">{{ todayLabel }}</div>
       <button class="px-2 py-1 text-xs rounded-md border border-slate-200 hover:bg-slate-50" @click="shift(1)">›</button>
       <button class="ml-1 px-2.5 py-1 text-xs rounded-md border border-slate-200 hover:bg-slate-50" @click="today">Today</button>
     </div>

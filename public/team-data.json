@@ -1,0 +1,17 @@
+{
+  "people": [
+    { "id": "p1", "name": "Sarah" },
+    { "id": "p2", "name": "Michael" },
+    { "id": "p3", "name": "Lisa" }
+  ],
+  "projects": [
+    { "id": "j1", "name": "Website Redesign", "color": "#8b5cf6", "emoji": "🎨" },
+    { "id": "j2", "name": "Mobile App", "color": "#06b6d4", "emoji": "📱" },
+    { "id": "j3", "name": "API Development", "color": "#ef4444", "emoji": "⚙️" }
+  ],
+  "assignments": [
+    { "id": "a1", "person_id": "p1", "project_id": "j1", "start": "2025-10-28", "end": "2025-11-08", "allocation": 0.75 },
+    { "id": "a2", "person_id": "p2", "project_id": "j2", "start": "2025-10-30", "end": "2025-11-12", "allocation": 1 },
+    { "id": "a3", "person_id": "p3", "project_id": "j3", "start": "2025-11-01", "end": "2025-11-15", "allocation": 0.5 }
+  ]
+}

@@ -29,4 +29,11 @@ export type PlannerState = {
   assignments: Assignment[]
   view: ViewState
   meta: { version: '2.9.0' }
+  isDataModified: boolean
+}
+
+export type ExternalPlannerData = {
+  people?: Person[]
+  projects?: Project[]
+  assignments?: Assignment[]
 }
