@@ -31,7 +31,7 @@ A lightweight, single‑page capacity planner to schedule people on projects day
   - `timeline/TimelineHeader.vue` — two‑line header (Month Year / D MMM) + GridOverlay
   - `ViewSwitcher.vue` — mode, date and zoom controls
   - `internal/RowGroup.vue` — group header + subrows (left labels + right track)
-  - `internal/RowTracks.vue` — track renderer (alternate minimal variant)
+  - `internal/RowTracks.vue` — track renderer (deprecated; archived/removed)
   - `internal/shared/AssignmentBar.vue` — draggable/resizable bar
   - `internal/shared/GridOverlay.vue` — vertical grid + today marker (shared with header)
   - `internal/LeftPaneCell.vue` — left pane cell for labels and “Add …” row

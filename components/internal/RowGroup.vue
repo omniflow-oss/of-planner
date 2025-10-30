@@ -66,9 +66,10 @@ import { nextTick, onMounted, onUnmounted } from 'vue'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import LeftPaneCell from '@/components/internal/LeftPaneCell.vue'
-import { addDaysISO, parseISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
+import { addDaysISO, businessDaysBetweenInclusive, businessOffset } from '@/composables/useDate'
 import { computeLanes } from '@/utils/lanes'
 import { useTimelineGrid } from '@/composables/useTimeline'
+import { indexFromX, businessSegment } from '@/utils/grid'
 
 const props = defineProps<{
   label: string
@@ -122,7 +123,6 @@ const autoScrollState = ref({
 
 function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.person_id === null || sr.project_id === null }
 function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
-function isWeekend(dayISO: string) { const d = parseISO(dayISO).getUTCDay(); return d === 0 || d === 6 }
 function subAssignmentsLaned(sr: { key:string; person_id: string|null; project_id: string|null }) {
   // Since we filtered out add rows, all rows here should have assignments
   const list = assignmentsRef.value.filter((a: any) => a.person_id === sr.person_id && a.project_id === sr.project_id)
@@ -164,8 +164,6 @@ function startDragCreate(e: MouseEvent, sr: any) {
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
   
-  console.log('RowGroup: Starting drag create for row:', sr.key)
-  
   // Save all critical state immediately before any mouse movement
   dragState.value.rowKey = sr.key
   dragState.value.startX = x
@@ -179,7 +177,6 @@ function startDragCreate(e: MouseEvent, sr: any) {
   dragState.value.longClickTimer = window.setTimeout(() => {
     dragState.value.active = true
     dragState.value.isLongClick = true
-    console.log('RowGroup: Long click timer completed, showing preview')
     updatePreviewBar()
   }, 200) // 200ms for preview display
 }
@@ -188,8 +185,7 @@ function updateDragCreate(e: MouseEvent, sr: any) {
   // Only process if drag is active and this is the correct row, or if rowKey matches but sr.key is different (mouse moved outside)
   if (!dragState.value.active) return
   if (dragState.value.rowKey && dragState.value.rowKey !== sr.key) {
-    // Mouse moved outside the original row, but we still want to update if we have a saved rowKey
-    console.log('RowGroup: Mouse outside original row, preserving rowKey:', dragState.value.rowKey)
+    // Mouse moved outside the original row; keep state bound to original row
     return
   }
   
@@ -202,12 +198,6 @@ function updateDragCreate(e: MouseEvent, sr: any) {
 }
 
 function endDragCreate(e: MouseEvent, sr: any) {
-  console.log('RowGroup: End drag create', { 
-    active: dragState.value.active, 
-    isLongClick: dragState.value.isLongClick,
-    rowKey: dragState.value.rowKey,
-    srKey: sr.key
-  })
   
   // Clear long click timer
   if (dragState.value.longClickTimer) {
@@ -217,7 +207,6 @@ function endDragCreate(e: MouseEvent, sr: any) {
   
   // If drag is not active, handle as regular click
   if (!dragState.value.active) {
-    console.log('RowGroup: Drag not active, handling as regular click')
     onEmptyClick(e, sr)
     resetDragState()
     return
@@ -225,7 +214,6 @@ function endDragCreate(e: MouseEvent, sr: any) {
   
   // If we have a saved rowKey but mouse ended on different row, still create assignment on original row
   if (dragState.value.rowKey && dragState.value.rowKey !== sr.key) {
-    console.log('RowGroup: Mouse ended on different row, using saved rowKey:', dragState.value.rowKey)
     // Find the original subrow data using the saved rowKey
     const originalSubrow = filteredSubrows.value.find(subrow => subrow.key === dragState.value.rowKey)
     if (originalSubrow) {
@@ -243,13 +231,6 @@ function endDragCreate(e: MouseEvent, sr: any) {
     
     // Calculate duration using business days (matching Timeline's onCreate expectation)
     const duration = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
-    
-    console.log('RowGroup: Creating assignment', { 
-      person_id: sr.person_id, 
-      project_id: sr.project_id, 
-      start: startDay, 
-      duration: duration 
-    })
     
     // Emit create event with duration (as expected by Timeline.onCreate)
     emit('create', {
@@ -275,7 +256,6 @@ function cancelDragCreate() {
 }
 
 function resetDragState() {
-  console.log('RowGroup: Resetting drag state, clearing rowKey:', dragState.value.rowKey)
   dragState.value.active = false
   dragState.value.isLongClick = false
   dragState.value.rowKey = ''
@@ -349,43 +329,19 @@ function updateDragFromScroll() {
 }
 
 function getDayIndexFromX(x: number): number {
-  let idx = 0
-  if (dayOffsets.value) {
-    for (let i = 0; i < days.value.length; i++) {
-      const left = lineLeft(i)
-      const width = dayWidth(i)
-      if (x < left + width) {
-        idx = i
-        break
-      }
-      idx = i
-    }
-  } else {
-    idx = Math.round(x / pxPerDay.value)
-  }
-  return Math.max(0, Math.min(days.value.length - 1, idx))
+  return indexFromX(x, dayOffsets.value, pxPerDay.value, days.value.length)
 }
 
 function updatePreviewBar() {
   const startIndex = Math.min(dragState.value.startDayIndex, dragState.value.endDayIndex)
   const endIndex = Math.max(dragState.value.startDayIndex, dragState.value.endDayIndex)
   
-  if (startIndex >= 0 && endIndex >= 0 && startIndex < days.value.length && endIndex < days.value.length) {
-    // Calculate preview bar using the same positioning logic as AssignmentBar
-    const startDay = days.value[startIndex]
-    const endDay = days.value[endIndex]
-    
-    // Use business day offset from timeline start (same as AssignmentBar)
-    const businessStartIndex = Math.max(0, businessOffset(props.startISO, startDay))
-    const businessDayCount = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
-    
-    // Position and width calculation (matching AssignmentBar logic)
-    const left = businessStartIndex * pxPerDay.value
-    const width = Math.max(1, businessDayCount * pxPerDay.value - 2)  // -2 for border like AssignmentBar
-    
-    dragState.value.previewLeft = left
-    dragState.value.previewWidth = width
-  }
+  if (startIndex < 0 || endIndex < 0 || startIndex >= days.value.length || endIndex >= days.value.length) return
+  const startDay = days.value[startIndex]
+  const endDay = days.value[endIndex]
+  const seg = businessSegment(props.startISO, startDay, endDay, pxPerDay.value)
+  dragState.value.previewLeft = seg.left
+  dragState.value.previewWidth = seg.width
 }
 
 // Empty click to show create popover (now handled by Timeline.vue)
@@ -395,38 +351,23 @@ function onEmptyClick(e: MouseEvent, sr: any) {
   }
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
-  // Map x to closest day index based on offsets/widths
-  let idx = 0
-  if (dayOffsets.value) {
-    for (let i=0;i<days.value.length;i++){
-      const left = lineLeft(i)
-      const width = dayWidth(i)
-      if (x < left + width) { idx = i; break }
-      idx = i
-    }
-  } else {
-    idx = Math.round(x / pxPerDay.value)
-  }
-  const start = days.value[Math.max(0, Math.min(days.value.length-1, idx))]
+  const idx = indexFromX(x, dayOffsets.value, pxPerDay.value, days.value.length)
+  const start = days.value[idx]
   emit('createPopover', { key: sr.key, x: e.clientX, y: e.clientY, dayISO: start, person_id: sr.person_id, project_id: sr.project_id })
 }
 
-// Today line - avoid hydration mismatch
-const todayISO = (() => { const d = new Date(); d.setUTCHours(0,0,0,0); return d.toISOString().slice(0,10) })()
-const todayIndex = computed(() => days.value.findIndex(d => d === todayISO))
+// Today index no longer used here; header overlay handles today marker
 
 // tiny pinia-less accessor for current assignments via inject to keep component pure
 const assignmentsKey = Symbol.for('assignmentsRef')
 function usePlanner() { return inject<any>(assignmentsKey)! }
 const assignmentsRef = usePlanner()
 
-// Header aggregated assignments
-const headerLaneCount = ref(1)
-const headerAssignments = computed(() => {
+// Header aggregated lane count
+const headerLaneCount = computed(() => {
   const list = assignmentsRef.value.filter((a: any) => (props.groupType === 'person' ? a.person_id === props.groupId : a.project_id === props.groupId))
-  const { items, laneCount } = computeLanes(props.startISO, list)
-  headerLaneCount.value = laneCount
-  return items
+  const { laneCount } = computeLanes(props.startISO, list)
+  return laneCount
 })
 
 // Force recalculation by triggering subAssignmentsLaned for all subrows
@@ -521,24 +462,20 @@ const handleGlobalMouseMove = (e: MouseEvent) => {
         
         // Check if mouse is near right edge and should trigger auto-scroll
         if (e.clientX > containerRect.right - scrollThreshold) {
-          console.log('RowGroup: Starting auto-scroll right')
           startAutoScroll(1, timelineContainer)
         }
         // Auto-scroll left when near left edge
         else if (e.clientX < containerRect.left + scrollThreshold && timelineContainer.scrollLeft > 0) {
-          console.log('RowGroup: Starting auto-scroll left')
           startAutoScroll(-1, timelineContainer)
         }
         // Stop auto-scroll when mouse is in the middle area
         else if (autoScrollState.value.isScrolling) {
-          console.log('RowGroup: Stopping auto-scroll')
           stopAutoScroll()
         }
       }
     } else {
       // If activeRow is not found, still update currentX based on the original startX position
       // This prevents losing the drag state when mouse goes far outside
-      console.log('RowGroup: Active row not found, preserving rowKey:', dragState.value.rowKey)
       dragState.value.currentX = e.clientX - dragState.value.startX
     }
   }
