@@ -9,14 +9,26 @@
       class="text-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
     />
 
-    <!-- Load Sample Data Button -->
+    <!-- Load Sample Data Button (only show when no data exists) -->
     <button 
+      v-if="!store.hasData"
       @click="loadSampleData"
       :disabled="loading"
       class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       title="Load sample data from /public/planner-data.json (5 people, 5 projects, 6 assignments)"
     >
       📊 Load Sample
+    </button>
+
+    <!-- Clear Data Button (only show when data exists) -->
+    <button 
+      v-if="store.hasData"
+      @click="clearAllData"
+      :disabled="loading"
+      class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Clear all data (people, projects, assignments)"
+    >
+      🗑️ Clear
     </button>
 
     <!-- Download Button (only show when data is modified) -->
@@ -105,6 +117,14 @@ const loadSampleData = async () => {
     alert('Failed to load sample data. Please check if planner-data.json exists in the public folder.')
   } finally {
     loading.value = false
+  }
+}
+
+const clearAllData = () => {
+  const confirmed = confirm('Are you sure you want to clear all data? This action cannot be undone.')
+  if (confirmed) {
+    store.clearState()
+    console.log('All data cleared')
   }
 }
 
