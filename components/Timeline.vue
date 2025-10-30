@@ -136,7 +136,6 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { inject, type Ref } from 'vue'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
@@ -146,12 +145,6 @@ import RowGroup from '@/components/internal/RowGroup.vue'
 
 const store = usePlannerStore()
 const { people, projects, view, assignments } = storeToRefs(store)
-
-// Inject timeline events from app.vue
-const timelineEvents = inject<{
-  goToToday: Ref<string | null>
-  addWeeks: Ref<{ direction: 'previous' | 'next', weeks: number } | null>
-}>('timelineEvents')
 
 const {
   todayISO,
@@ -323,27 +316,15 @@ function handleScroll() {
   onScroll()
 }
 
-  // Handle timeline scroll trigger from ViewSwitcher shift
-  const handleScrollTrigger = () => {
-    handleScroll()
-  }
+// Inject timeline events from app.vue
+const timelineEvents = inject<{
+  goToTodayEvent: Ref<string | null>
+  addWeeksEvent: Ref<{ direction: 'previous' | 'next', weeks: number } | null>
+}>('timelineEvents')
 
-  // Handle adding weeks to timeline from ViewSwitcher shift
-  function handleAddWeeks(data: { direction: 'previous' | 'next', weeks: number }) {
-    const { direction, weeks } = data
-    
-    // Convert weeks to weekdays (5 working days per week)
-    const weekdays = weeks * 5
-    
-    if (direction === 'previous') {
-      prependWeekdays(weekdays, true)
-    } else {
-      appendWeekdays(weekdays, true)
-    }
-  }
-
-  // Handle go to today functionality
-  function handleGoToToday(todayISO: string) {
+// Watch for go to today events
+watch(() => timelineEvents?.goToTodayEvent.value, (todayISO) => {
+  if (todayISO) {
     // Find today's index in the current days array
     const todayIndex = days.value.findIndex(d => d === todayISO)
     
@@ -361,6 +342,23 @@ function handleScroll() {
       })
     }
   }
+})
+
+// Watch for add weeks events
+watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
+  if (data) {
+    const { direction, weeks } = data
+    
+    // Convert weeks to weekdays (5 working days per week)
+    const weekdays = weeks * 5
+    
+    if (direction === 'previous') {
+      prependWeekdays(weekdays, true)
+    } else {
+      appendWeekdays(weekdays, true)
+    }
+  }
+})
   
   // Handle clicks outside of popovers to close them
   const handleClickOutside = (event: MouseEvent) => {
@@ -379,20 +377,7 @@ function handleScroll() {
     }
   }
 
-// Watch for timeline events from ViewSwitcher (via provide/inject)
-watch(() => timelineEvents?.goToToday.value, (todayISO) => {
-  if (todayISO) {
-    handleGoToToday(todayISO)
-  }
-})
-
-watch(() => timelineEvents?.addWeeks.value, (data) => {
-  if (data) {
-    handleAddWeeks(data)
-  }
-})
-
-// Initialize timeline and setup click listener
+// Initialize timeline and auto-scroll to today
 onMounted(async () => { 
   // Ensure we have a valid todayISO before calling init
   await init(todayISO);
@@ -401,7 +386,14 @@ onMounted(async () => {
   
   // Auto-scroll to today on app initialization
   await nextTick()
-  handleGoToToday(todayISO)
+  if (timelineEvents?.goToTodayEvent) {
+    timelineEvents.goToTodayEvent.value = todayISO
+    nextTick(() => {
+      if (timelineEvents?.goToTodayEvent) {
+        timelineEvents.goToTodayEvent.value = null
+      }
+    })
+  }
 })
 
 onUnmounted(() => {

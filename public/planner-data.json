@@ -1,0 +1,24 @@
+{
+  "people": [
+    { "id": "p1", "name": "Alice" },
+    { "id": "p2", "name": "Bob" },
+    { "id": "p3", "name": "Chloé" },
+    { "id": "p4", "name": "David" },
+    { "id": "p5", "name": "Emma" }
+  ],
+  "projects": [
+    { "id": "j1", "name": "Aurora", "color": "#6bc6ff", "emoji": "🟦" },
+    { "id": "j2", "name": "Nebula", "color": "#ffd166", "emoji": "🟨" },
+    { "id": "j3", "name": "Helios", "color": "#ff7e6b", "emoji": "🟥" },
+    { "id": "j4", "name": "Cosmos", "color": "#a78bfa", "emoji": "🟪" },
+    { "id": "j5", "name": "Phoenix", "color": "#34d399", "emoji": "🟩" }
+  ],
+  "assignments": [
+    { "id": "a1", "person_id": "p1", "project_id": "j1", "start": "2025-10-30", "end": "2025-11-03", "allocation": 1 },
+    { "id": "a2", "person_id": "p1", "project_id": "j2", "start": "2025-11-06", "end": "2025-11-10", "allocation": 0.5 },
+    { "id": "a3", "person_id": "p2", "project_id": "j2", "start": "2025-11-01", "end": "2025-11-07", "allocation": 0.75 },
+    { "id": "a4", "person_id": "p3", "project_id": "j3", "start": "2025-10-28", "end": "2025-11-05", "allocation": 0.75 },
+    { "id": "a5", "person_id": "p4", "project_id": "j4", "start": "2025-11-04", "end": "2025-11-12", "allocation": 1 },
+    { "id": "a6", "person_id": "p5", "project_id": "j5", "start": "2025-10-29", "end": "2025-11-08", "allocation": 0.5 }
+  ]
+}
