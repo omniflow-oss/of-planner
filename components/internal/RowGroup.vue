@@ -108,6 +108,13 @@ const dragState = ref({
   isLongClick: false
 })
 
+// Auto-scroll state
+const autoScrollState = ref({
+  isScrolling: false,
+  direction: 0, // -1 for left, 1 for right, 0 for no scroll
+  animationId: null as number | null
+})
+
 function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.person_id === null || sr.project_id === null }
 function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
 function isWeekend(dayISO: string) { const d = parseISO(dayISO).getUTCDay(); return d === 0 || d === 6 }
@@ -254,6 +261,67 @@ function resetDragState() {
   dragState.value.endDayIndex = 0
   dragState.value.previewLeft = 0
   dragState.value.previewWidth = 0
+  
+  // Stop any active auto-scrolling
+  stopAutoScroll()
+}
+
+// Auto-scroll helper functions
+function startAutoScroll(direction: number, timelineContainer: HTMLElement) {
+  if (autoScrollState.value.isScrolling && autoScrollState.value.direction === direction) {
+    return // Already scrolling in this direction
+  }
+  
+  stopAutoScroll()
+  autoScrollState.value.isScrolling = true
+  autoScrollState.value.direction = direction
+  
+  const scroll = () => {
+    if (!autoScrollState.value.isScrolling || !dragState.value.active) {
+      return
+    }
+    
+    const scrollSpeed = 8
+    timelineContainer.scrollLeft += direction * scrollSpeed
+    
+    // Update drag state after scroll
+    if (dragState.value.rowKey) {
+      const activeRow = document.querySelector(`[data-row-key="${dragState.value.rowKey}"]`)
+      if (activeRow) {
+        // Re-trigger mouse position update to maintain correct drag state
+        const mouseEvent = new MouseEvent('mousemove', {
+          clientX: dragState.value.currentX + (activeRow.getBoundingClientRect().left),
+          clientY: 0
+        })
+        updateDragFromScroll()
+      }
+    }
+    
+    autoScrollState.value.animationId = requestAnimationFrame(scroll)
+  }
+  
+  autoScrollState.value.animationId = requestAnimationFrame(scroll)
+}
+
+function stopAutoScroll() {
+  if (autoScrollState.value.animationId) {
+    cancelAnimationFrame(autoScrollState.value.animationId)
+    autoScrollState.value.animationId = null
+  }
+  autoScrollState.value.isScrolling = false
+  autoScrollState.value.direction = 0
+}
+
+function updateDragFromScroll() {
+  if (dragState.value.active && dragState.value.rowKey) {
+    const activeRow = document.querySelector(`[data-row-key="${dragState.value.rowKey}"]`)
+    if (activeRow) {
+      const rect = activeRow.getBoundingClientRect()
+      const x = dragState.value.currentX // Keep the relative mouse position
+      dragState.value.endDayIndex = getDayIndexFromX(x)
+      updatePreviewBar()
+    }
+  }
 }
 
 function getDayIndexFromX(x: number): number {
@@ -417,6 +485,32 @@ const handleGlobalMouseMove = (e: MouseEvent) => {
       dragState.value.currentX = x
       dragState.value.endDayIndex = getDayIndexFromX(x)
       updatePreviewBar()
+      
+      // Auto-scroll when dragging beyond the edges of the timeline
+      const timelineContainer = activeRow.closest('.overflow-auto') as HTMLElement || 
+                               document.querySelector('[ref="scrollArea"]') as HTMLElement ||
+                               document.querySelector('.overflow-auto') as HTMLElement
+      
+      if (timelineContainer) {
+        const containerRect = timelineContainer.getBoundingClientRect()
+        const scrollThreshold = 100 // pixels from edge to trigger scroll
+        
+        // Check if mouse is near right edge and should trigger auto-scroll
+        if (e.clientX > containerRect.right - scrollThreshold) {
+          console.log('RowGroup: Starting auto-scroll right')
+          startAutoScroll(1, timelineContainer)
+        }
+        // Auto-scroll left when near left edge
+        else if (e.clientX < containerRect.left + scrollThreshold && timelineContainer.scrollLeft > 0) {
+          console.log('RowGroup: Starting auto-scroll left')
+          startAutoScroll(-1, timelineContainer)
+        }
+        // Stop auto-scroll when mouse is in the middle area
+        else if (autoScrollState.value.isScrolling) {
+          console.log('RowGroup: Stopping auto-scroll')
+          stopAutoScroll()
+        }
+      }
     } else {
       // If activeRow is not found, still update currentX based on the original startX position
       // This prevents losing the drag state when mouse goes far outside
@@ -437,6 +531,7 @@ onUnmounted(() => {
   if (dragState.value.longClickTimer) {
     clearTimeout(dragState.value.longClickTimer)
   }
+  stopAutoScroll()
   document.removeEventListener('mouseup', handleGlobalMouseUp)
   document.removeEventListener('mousemove', handleGlobalMouseMove)
 })
