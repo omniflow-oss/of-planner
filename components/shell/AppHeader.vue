@@ -5,7 +5,7 @@
         <div class="font-semibold tracking-tight">Capacity Planner</div>
         <span class="text-[10px] rounded px-1.5 py-0.5 bg-slate-100 border border-slate-200 text-slate-600">PRD v2.9</span>
       </div>
-      <DataManager />
+      <DataManager @go-to-today="$emit('go-to-today', $event)" />
     </div>
     <ViewSwitcher 
       @go-to-today="$emit('go-to-today', $event)"

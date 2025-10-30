@@ -84,6 +84,20 @@ const store = usePlannerStore()
 const fileInput = ref<HTMLInputElement>()
 const loading = ref(false)
 
+// Define emits for navigation
+const emit = defineEmits<{
+  'go-to-today': [todayISO: string]
+}>()
+
+// Helper function to navigate to today
+const navigateToToday = () => {
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
+  const todayISO = today.toISOString().slice(0, 10)
+  
+  emit('go-to-today', todayISO)
+}
+
 const triggerFileInput = () => {
   fileInput.value?.click()
 }
@@ -110,6 +124,9 @@ const handleFileSelect = async (event: Event) => {
     // Load data using store method (automatically refreshes)
     store.loadDataFromObject(data)
     
+    // Navigate to today after loading data
+    navigateToToday()
+    
   } catch (error) {
     console.error('Error loading JSON file:', error)
     alert('Failed to load JSON file. Please check the file format.')
@@ -133,6 +150,9 @@ const loadSampleData = async () => {
   
   try {
     await store.loadDataFromJSON('planner-data.json')
+    
+    // Navigate to today after loading sample data
+    navigateToToday()
   } catch (error) {
     console.error('Error loading sample data:', error)
     alert('Failed to load sample data. Please check if planner-data.json exists in the public folder.')
@@ -152,6 +172,9 @@ const clearAllData = () => {
   const confirmed = confirm('Are you sure you want to clear all data? This action cannot be undone.')
   if (confirmed) {
     store.clearState()
+    
+    // Navigate to today after clearing data
+    navigateToToday()
   }
 }
 
