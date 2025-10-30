@@ -30,6 +30,7 @@ export type PlannerState = {
   view: ViewState
   meta: { version: '2.9.0' }
   isDataModified: boolean
+  _initialData: ExternalPlannerData | null
 }
 
 export type ExternalPlannerData = {
