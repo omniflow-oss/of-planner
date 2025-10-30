@@ -1,7 +1,13 @@
 <template>
-  <div class="grid" style="grid-template-columns: 240px 1fr;" :style="{ width: timelineWidth+'px' }">
+  <div class="grid" style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;" :style="{ width: timelineWidth+'px' }"
+  draggable="false"
+  >
     <!-- Group header row -->
-    <div class="px-3 py-2 border-b border-r pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-white">
+    <div 
+      class="px-3 py-2 border-b border-r pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-white"
+      draggable="false"
+      style="-webkit-user-select: none; user-select: none;"
+    >
       <button class="w-5 h-5 grid place-items-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50" @click="expanded = !expanded">{{ expanded ? '–' : '+' }}</button>
       <span>{{ label }}  </span>
       <span class="ml-auto inline-flex items-center rounded-xl bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 inset-ring inset-ring-indigo-700/10">{{ itemCount }}</span>
@@ -30,7 +36,8 @@
            @mousedown="startDragCreate($event, sr)"
            @mousemove="updateDragCreate($event, sr)"
            @mouseup="endDragCreate($event, sr)"
-           @mouseleave="cancelDragCreate">
+           @dragstart="cancelDragCreate"
+           >
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
         <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :peopleMap="peopleMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e: any) => onResizeEvent=e" />
         
@@ -139,7 +146,7 @@ function startDragCreate(e: MouseEvent, sr: any) {
     dragState.value.startDayIndex = getDayIndexFromX(x)
     dragState.value.endDayIndex = dragState.value.startDayIndex
     updatePreviewBar()
-  }, 300) // 300ms for long click
+  }, 100) // 300ms for long click
 }
 
 function updateDragCreate(e: MouseEvent, sr: any) {
