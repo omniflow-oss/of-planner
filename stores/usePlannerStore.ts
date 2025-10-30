@@ -19,7 +19,6 @@ function generateSequentialId(prefix: string, existingItems: { id: string }[]): 
   }
   
   const newId = `${prefix}${maxNumber + 1}`
-  console.log(`Generated sequential ID: ${newId} (previous max: ${prefix}${maxNumber})`)
   return newId
 }
 
@@ -116,13 +115,11 @@ export const usePlannerStore = defineStore('planner', {
       this.view.selected_id = null
       this._initialData = null
       this.isDataModified = false
-      console.log('PlannerState cleared - all data emptied')
     },
 
     // Reset data to initial loaded state
     resetToInitialData() {
       if (!this._initialData) {
-        console.warn('No initial data available to reset to')
         return
       }
 
@@ -139,12 +136,6 @@ export const usePlannerStore = defineStore('planner', {
       
       // Reset modified flag
       this.isDataModified = false
-      
-      console.log('Data reset to initial state:', {
-        people: this.people.length,
-        projects: this.projects.length,
-        assignments: this.assignments.length
-      })
     },
 
     // Load data from external JSON data object (for local file loading)
@@ -165,12 +156,7 @@ export const usePlannerStore = defineStore('planner', {
       
       // Reset modified flag after loading
       this.isDataModified = false
-      
-      console.log('Data refreshed from local file:', {
-        people: this.people.length,
-        projects: this.projects.length,
-        assignments: this.assignments.length
-      })
+
     },
 
     // Load data from external JSON file
@@ -193,7 +179,6 @@ export const usePlannerStore = defineStore('planner', {
         // Reset modified flag after loading
         this.isDataModified = false
         
-        console.log(`Successfully loaded data from ${filename}`)
         return data
       } catch (error) {
         console.error('Error loading JSON data:', error)
@@ -224,7 +209,6 @@ export const usePlannerStore = defineStore('planner', {
       // Mark as not modified after download
       this.isDataModified = false
       
-      console.log(`Downloaded planner data as ${filename}`)
     }
   }
 })
