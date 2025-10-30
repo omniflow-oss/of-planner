@@ -40,13 +40,32 @@ function today() {
   emit('go-to-today', todayISO)
 }
 function zoom(delta: number) { 
-  const zoomLevel = view.value.px_per_day + delta * 4;
-  if(zoomLevel < 48){
+  const currentZoom = view.value.px_per_day
+  const newZoomLevel = currentZoom + delta * 4
+  
+  // If zooming out (delta < 0), check if timeline width would be smaller than window width
+  if (delta < 0) {
+    // Estimate weekdays from total days (roughly 5/7 of total days)
+    const estimatedWeekdays = Math.floor(view.value.days * 5 / 7)
+    const timelineWidth = estimatedWeekdays * newZoomLevel
+    const windowWidth = window.innerWidth
+    const sidebarWidth = 240 // Left column width for labels
+    const availableWidth = windowWidth - sidebarWidth
+    
+    // Prevent zoom out if timeline would be smaller than available width
+    if (timelineWidth < availableWidth) {
+      return // Don't allow this zoom level
+    }
+  }
+  
+  // Apply CSS class for small cells
+  if(newZoomLevel < 48){
     document.body.classList.add('cell-small');
   }else {
     document.body.classList.remove('cell-small');
   }
-  store.setPxPerDay(zoomLevel) 
+  
+  store.setPxPerDay(newZoomLevel) 
 }
 
 const todayLabel = computed(() => {
