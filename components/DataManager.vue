@@ -1,17 +1,23 @@
 <template>
   <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border">
-   
-
-    <!-- File Input Container -->
-    <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border">
-      <input
-        ref="fileInput"
-        type="file"
-        accept=".json"
-        @change="handleFileSelect"
-        class="text-sm file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-      />
-    </div>
+    <!-- Hidden File Input -->
+    <input
+      ref="fileInput"
+      type="file"
+      accept=".json"
+      @change="handleFileSelect"
+      class="hidden"
+    />
+    
+    <!-- Custom File Input Button -->
+    <button 
+      @click="triggerFileInput"
+      :disabled="loading"
+      class="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
+      title="Upload JSON data file"
+    >
+      📁 Choose File
+    </button>
 
     <!-- Load Sample Data Button (only show when no data exists) -->
     <button 
@@ -22,6 +28,17 @@
       title="Load sample data from /public/planner-data.json (5 people, 5 projects, 6 assignments)"
     >
       📊 Load Sample
+    </button>
+
+    <!-- Clear Data Button (only show when data exists but can't be reset) -->
+    <button 
+      v-if="store.hasData && !store.canReset"
+      @click="clearAllData"
+      :disabled="loading"
+      class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Clear all data (people, projects, assignments)"
+    >
+      🗑️ Clear
     </button>
 
      <!-- Reset Data Button (only show when data can be reset) -->
@@ -67,6 +84,10 @@ const store = usePlannerStore()
 const fileInput = ref<HTMLInputElement>()
 const loading = ref(false)
 
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
 const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
@@ -88,8 +109,6 @@ const handleFileSelect = async (event: Event) => {
     
     // Load data using store method (automatically refreshes)
     store.loadDataFromObject(data)
-    
-    console.log(`Successfully loaded data from ${file.name}`)
     
   } catch (error) {
     console.error('Error loading JSON file:', error)
@@ -114,7 +133,6 @@ const loadSampleData = async () => {
   
   try {
     await store.loadDataFromJSON('planner-data.json')
-    console.log('Successfully loaded sample data from planner-data.json')
   } catch (error) {
     console.error('Error loading sample data:', error)
     alert('Failed to load sample data. Please check if planner-data.json exists in the public folder.')
@@ -127,7 +145,6 @@ const resetData = () => {
   const confirmed = confirm('Reset all changes back to the initially loaded data?')
   if (confirmed) {
     store.resetToInitialData()
-    console.log('Data reset to initial state')
   }
 }
 
@@ -135,7 +152,6 @@ const clearAllData = () => {
   const confirmed = confirm('Are you sure you want to clear all data? This action cannot be undone.')
   if (confirmed) {
     store.clearState()
-    console.log('All data cleared')
   }
 }
 

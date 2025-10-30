@@ -420,7 +420,6 @@ function addNewProject() {
   }
   
   const newProject = store.createProject({ name: projectName.trim() })
-  console.log(`Created new project: ${newProject.name} (${newProject.id})`)
 }
 
 // Add new person function
@@ -436,7 +435,6 @@ function addNewPerson() {
   }
   
   const newPerson = store.createPerson({ name: personName.trim() })
-  console.log(`Created new person: ${newPerson.name} (${newPerson.id})`)
 }
 
 // Provide assignments ref to children (RowGroup) for lane computation
