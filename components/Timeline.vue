@@ -25,6 +25,10 @@
             >
               ➕ Add Person
             </button>
+            <!-- Expand/Collapse all -->
+            <span class="mx-1 w-px h-4 bg-slate-200"></span>
+            <button @click="expandAll()" class="px-2 py-1 text-[11px] border border-slate-200 rounded hover:bg-slate-50">Expand all</button>
+            <button @click="collapseAll()" class="px-2 py-1 text-[11px] border border-slate-200 rounded hover:bg-slate-50">Collapse all</button>
           </div>          
         </div>     
       </div>
@@ -464,6 +468,13 @@ const timelineEvents = inject<{
   addWeeksEvent: Ref<{ direction: 'previous' | 'next', weeks: number } | null>
 }>('timelineEvents')
 
+// Expand/Collapse all controls provided to RowGroup
+const rowGroupControls = {
+  expandAllToken: ref<number>(0),
+  collapseAllToken: ref<number>(0),
+}
+provide('rowGroupControls', rowGroupControls)
+
 // Watch for go to today events
 watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
   if (todayISO) {
@@ -557,4 +568,8 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   window.removeEventListener('scroll', handleWindowScroll)
 })
+
+// Expand/Collapse handlers
+function expandAll() { rowGroupControls.expandAllToken.value = Date.now() }
+function collapseAll() { rowGroupControls.collapseAllToken.value = Date.now() }
 </script>

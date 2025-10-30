@@ -11,6 +11,7 @@
       <button class="w-5 h-5 grid place-items-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50" @click="expanded = !expanded">{{ expanded ? '–' : '+' }}</button>
       <span>{{ label }}  </span>
       <span class="ml-auto inline-flex items-center rounded-xl bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 inset-ring inset-ring-indigo-700/10">{{ itemCount }}</span>
+      <span class="ml-2 inline-flex items-center rounded-xl bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700 border border-slate-200" :title="'Total man-days (visible window)'">{{ totalMDBadge }}</span>
       <button
         @click="handleAddClick"
         class="ml-2 w-6 h-6 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-colors"
@@ -21,6 +22,17 @@
     </div>
     <div class="relative border-b border-r pane-border timeline-bg disabled-rows" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
+      <!-- Per-day coverage overlays on header track -->
+      <template v-for="(day, i) in days" :key="'cap'+i">
+        <div 
+          v-if="capacityDaily[i] > 0"
+          class="absolute inset-y-0"
+          :class="coverageClass(i)"
+          :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }"
+        >
+          <div v-if="pxPerDay >= 44" class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700">{{ Math.round(capacityDaily[i]*100) }}%</div>
+        </div>
+      </template>
       <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
     </div>
 
@@ -70,6 +82,7 @@ import { addDaysISO, businessDaysBetweenInclusive, businessOffset } from '@/comp
 import { computeLanes } from '@/utils/lanes'
 import { useTimelineGrid } from '@/composables/useTimeline'
 import { indexFromX, businessSegment } from '@/utils/grid'
+import { useCapacity } from '@/composables/useCapacity'
 
 const props = defineProps<{
   label: string
@@ -363,6 +376,13 @@ const assignmentsKey = Symbol.for('assignmentsRef')
 function usePlanner() { return inject<any>(assignmentsKey)! }
 const assignmentsRef = usePlanner()
 
+// Expand/Collapse all controls
+const rowGroupControls = inject<{ expandAllToken: Ref<number>; collapseAllToken: Ref<number> }>('rowGroupControls', null)
+if (rowGroupControls) {
+  watch(() => rowGroupControls.expandAllToken.value, (v) => { if (v) expanded.value = true })
+  watch(() => rowGroupControls.collapseAllToken.value, (v) => { if (v) expanded.value = false })
+}
+
 // Header aggregated lane count
 const headerLaneCount = computed(() => {
   const list = assignmentsRef.value.filter((a: any) => (props.groupType === 'person' ? a.person_id === props.groupId : a.project_id === props.groupId))
@@ -388,12 +408,29 @@ watch(() => props.subrows, () => {
   })
 }, { immediate: true })
 
-const headerHeight = computed(() => Math.max(baseRowMin, 16 + headerLaneCount.value*30))
+// Keep main (header) row height fixed regardless of subrow lanes
+const headerHeight = computed(() => baseRowMin)
 
 // Count of projects or people (excluding the "add" row)
 const itemCount = computed(() => {
   return filteredSubrows.value.length
 })
+
+// Capacity per group in visible window (header overlays and total MD badge)
+const capacityApi = useCapacity(assignmentsRef, days, { type: props.groupType, id: props.groupId })
+const capacityDaily = computed(() => capacityApi.daily.value)
+const totalMD = computed(() => capacityApi.totalMD.value)
+const totalMDBadge = computed(() => {
+  const val = totalMD.value
+  return Number.isInteger(val) ? `${val}d` : `${Math.round(val * 10) / 10}d`
+})
+function coverageClass(i: number) {
+  const v = capacityDaily.value[i] || 0
+  if (v > 1) return 'bg-red-500/15'
+  if (Math.abs(v - 1) < 1e-6) return 'bg-green-500/15'
+  if (v > 0) return 'bg-amber-400/15'
+  return ''
+}
 
 // Global mouse event handlers for drag operations
 const handleGlobalMouseUp = (e: MouseEvent) => {
