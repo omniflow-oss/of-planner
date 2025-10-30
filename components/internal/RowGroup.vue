@@ -384,7 +384,8 @@ watch(() => props.subrows, () => {
   })
 }, { immediate: true })
 
-const headerHeight = computed(() => Math.max(baseRowMin, 16 + headerLaneCount.value*30))
+// Keep main (header) row height fixed regardless of subrow lanes
+const headerHeight = computed(() => baseRowMin)
 
 // Count of projects or people (excluding the "add" row)
 const itemCount = computed(() => {
