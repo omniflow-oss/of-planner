@@ -1,12 +1,11 @@
 import { nextTick, type Ref, ref } from 'vue'
 import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
-import type { B } from 'vitest/dist/reporters-w_64AS5f.js';
 
 // Business-day aware infinite scroll for the timeline
 export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_day:number }>, scrollArea: Ref<HTMLElement | null>) {
   const extending = ref(false)
 
-  async function prependWeekdays(w: number, nextPrev:Boolean=false) {
+  async function prependWeekdays(w: number, nextPrev: boolean = false) {
     const el = scrollArea.value
     if (!el) return
     const half = el.clientWidth / 2
@@ -24,7 +23,7 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     }
   }
 
-  async function appendWeekdays(w: number, nextPrev:Boolean=false) {
+  async function appendWeekdays(w: number, nextPrev: boolean = false) {
     const el = scrollArea.value;
     if (!el) return
     const half = el.clientWidth / 2
