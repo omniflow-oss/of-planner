@@ -382,7 +382,7 @@ function usePlanner() { return inject<any>(assignmentsKey)! }
 const assignmentsRef = usePlanner()
 
 // Expand/Collapse all controls
-const rowGroupControls = inject<{ expandAllToken: Ref<number>; collapseAllToken: Ref<number> }>('rowGroupControls', null)
+const rowGroupControls = inject<{ expandAllToken: Ref<number>; collapseAllToken: Ref<number> } | null>('rowGroupControls', null)
 if (rowGroupControls) {
   watch(() => rowGroupControls.expandAllToken.value, (v) => { if (v) expanded.value = true })
   watch(() => rowGroupControls.collapseAllToken.value, (v) => { if (v) expanded.value = false })

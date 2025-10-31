@@ -55,7 +55,7 @@
     </div>
 
     <!-- Scrollable content with aligned rows -->
-    <div ref="scrollArea" class="overflow-auto h-full flex-1  border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
+    <div ref="scrollArea" class="overflow-auto h-full flex-1 border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
       <template v-if="view.mode==='person'">
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
@@ -414,13 +414,11 @@ const assignmentsKey = Symbol.for('assignmentsRef')
 provide(assignmentsKey, assignments)
 
 const scrollArea = ref<HTMLElement | null>(null)
-const scrollLeft = ref(0)
-
-
 
 const { onScroll, init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
+<<<<<<< HEAD
   if (scrollArea.value) {
     scrollLeft.value = scrollArea.value.scrollLeft
   }
@@ -428,6 +426,11 @@ function handleScroll() {
   // Hide modals when scrolling to keep UX coherent on large moves
   editOpen.value = false
   createOpen.value = false
+=======
+  // Hide popovers when scrolling to prevent positioning issues
+  closeEditPopover()
+  closeCreatePopover()
+>>>>>>> 1710e77 (fix timeline header)
   
   onScroll()
 }
