@@ -24,24 +24,9 @@ function generateSequentialId(prefix: string, existingItems: { id: string }[]): 
 
 export const usePlannerStore = defineStore('planner', {
   state: (): PlannerState => ({
-    people: [
-      // Seed minimal data to support tests and quick demo
-      { id: 'p1', name: 'Ada' },
-      { id: 'p2', name: 'Bruno' }
-    ],
-    projects: [
-      { id: 'j1', name: 'Aurora', color: '#6bc6ff', emoji: '🟦' },
-      { id: 'j2', name: 'Borealis', color: '#a7f3d0', emoji: '🟩' }
-    ],
-    assignments: (() => {
-      // seed one assignment for tests and quick demo
-      const d = new Date()
-      d.setUTCHours(0, 0, 0, 0)
-      const start = toISO(d)
-      return [
-        { id: 'a1', person_id: 'p1', project_id: 'j1', start, end: addDaysISO(start, 3), allocation: 1 as Allocation }
-      ]
-    })(),
+    people: [],
+    projects: [],
+    assignments: [],
     view: {
       mode: 'person',
       start: (() => {
