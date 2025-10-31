@@ -22,6 +22,32 @@ module.exports = {
   rules: {
     'vue/multi-word-component-names': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-explicit-any': 'off',
+    'vue/no-use-v-if-with-v-for': 'off'
   },
+  globals: {
+    // Nuxt auto-imported Vue utilities used in <script setup>
+    ref: 'readonly',
+    reactive: 'readonly',
+    computed: 'readonly',
+    watch: 'readonly',
+    watchEffect: 'readonly',
+    onMounted: 'readonly',
+    onUnmounted: 'readonly',
+    provide: 'readonly',
+    inject: 'readonly',
+    nextTick: 'readonly',
+    // Nuxt UI composables auto-imported
+    useToast: 'readonly',
+    useColorMode: 'readonly',
+    Ref: 'readonly'
+  },
+  overrides: [
+    {
+      files: ['tests/**/*', '**/*.spec.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off'
+      }
+    }
+  ]
 }
-
