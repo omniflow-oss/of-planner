@@ -10,56 +10,69 @@
     />
     
     <!-- Custom File Input Button -->
-    <button 
+    <UButton 
       @click="triggerFileInput"
       :disabled="loading"
-      class="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
+      color="neutral"
+      variant="outline"
+      size="xs"
+      :leading-icon="'i-lucide-folder-open'"
       title="Upload JSON data file"
     >
-      📁 Choose File
-    </button>
+      Choose File
+    </UButton>
 
     <!-- Load Sample Data Button (only show when no data exists) -->
-    <button 
+    <UButton 
       v-if="!store.hasData"
       @click="loadSampleData"
       :disabled="loading"
-      class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      color="primary"
+      size="xs"
+      :leading-icon="'i-lucide-database'"
       title="Load sample data from /public/planner-data.json (5 people, 5 projects, 6 assignments)"
     >
-      📊 Load Sample
-    </button>
+      Load Sample
+    </UButton>
 
     <!-- Clear Data Button (only show when data exists but can't be reset) -->
-    <button 
+    <UButton 
       v-if="store.hasData && !store.canReset"
       @click="clearAllData"
       :disabled="loading"
-      class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      color="error"
+      variant="outline"
+      size="xs"
+      :leading-icon="'i-lucide-trash-2'"
       title="Clear all data (people, projects, assignments)"
     >
-      🗑️ Clear
-    </button>
+      Clear
+    </UButton>
 
      <!-- Reset Data Button (only show when data can be reset) -->
-    <button 
+    <UButton 
       v-if="store.canReset"
       @click="resetData"
       :disabled="loading"
-      class="px-3 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      color="warning"
+      variant="outline"
+      size="xs"
+      :leading-icon="'i-lucide-rotate-ccw'"
       title="Reset all changes back to initially loaded data"
     >
-      🔄 Reset
-    </button>
+      Reset
+    </UButton>
     <!-- Download Button (only show when data is modified) -->
-    <button 
+    <UButton 
       v-if="store.shouldShowDownload"
       @click="downloadData" 
-      class="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+      color="success"
+      size="xs"
+      :leading-icon="'i-lucide-download'"
       title="Download modified data as JSON"
     >
-      📥 Download
-    </button>
+      Download
+    </UButton>
 
     <!-- Loading State -->
     <div v-if="loading" class="text-sm text-blue-600">
@@ -83,6 +96,7 @@ import type { ExternalPlannerData } from '@/types/planner'
 const store = usePlannerStore()
 const fileInput = ref<HTMLInputElement>()
 const loading = ref(false)
+const toast = useToast()
 
 // Define emits for navigation
 const emit = defineEmits<{
@@ -123,13 +137,14 @@ const handleFileSelect = async (event: Event) => {
     
     // Load data using store method (automatically refreshes)
     store.loadDataFromObject(data)
+    toast.add({ title: 'Data loaded', description: 'JSON file imported successfully', color: 'success' })
     
     // Navigate to today after loading data
     navigateToToday()
     
   } catch (error) {
     console.error('Error loading JSON file:', error)
-    alert('Failed to load JSON file. Please check the file format.')
+    toast.add({ title: 'Load failed', description: 'Invalid JSON file', color: 'error' })
   } finally {
     loading.value = false
     // Clear the input so the same file can be selected again
@@ -150,12 +165,13 @@ const loadSampleData = async () => {
   
   try {
     await store.loadDataFromJSON('planner-data.json')
+    toast.add({ title: 'Sample loaded', description: 'Sample planner data loaded', color: 'success' })
     
     // Navigate to today after loading sample data
     navigateToToday()
   } catch (error) {
     console.error('Error loading sample data:', error)
-    alert('Failed to load sample data. Please check if planner-data.json exists in the public folder.')
+    toast.add({ title: 'Sample load failed', description: 'Could not load sample data', color: 'error' })
   } finally {
     loading.value = false
   }
@@ -165,6 +181,7 @@ const resetData = () => {
   const confirmed = confirm('Reset all changes back to the initially loaded data?')
   if (confirmed) {
     store.resetToInitialData()
+    toast.add({ title: 'Reset complete', description: 'State restored to initial data', color: 'warning' })
   }
 }
 
@@ -172,7 +189,7 @@ const clearAllData = () => {
   const confirmed = confirm('Are you sure you want to clear all data? This action cannot be undone.')
   if (confirmed) {
     store.clearState()
-    
+    toast.add({ title: 'Data cleared', description: 'All data removed', color: 'error' })
     // Navigate to today after clearing data
     navigateToToday()
   }
@@ -182,5 +199,6 @@ const downloadData = () => {
   const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')
   const filename = `planner-data-${timestamp}.json`
   store.downloadPlannerData(filename)
+  toast.add({ title: 'Download started', description: filename, color: 'success' })
 }
 </script>
