@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-slate-200 bg-white" 
+    class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-default bg-default text-default" 
     :style="barStyle" 
     :class="{ 'dragging': isDragging }"
     draggable="true"
@@ -13,10 +13,10 @@
   >
     <div class="h-full w-1.5" :style="{ background: color }"></div>
     <UTooltip :text="tooltipText">
-      <div class="flex items-center gap-2 px-3 text-[12px] text-slate-800 w-full">
+      <div class="flex items-center gap-2 px-3 text-[12px] w-full">
         <span>{{ person?.name ?? assignment.person_id }}</span>
-        <span class="px-1.5 rounded-full border border-slate-200 bg-white/80 text-[11px]">{{ allocBadge }}</span>
-        <span class="ml-auto pl-2 text-[11px] text-slate-600" :title="mdTitle">{{ mdBadge }}</span>
+        <span class="px-1.5 rounded-full border border-default bg-elevated/80 text-[11px]">{{ allocBadge }}</span>
+        <span class="ml-auto pl-2 text-[11px] text-muted" :title="mdTitle">{{ mdBadge }}</span>
       </div>
     </UTooltip>
     <div class="handle left" @mousedown.stop.prevent="onResizeStart('left', $event)" draggable="false"></div>

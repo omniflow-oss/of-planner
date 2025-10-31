@@ -4,7 +4,7 @@
   >
     <!-- Group header row -->
     <div 
-      class="px-3 py-2 border-b border-r pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-white"
+      class="px-3 py-2 border-b border-r pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
@@ -43,8 +43,8 @@
     <!-- Subrows -->
     <template v-if="expanded" v-for="sr in filteredSubrows" :key="sr.key">
       <!-- Left: label -->
-      <div class="border-b border-r pane-border sticky left-0 z-10 bg-white" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }">
-        <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-slate-800">
+      <div class="border-b border-r pane-border sticky left-0 z-10 bg-default" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }">
+        <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
           <UIcon :name="groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user'" class="mr-2 text-slate-400 size-3" />
           <div class="truncate font-medium text-slate-700">{{ sr.label }}</div>
         </div>
