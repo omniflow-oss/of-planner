@@ -37,7 +37,7 @@
 
 
       <div v-if="editOpen && editState" class="fixed inset-0 z-[1000] grid place-items-center bg-black/30">
-        <div class="bg-default text-default border border-default rounded-md shadow-lg w-[28rem] max-w-[95vw] p-4">
+        <div class="bg-default text-default border border-default rounded-md shadow-lg w-[28rem] max-w-[95vw] p-4 overflow-visible">
           <div class="flex items-center justify-between text-sm font-medium mb-3">
             <div>Edit Assignment</div>
             <UButton color="neutral" variant="ghost" size="xs" :icon="'i-lucide-x'" aria-label="Close" @click="closeEditModal" />
@@ -53,7 +53,7 @@
             </div>
             <div class="flex items-center gap-2 text-sm">
               <label class="w-20">Allocation</label>
-              <USelect class="flex-1" size="xs" v-model="editState.allocation" :options="[
+              <USelect class="flex-1" size="xs" v-model="editState.allocation" :items="[
                 { label: '100% (1)', value: 1 },
                 { label: '75% (¾)', value: 0.75 },
                 { label: '50% (½)', value: 0.5 },
@@ -119,7 +119,7 @@
 
     <!-- Create popover (moved from RowGroup.vue) -->
     <div v-if="createOpen" class="fixed inset-0 z-[1000] grid place-items-center bg-black/30">
-      <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
+      <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3 overflow-visible">
         <div class="flex items-center justify-between text-xs mb-2">
           <div>Quick create</div>
           <UButton size="xs" variant="outline" :icon="'i-lucide-x'" aria-label="Close" @click.stop="closeCreateModal" />
@@ -130,7 +130,7 @@
         </div>
         <div class="mt-2 flex items-center gap-2 text-sm">
           <label class="w-20">Allocation</label>
-          <USelect size="xs" class="w-full" v-model="allocation" :options="[
+          <USelect size="xs" class="w-full" v-model="allocation" :items="[
             { label: '1', value: 1 },
             { label: '0.75', value: 0.75 },
             { label: '0.5', value: 0.5 },
@@ -382,13 +382,6 @@ const scrollLeft = ref(0);
 
 const { onScroll, init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
 
-function closeEditPopover() {
-  editOpen.value = false
-
-}
-function closeCreatePopover() {
-  createOpen.value = false
-}
 function handleScroll() {
 
   if (scrollArea.value) {
@@ -398,10 +391,6 @@ function handleScroll() {
   // Hide modals when scrolling to keep UX coherent on large moves
   editOpen.value = false
   createOpen.value = false
-
-  // Hide popovers when scrolling to prevent positioning issues
-  closeEditPopover()
-  closeCreatePopover()
   
   onScroll()
 }
@@ -427,7 +416,6 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
     
     // If today is not found in the current timeline, we need to ensure it's included
     if (todayIndex < 0) {
-      console.log('Timeline: Today not found in current view, reinitializing with assignments')
       await initTimelineWithAssignments()
       await nextTick()
       todayIndex = days.value.findIndex(d => d === todayISO)
@@ -513,7 +501,6 @@ async function initTimelineWithAssignments() {
   // Ensure we always include today in the range
   const todayDate = new Date(todayISO)
   if (todayDate < startDate || todayDate > endDate) {
-    console.log('Timeline: Expanding range to include today')
     const expandedStart = new Date(Math.min(startDate.getTime(), todayDate.getTime()))
     const expandedEnd = new Date(Math.max(endDate.getTime(), todayDate.getTime()))
     const expandedTotalDays = Math.floor((expandedEnd.getTime() - expandedStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
@@ -524,14 +511,6 @@ async function initTimelineWithAssignments() {
     view.value.start = paddedStart
     view.value.days = Math.min(365, Math.max(35, totalDays))
   }
-  
-  console.log('Timeline: Initialized with assignment range', {
-    assignmentRange,
-    paddedStart,
-    paddedEnd,
-    totalDays: view.value.days,
-    assignmentCount: assignments.value.length
-  })
 }
 
 // Watch for assignment changes and re-initialize timeline if needed
@@ -546,7 +525,6 @@ watch(assignments, async (newAssignments) => {
   const needsExpansion = assignmentRange.start < currentStart || assignmentRange.end > currentEnd
   
   if (needsExpansion) {
-    console.log('Timeline: Assignments outside current range, expanding timeline')
     await initTimelineWithAssignments()
     
     // Auto-scroll to today after expansion

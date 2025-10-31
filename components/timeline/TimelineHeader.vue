@@ -49,7 +49,7 @@
       </div>
       <!-- Bottom: Day (D MMM) -->
       <div class="grid text-[11px] text-highlighted select-none" :style="{ gridTemplateColumns: dayColumns }">
-        <div v-for="day in days" :key="day" class="text-center flex items-end justify-center pb-1.5 pt-1">
+        <div v-for="day in days" :key="day" class="text-center py-1.5">
           <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-inverted text-inverted' : '']" v-html="dayShort(day)"></span>
         </div>
       </div>

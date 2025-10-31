@@ -1,5 +1,5 @@
 <template>
-  <header class="sticky top-0 z-30 flex items-center justify-between px-3 py-2 border-b border-default bg-default/95 backdrop-blur">
+  <header class="sticky top-0 z-31 flex items-center justify-between px-3 py-2 border-b border-default bg-default/95 backdrop-blur">
     <div class="flex items-center gap-4">
       <div class="flex items-center gap-2">
         <div class="font-semibold tracking-tight">Capacity Planner</div>
