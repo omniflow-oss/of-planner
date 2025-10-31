@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-default bg-default text-default" 
+    class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-default bg-default dark:bg-gray-300 text-default dark:text-gray-800" 
     :style="barStyle" 
     :class="{ 'dragging': isDragging }"
     draggable="true"
@@ -16,10 +16,10 @@
     />
     <UTooltip :text="tooltipText">
       <div class="flex items-center gap-2 px-3 text-[12px] w-full">
-        <span>{{ person?.name ?? assignment.person_id }}</span>
-        <span class="px-1.5 rounded-full border border-default bg-elevated/80 text-[11px]">{{ allocBadge }}</span>
+        <span class="dark:text-gray-700">{{ person?.name ?? assignment.person_id }}</span>
+        <span class="px-1.5 rounded-full border border-default bg-elevated/80 dark:bg-gray-200 dark:border-gray-400 text-[11px] dark:text-gray-800">{{ allocBadge }}</span>
         <span
-          class="ml-auto pl-2 text-[11px] text-muted"
+          class="ml-auto pl-2 text-[11px] text-muted dark:text-gray-700"
           :title="mdTitle"
         >{{ mdBadge }}</span>
       </div>
