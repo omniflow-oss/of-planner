@@ -1,14 +1,18 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-white text-slate-900 text-[13.5px]">
-    <AppHeader 
-      @go-to-today="handleGoToToday"
-      @add-weeks="handleAddWeeks"
-    />
-    <main class="flex-1 w-full flex flex-col">
-      <NuxtPage />
-    </main>
-    <AppFooter />
-  </div>
+  <UApp>
+    <div class="min-h-screen flex flex-col bg-white text-slate-900 text-[13.5px]">
+      <AppHeader 
+        @go-to-today="handleGoToToday"
+        @add-weeks="handleAddWeeks"
+      />
+      <main class="flex-1 w-full flex flex-col">
+        <NuxtPage />
+      </main>
+      <AppFooter />
+    </div>
+    <UToaster />
+  </UApp>
+  
 </template>
 
 <script setup lang="ts">
