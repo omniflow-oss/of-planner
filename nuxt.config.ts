@@ -6,16 +6,12 @@ export default defineNuxtConfig({
     shim: false,
     strict: true
   },
-  postcss: {
-    plugins: {
-      tailwindcss: {},
-      autoprefixer: {}
-    }
-  },
-  css: ["~/assets/tailwind.css"],
+  css: [
+    "~/assets/tailwind.css"
+  ],
   modules: [
     ["@pinia/nuxt", { autoImports: ["defineStore"] }],
-    "@nuxtjs/tailwindcss"
+    "@nuxt/ui"
   ],
   app: {
     // Set base URL for GitHub Pages deployments. The workflow sets BASE_URL=/repo-name/
@@ -27,6 +23,7 @@ export default defineNuxtConfig({
   },
   nitro: {
     // Generate a static site tailored for GitHub Pages hosting
-    preset: "github-pages"
+    preset: "github-pages",
+    compatibilityDate: '2025-10-31'
   }
 })

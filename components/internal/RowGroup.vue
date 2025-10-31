@@ -8,17 +8,21 @@
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
-      <button class="w-5 h-5 grid place-items-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50" @click="expanded = !expanded">{{ expanded ? '–' : '+' }}</button>
+      <UButton size="xs" variant="outline" :icon="expanded ? 'i-lucide-minus' : 'i-lucide-plus'" aria-label="Toggle" @click="expanded = !expanded" />
+      <UIcon :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'" class="text-slate-500 size-4" />
       <span>{{ label }}  </span>
-      <span class="ml-auto inline-flex items-center rounded-xl bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 inset-ring inset-ring-indigo-700/10">{{ itemCount }}</span>
-      <span class="ml-2 inline-flex items-center rounded-xl bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700 border border-slate-200" :title="'Total man-days (visible window)'">{{ totalMDBadge }}</span>
-      <button
+      <UBadge class="ml-auto" size="xs" color="primary" variant="subtle">{{ itemCount }}</UBadge>
+      <UBadge class="ml-2" size="xs" color="neutral" variant="soft" :title="'Total man-days (visible window)'">{{ totalMDBadge }}</UBadge>
+      <UButton
         @click="handleAddClick"
-        class="ml-2 w-6 h-6 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-colors"
+        size="xs"
+        color="primary"
+        variant="soft"
+        class="ml-2"
         :title="groupType === 'person' ? 'Assigner un projet' : 'Ajouter une personne'"
-      >
-        ➕
-      </button>
+        :icon="'i-lucide-plus'"
+        aria-label="Add"
+      />
     </div>
     <div class="relative border-b border-r pane-border timeline-bg disabled-rows" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
@@ -40,8 +44,9 @@
     <template v-if="expanded" v-for="sr in filteredSubrows" :key="sr.key">
       <!-- Left: label -->
       <div class="border-b border-r pane-border sticky left-0 z-10 bg-white" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }">
-        <div class="flex items-center h-full px-3 pl-8 py-2 text-sm text-slate-800">
-          <div class="truncate font-medium">-- {{ sr.label }}</div>
+        <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-slate-800">
+          <UIcon :name="groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user'" class="mr-2 text-slate-400 size-3" />
+          <div class="truncate font-medium text-slate-700">{{ sr.label }}</div>
         </div>
       </div>
 
@@ -161,7 +166,7 @@ function handleAddClick() {
   // Create a synthetic add row object to maintain compatibility with existing logic
   const addRowData = {
     key: `${props.groupId}:__add__`,
-    label: props.groupType === 'person' ? '➕ Assigner un projet' : '➕ Ajouter une personne',
+    label: props.groupType === 'person' ? 'Assigner un projet' : 'Ajouter une personne',
     person_id: props.groupType === 'person' ? props.groupId : null,
     project_id: props.groupType === 'project' ? props.groupId : null
   }

@@ -1,20 +1,22 @@
 <template>
   <div class="flex items-center gap-2" role="tablist" aria-label="View mode">
-    <div class="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
-      <button class="px-2.5 py-1 text-xs" :class="mode==='person' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-50 text-slate-700'" @click="setMode('person')">People</button>
-      <button class="px-2.5 py-1 text-xs" :class="mode==='project' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-50 text-slate-700'" @click="setMode('project')">Projects</button>
-    </div>
+    <UButtonGroup size="xs">
+      <UButton :variant="mode==='person' ? 'solid' : 'ghost'" color="neutral" @click="setMode('person')">People</UButton>
+      <UButton :variant="mode==='project' ? 'solid' : 'ghost'" color="neutral" @click="setMode('project')">Projects</UButton>
+    </UButtonGroup>
     <div class="w-px h-6 bg-slate-200/70 mx-2" />
     <div class="inline-flex items-center gap-1">
-      <button class="px-2 py-1 text-xs rounded-md border border-slate-200 hover:bg-slate-50" @click="shift(-1)">‹</button>
-      <div class="px-2.5 py-1 text-xs rounded-full bg-slate-900 text-white tracking-tight whitespace-nowrap">{{ todayLabel }}</div>
-      <button class="px-2 py-1 text-xs rounded-md border border-slate-200 hover:bg-slate-50" @click="shift(1)">›</button>
-      <button class="ml-1 px-2.5 py-1 text-xs rounded-md border border-slate-200 hover:bg-slate-50" @click="today">Today</button>
+      <UButton size="xs" variant="outline" :icon="'i-lucide-chevron-left'" aria-label="Previous" @click="shift(-1)" />
+      <UButton size="xs" variant="outline" :disabled="true" class="whitespace-nowrap">{{ todayLabel }}</UButton>
+      <UButton size="xs" variant="outline" :icon="'i-lucide-chevron-right'" aria-label="Next" @click="shift(1)" />
+      <UButton size="xs" variant="outline" class="ml-1" :leading-icon="'i-lucide-calendar'" @click="today">Today</UButton>
     </div>
-    <div class="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
-      <button class="px-2 text-xs" @click="zoom(-1)">-</button>
-      <div class="px-2 text-[11px] flex items-center bg-slate-50 border-l border-r border-slate-200 text-slate-700">{{ store.view.px_per_day }} px/day</div>
-      <button class="px-2 text-xs" @click="zoom(1)">+</button>
+    <div class="inline-flex items-center gap-1">
+      <UButtonGroup size="xs">
+        <UButton size="xs" square variant="outline" color="neutral" :icon="'i-lucide-minus'" aria-label="Zoom out" @click="zoom(-1)" />
+        <UButton size="xs" square variant="outline" color="neutral" :icon="'i-lucide-plus'" aria-label="Zoom in" @click="zoom(1)" />
+      </UButtonGroup>
+      <UBadge size="xs" color="neutral" variant="soft" class="whitespace-nowrap">{{ store.view.px_per_day }} px/day</UBadge>
     </div>
   </div>
 </template>

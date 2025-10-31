@@ -1,16 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@nuxt/ui";
 
-/* App-specific utilities */
-.today-line { @apply absolute top-0 bottom-0 w-0.5 bg-slate-700; }
-.grid-v { @apply absolute top-0 bottom-0 w-px bg-slate-100; }
-.grid-v.week { @apply bg-slate-300; width: 2px; }
-.timeline-bg { background: #f7f8fb; }
-.pane-border { @apply border-slate-200; }
+/* App-specific utilities (token-based for dark/light) */
+.today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: var(--ring-color-inverted); opacity: .9; }
+.grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background-color: var(--divide-color-muted); }
+.grid-v.week { background-color: var(--divide-color-accented); width: 2px; }
+.timeline-bg { background-color: var(--background-color-muted); }
+.pane-border { border-color: var(--border-color-muted); }
 .bar-shadow { box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 6px rgba(0,0,0,.06); }
-/* Weekend background bands */
-.day-bg { @apply absolute top-0 bottom-0; }
-.day-bg.weekend { @apply bg-slate-50; }
+/* Day background bands (can be used for weekend if needed) */
+.day-bg { position: absolute; top: 0; bottom: 0; }
+.day-bg.weekend { background-color: color-mix(in lab, var(--background-color-muted) 70%, black); opacity: .04; }
 body{  overflow-x: hidden; }
-.cell-text {background-color: #f7f8fb;}
+.cell-text { background-color: var(--background-color-muted); }

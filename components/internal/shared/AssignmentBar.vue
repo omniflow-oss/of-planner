@@ -12,11 +12,13 @@
 
   >
     <div class="h-full w-1.5" :style="{ background: color }"></div>
-    <div class="flex items-center gap-2 px-3 text-[12px] text-slate-800 w-full">
-      <span>{{ person?.name ?? assignment.person_id }}</span>
-      <span class="px-1.5 rounded-full border border-slate-200 bg-white/80 text-[11px]">{{ allocBadge }}</span>
-      <span class="ml-auto pl-2 text-[11px] text-slate-600" :title="mdTitle">{{ mdBadge }}</span>
-    </div>
+    <UTooltip :text="tooltipText">
+      <div class="flex items-center gap-2 px-3 text-[12px] text-slate-800 w-full">
+        <span>{{ person?.name ?? assignment.person_id }}</span>
+        <span class="px-1.5 rounded-full border border-slate-200 bg-white/80 text-[11px]">{{ allocBadge }}</span>
+        <span class="ml-auto pl-2 text-[11px] text-slate-600" :title="mdTitle">{{ mdBadge }}</span>
+      </div>
+    </UTooltip>
     <div class="handle left" @mousedown.stop.prevent="onResizeStart('left', $event)" draggable="false"></div>
     <div class="handle right" @mousedown.stop.prevent="onResizeStart('right', $event)" draggable="false"></div>
   </div>
@@ -58,6 +60,11 @@ const mdBadge = computed(() => {
   return Number.isInteger(val) ? `${val}d` : `${Math.round(val * 10) / 10}d`
 })
 const mdTitle = computed(() => `Total man-days for this assignment`)
+const tooltipText = computed(() => {
+  const p = person.value?.name ?? props.assignment.person_id
+  const proj = project.value?.name ?? props.assignment.project_id
+  return `${proj} • ${p} • ${allocBadge.value} • ${props.assignment.start} → ${props.assignment.end}`
+})
 
 // Dragging state
 const isDragging = ref(false)
@@ -228,3 +235,4 @@ div[draggable="true"]:hover {
   cursor: ew-resize;
 }
 </style>
+ 
