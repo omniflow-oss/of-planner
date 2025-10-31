@@ -1,57 +1,50 @@
 <template>
   <div class="flex-1 w-full flex flex-col">
-    <!-- Header rows: Month+Year (top) / Day (bottom) (right only) -->
-    <div class="grid" style="grid-template-columns: 240px 1fr;">
-      <!-- Left placeholders to match 2 header rows: month+year / day -->
-      <div class="flex flex-col border-r">
-        <div class="py-3 px-3 text-center my-auto">
-          <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">
-            {{ view.mode === 'person' ? 'People View' : 'Project View' }} 
-              <!-- Add Project Button (only show in project view) -->
-              <button 
-              v-if="view.mode === 'project'"
-              @click="addNewProject"
-              class="px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors shadow-sm font-medium"
-              title="Add a new project to the timeline"
-            >
-              ➕ Add Project
-            </button>
-            <!-- Add Person Button (only show in people view) -->
-            <button 
-              v-if="view.mode === 'person'"
-              @click="addNewPerson"
-              class="px-3 py-1 text-xs bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors shadow-sm font-medium"
-              title="Add a new person to the timeline"
-            >
-              ➕ Add Person
-            </button>
-            <!-- Expand/Collapse all -->
-            <span class="mx-1 w-px h-4 bg-slate-200"></span>
-            <button @click="expandAll()" class="px-2 py-1 text-[11px] border border-slate-200 rounded hover:bg-slate-50">Expand all</button>
-            <button @click="collapseAll()" class="px-2 py-1 text-[11px] border border-slate-200 rounded hover:bg-slate-50">Collapse all</button>
-          </div>          
-        </div>     
-      </div>
-      <div class="relative">
-        <div class="overflow-hidden">
-          <TimelineHeader
-            :days="days"
-            :dayColumns="dayColumns"
-            :monthSegments="monthSegments"
-            :monthColumns="monthColumns"
-            :todayISO="todayISO"
-            :dayLabel="dayLabel"
-            :pxPerDay="view.px_per_day"
-            :dayOffsets="dayOffsets"
-            :weekStarts="weekStarts"
-            :scrollLeft="scrollLeft"
-          />
-        </div>
-      </div>
+    <!-- Control panel -->
+    <div class="border-b border-slate-200 px-3 py-3">
+      <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">
+        {{ view.mode === 'person' ? 'People View' : 'Project View' }} 
+        <!-- Add Project Button (only show in project view) -->
+        <button 
+        v-if="view.mode === 'project'"
+        @click="addNewProject"
+        class="px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors shadow-sm font-medium"
+        title="Add a new project to the timeline"
+      >
+        ➕ Add Project
+      </button>
+      <!-- Add Person Button (only show in people view) -->
+      <button 
+        v-if="view.mode === 'person'"
+        @click="addNewPerson"
+        class="px-3 py-1 text-xs bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors shadow-sm font-medium"
+        title="Add a new person to the timeline"
+      >
+        ➕ Add Person
+      </button>
+      <!-- Expand/Collapse all -->
+      <span class="mx-1 w-px h-4 bg-slate-200"></span>
+      <button @click="expandAll()" class="px-2 py-1 text-[11px] border border-slate-200 rounded hover:bg-slate-50">Expand all</button>
+      <button @click="collapseAll()" class="px-2 py-1 text-[11px] border border-slate-200 rounded hover:bg-slate-50">Collapse all</button>
+      </div>          
     </div>
 
-    <!-- Scrollable content with aligned rows -->
-    <div ref="scrollArea" class="overflow-auto h-full flex-1  border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
+    <!-- Scrollable content with header and rows -->
+    <div ref="scrollArea" class="overflow-auto h-full flex-1 border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
+      <!-- Timeline Header inside scrollable area -->
+      
+        <TimelineHeader
+          :days="days"
+          :dayColumns="dayColumns"
+          :monthSegments="monthSegments"
+          :monthColumns="monthColumns"
+          :todayISO="todayISO"
+          :dayLabel="dayLabel"
+          :pxPerDay="view.px_per_day"
+          :dayOffsets="dayOffsets"
+          :weekStarts="weekStarts"
+        />
+      
       <template v-if="view.mode==='person'">
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
@@ -444,17 +437,10 @@ const assignmentsKey = Symbol.for('assignmentsRef')
 provide(assignmentsKey, assignments)
 
 const scrollArea = ref<HTMLElement | null>(null)
-const scrollLeft = ref(0)
-
-
 
 const { onScroll, init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
-  if (scrollArea.value) {
-    scrollLeft.value = scrollArea.value.scrollLeft
-  }
-  
   // Hide popovers when scrolling to prevent positioning issues
   closeEditPopover()
   closeCreatePopover()
