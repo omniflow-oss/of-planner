@@ -187,7 +187,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
-import { addBusinessDaysISO } from '@/composables/useDate'
+import { addBusinessDaysISO, addDaysISO } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
@@ -451,10 +451,10 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
     // Find today's index in the current days array
     let todayIndex = days.value.findIndex(d => d === todayISO)
     
-    // If today's index is too high (suggesting timeline has expanded too much), 
-    // or if today is not found, reinitialize the timeline
-    if (todayIndex < 0 || todayIndex > 25) { // 25 is roughly where today should be in a 35-day range
-      await init(todayISO)
+    // If today is not found in the current timeline, we need to ensure it's included
+    if (todayIndex < 0) {
+      console.log('Timeline: Today not found in current view, reinitializing with assignments')
+      await initTimelineWithAssignments()
       await nextTick()
       todayIndex = days.value.findIndex(d => d === todayISO)
     }
@@ -493,10 +493,105 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
   
   // No external click handlers needed with UModal
 
+// Function to calculate the date range needed to show all assignments
+function calculateAssignmentDateRange() {
+  if (assignments.value.length === 0) {
+    return null
+  }
+  
+  let earliestDate = assignments.value[0].start
+  let latestDate = assignments.value[0].end
+  
+  for (const assignment of assignments.value) {
+    if (assignment.start < earliestDate) earliestDate = assignment.start
+    if (assignment.end > latestDate) latestDate = assignment.end
+  }
+  
+  return { start: earliestDate, end: latestDate }
+}
+
+// Function to initialize timeline with assignment coverage
+async function initTimelineWithAssignments() {
+  const assignmentRange = calculateAssignmentDateRange()
+  
+  if (!assignmentRange) {
+    // No assignments, use default initialization around today
+    await init(todayISO)
+    return
+  }
+  
+  // Calculate how many days we need to cover all assignments with some padding
+  const today = new Date(todayISO)
+  const startDate = new Date(Math.min(new Date(assignmentRange.start).getTime(), today.getTime()))
+  const endDate = new Date(Math.max(new Date(assignmentRange.end).getTime(), today.getTime()))
+  
+  // Add padding: 2 weeks before earliest and 2 weeks after latest
+  startDate.setUTCDate(startDate.getUTCDate() - 14)
+  endDate.setUTCDate(endDate.getUTCDate() + 14)
+  
+  // Convert back to ISO dates
+  const paddedStart = startDate.toISOString().slice(0, 10)
+  const paddedEnd = endDate.toISOString().slice(0, 10)
+  
+  // Calculate the number of calendar days needed
+  const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+  
+  // Ensure we always include today in the range
+  const todayDate = new Date(todayISO)
+  if (todayDate < startDate || todayDate > endDate) {
+    console.log('Timeline: Expanding range to include today')
+    const expandedStart = new Date(Math.min(startDate.getTime(), todayDate.getTime()))
+    const expandedEnd = new Date(Math.max(endDate.getTime(), todayDate.getTime()))
+    const expandedTotalDays = Math.floor((expandedEnd.getTime() - expandedStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    
+    view.value.start = expandedStart.toISOString().slice(0, 10)
+    view.value.days = Math.min(365, Math.max(35, expandedTotalDays))
+  } else {
+    view.value.start = paddedStart
+    view.value.days = Math.min(365, Math.max(35, totalDays))
+  }
+  
+  console.log('Timeline: Initialized with assignment range', {
+    assignmentRange,
+    paddedStart,
+    paddedEnd,
+    totalDays: view.value.days,
+    assignmentCount: assignments.value.length
+  })
+}
+
+// Watch for assignment changes and re-initialize timeline if needed
+watch(assignments, async (newAssignments) => {
+  const assignmentRange = calculateAssignmentDateRange()
+  if (!assignmentRange) return
+  
+  // Check if any assignments are outside current timeline view
+  const currentStart = view.value.start
+  const currentEnd = addDaysISO(currentStart, view.value.days - 1)
+  
+  const needsExpansion = assignmentRange.start < currentStart || assignmentRange.end > currentEnd
+  
+  if (needsExpansion) {
+    console.log('Timeline: Assignments outside current range, expanding timeline')
+    await initTimelineWithAssignments()
+    
+    // Auto-scroll to today after expansion
+    await nextTick()
+    if (timelineEvents?.goToTodayEvent) {
+      timelineEvents.goToTodayEvent.value = todayISO
+      nextTick(() => {
+        if (timelineEvents?.goToTodayEvent) {
+          timelineEvents.goToTodayEvent.value = null
+        }
+      })
+    }
+  }
+}, { deep: true })
+
 // Initialize timeline and auto-scroll to today
 onMounted(async () => { 
-  // Ensure we have a valid todayISO before calling init
-  await init(todayISO);
+  // Initialize timeline considering existing assignments
+  await initTimelineWithAssignments()
   
   // No global listeners needed here
   
