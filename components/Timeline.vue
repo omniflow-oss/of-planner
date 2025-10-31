@@ -1,7 +1,7 @@
 <template>
   <div class="flex-1 w-full flex flex-col">
     <!-- Header rows: Month+Year (top) / Day (bottom) (right only) -->
-    <div class="grid" style="grid-template-columns: 240px 1fr;">
+    <div >
       <!-- Left placeholders to match 2 header rows: month+year / day -->
       <div class="flex flex-col border-r">
         <div class="py-3 px-3 text-center my-auto">
@@ -109,11 +109,9 @@
         <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
           <div class="text-sm font-medium mb-2">New project</div>
           <div class="space-y-2">
-            <div>
-              <label class="block text-xs font-medium text-slate-700 mb-1">Name</label>
-              <input class="w-full px-2 py-1 text-xs border border-slate-200 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none" v-model="newProjectName" placeholder="e.g. Aurora" />
-              <div class="text-xs text-slate-500 mt-1">Enter a unique project name</div>
-            </div>
+            <UFormField label="Name" help="Enter a unique project name">
+              <UInput v-model="newProjectName" size="xs" placeholder="e.g. Aurora" />
+            </UFormField>
             <div v-if="newProjectError" class="text-xs text-error">{{ newProjectError }}</div>
           </div>
           <div class="mt-3 flex justify-end gap-2">
@@ -128,11 +126,9 @@
         <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
           <div class="text-sm font-medium mb-2">New person</div>
           <div class="space-y-2">
-            <div>
-              <label class="block text-xs font-medium text-slate-700 mb-1">Name</label>
-              <input class="w-full px-2 py-1 text-xs border border-slate-200 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none" v-model="newPersonName" placeholder="e.g. Ada" />
-              <div class="text-xs text-slate-500 mt-1">Enter a unique person name</div>
-            </div>
+            <UFormField label="Name" help="Enter a unique person name">
+              <UInput v-model="newPersonName" size="xs" placeholder="e.g. Ada" />
+            </UFormField>
             <div v-if="newPersonError" class="text-xs text-error">{{ newPersonError }}</div>
           </div>
           <div class="mt-3 flex justify-end gap-2">
@@ -159,26 +155,24 @@
       <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
         <div class="flex items-center justify-between text-xs mb-2">
           <div>Quick create</div>
-          <button class="px-1 py-1 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded border border-slate-200" aria-label="Close" @click.stop="closeCreateModal">
-            ×
-          </button>
+          <UButton size="xs" variant="outline" :icon="'i-lucide-x'" aria-label="Close" @click.stop="closeCreateModal" />
         </div>
         <div class="mt-1 flex items-center gap-2 text-sm">
           <label class="w-20">Durée</label>
-          <input class="w-full px-2 py-1 text-xs border border-slate-200 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none" type="number" v-model.number="duration" min="1" />
+          <UInput size="xs" class="w-full" type="number" v-model.number="duration" min="1" />
         </div>
         <div class="mt-2 flex items-center gap-2 text-sm">
           <label class="w-20">Allocation</label>
-          <select class="w-full px-2 py-1 text-xs border border-slate-200 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white" v-model="allocation">
-            <option :value="1">1</option>
-            <option :value="0.75">0.75</option>
-            <option :value="0.5">0.5</option>
-            <option :value="0.25">0.25</option>
-          </select>
+          <USelect size="xs" class="w-full" v-model="allocation" :options="[
+            { label: '1', value: 1 },
+            { label: '0.75', value: 0.75 },
+            { label: '0.5', value: 0.5 },
+            { label: '0.25', value: 0.25 }
+          ]" />
         </div>
         <div class="mt-3 flex justify-end gap-2">
-          <button class="px-2 py-1 text-xs font-medium text-slate-600 hover:text-slate-700 hover:bg-slate-50 rounded border border-slate-200 hover:border-slate-300" @click.stop="closeCreateModal">Cancel</button>
-          <button class="px-2 py-1 text-xs font-medium text-white bg-slate-800 hover:bg-slate-900 rounded" @click.stop="confirmCreate">Create</button>
+          <UButton size="xs" variant="outline" @click.stop="closeCreateModal">Cancel</UButton>
+          <UButton size="xs" color="neutral" @click.stop="confirmCreate">Create</UButton>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+  <div class="flex items-center gap-2 p-2 bg-elevated rounded border border-default">
     <!-- Hidden File Input -->
     <input
       ref="fileInput"

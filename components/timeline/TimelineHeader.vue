@@ -1,26 +1,24 @@
 <template>
-  <!-- Timeline header grid matching content layout -->
   <div class="grid border-b" style=" grid-template-columns: 240px 1fr;" :style="{ width: timelineWidth+'px' }">
     <!-- Left empty spacer to match content structure -->
-    <div class="bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 sticky left-0 z-10 border-r border-slate-200"></div>
-    
-    <!-- Right timeline header content -->
-    <div class="relative bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75" :style="{ width: (timelineWidth - 240)+'px' }">
+    <div class="border-b border-r pane-border sticky left-0 z-30 bg-default"></div>
+
+    <!-- Sticky timeline header with grid overlay -->
+    <div class="relative top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75" :style="{ width: (timelineWidth - 240)+'px' }">
+
       <!-- Grid overlay aligned with days (uses shared GridOverlay for consistency) -->
-      <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute inset-0 pointer-events-none" style="top: 30px;">
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
       </div>
 
       <!-- Top: Month + Year -->
-      <div class="grid text-[12px] text-slate-700 select-none border-b border-slate-200 bg-white" :style="{ gridTemplateColumns: monthColumns }">
-        <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium  relative bg-white month-year-header" style="height:30px;"> 
-          <span class="month-year">{{ monthWithYear(seg) }}</span>
-        </div>
+      <div class="grid text-[12px] text-highlighted select-none border-b border-default bg-default " :style="{ gridTemplateColumns: monthColumns }">
+        <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium  border-accented month-year-header relative" > {{ monthWithYear(seg) }}</div>
       </div>
       <!-- Bottom: Day (D MMM) -->
-      <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns }">
+      <div class="grid text-[11px] text-highlighted select-none" :style="{ gridTemplateColumns: dayColumns }">
         <div v-for="day in days" :key="day" class="text-center py-1.5">
-          <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-slate-900 text-white' : '']" v-html="dayShort(day)"></span>
+          <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-inverted text-inverted' : '']" v-html="dayShort(day)"></span>
         </div>
       </div>
     </div>
@@ -76,10 +74,7 @@ function isToday(day: string) {
   width: 15px;
   height: 1px;
   margin: auto;
-  background-color: rgb(51 65 85);
-}
-.bg-slate-900 .month-numeric::before {
-  background-color: white;
+  background-color: currentColor;
 }
 .cell-small  .month-txt {
   display: none;
@@ -88,6 +83,7 @@ function isToday(day: string) {
   display: block;
 }
 .month-year-header::after {
+  height: 30px;
   content: '';
   position: absolute;
   bottom: 0;
