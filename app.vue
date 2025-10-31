@@ -1,11 +1,11 @@
 <template>
   <UApp>
-    <div class="min-h-screen flex flex-col bg-default text-default text-[13.5px]">
+    <div class="h-screen flex flex-col bg-default text-default text-[13.5px]">
       <AppHeader 
         @go-to-today="handleGoToToday"
         @add-weeks="handleAddWeeks"
       />
-      <main class="flex-1 w-full flex flex-col">
+      <main class="flex-1 w-full flex flex-col overflow-hidden h-full">
         <NuxtPage />
       </main>
       <AppFooter />
