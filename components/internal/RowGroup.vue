@@ -171,7 +171,6 @@ function handleAddClick() {
     project_id: props.groupType === 'project' ? props.groupId : null
   }
   
-  console.log('RowGroup: Add button clicked for', props.label, 'creating synthetic add row:', addRowData)
   emit('createFromSidebar', addRowData)
 }
 
@@ -192,13 +191,10 @@ function handleMouseDown(e: MouseEvent, sr: any) {
     rightMouseState.value.startTime = Date.now()
     rightMouseState.value.blocked = false // Start unblocked
     
-    console.log('RowGroup: Right mousedown started')
-    
     // Start timer to block context menu after long press threshold
     rightMouseState.value.timer = window.setTimeout(() => {
       if (rightMouseState.value.isDown) {
         rightMouseState.value.blocked = true
-        console.log('RowGroup: Right mouse long press detected, blocking context menu')
       }
     }, 200) // 200ms threshold for long press
     
@@ -224,12 +220,9 @@ function handleMouseUp(e: MouseEvent, sr: any) {
       rightMouseState.value.timer = null
     }
     
-    console.log('RowGroup: Right mouseup, press duration:', pressDuration + 'ms', 'wasDown:', wasDown)
-    
     // Reset block state after a short delay to allow contextmenu event to fire
     setTimeout(() => {
       rightMouseState.value.blocked = false
-      console.log('RowGroup: Reset rightClickBlocked after mouseup')
     }, 10)
     
     return
@@ -248,7 +241,6 @@ function startDragCreate(e: MouseEvent, sr: any) {
   // Increment interaction counter and block right clicks
   rightMouseState.value.interactionCounter++
   rightMouseState.value.blocked = true
-  console.log('RowGroup: startDragCreate, counter:', rightMouseState.value.interactionCounter, 'rightClickBlocked:', rightMouseState.value.blocked)
   
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
@@ -355,8 +347,6 @@ function resetDragState() {
     rightMouseState.value.blocked = false
   }
   
-  console.log('RowGroup: resetDragState, counter:', rightMouseState.value.interactionCounter, 'rightClickBlocked:', rightMouseState.value.blocked)
-  
   dragState.value.active = false
   dragState.value.isLongClick = false
   dragState.value.rowKey = ''
@@ -451,20 +441,9 @@ function handleContextMenu(e: MouseEvent, sr: any) {
   e.preventDefault()
   e.stopPropagation()
   
-  console.log('RowGroup: handleContextMenu called', {
-    active: dragState.value.active,
-    isLongClick: dragState.value.isLongClick,
-    hasTimer: !!dragState.value.longClickTimer,
-    counter: rightMouseState.value.interactionCounter,
-    rightClickBlocked: rightMouseState.value.blocked
-  })
-  
   // Only show create popup if right clicks are not blocked
   if (!rightMouseState.value.blocked && !dragState.value.active && !dragState.value.isLongClick && !dragState.value.longClickTimer && rightMouseState.value.interactionCounter === 0) {
-    console.log('RowGroup: Showing create popup on simple right-click')
     onEmptyClick(e, sr)
-  } else {
-    console.log('RowGroup: Ignoring right-click - blocked or during interaction')
   }
 }
 
@@ -546,8 +525,6 @@ function coverageClass(i: number) {
 // Global mouse event handlers for drag operations
 const handleGlobalMouseUp = (e: MouseEvent) => {
   if (dragState.value.active && dragState.value.rowKey) {
-    console.log('RowGroup: Global mouseup with active drag, completing assignment creation')
-    
     // Find the original subrow data using the saved rowKey
     const originalSubrow = filteredSubrows.value.find(subrow => subrow.key === dragState.value.rowKey)
     if (originalSubrow) {
@@ -561,13 +538,6 @@ const handleGlobalMouseUp = (e: MouseEvent) => {
         
         // Calculate duration using business days
         const duration = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
-        
-        console.log('RowGroup: Creating assignment from global mouseup', { 
-          person_id: originalSubrow.person_id, 
-          project_id: originalSubrow.project_id, 
-          start: startDay, 
-          duration: duration 
-        })
         
         // Emit create event
         emit('create', {
