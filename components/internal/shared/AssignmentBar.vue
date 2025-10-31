@@ -49,8 +49,7 @@ const barStyle = computed(() => ({
   left: (startIndex.value * props.pxPerDay) + 'px',
   width: Math.max(1, lengthDays.value * props.pxPerDay - 2) + 'px',
   top: (props.top ?? 8) + 'px',
-  height: '30px',
-  background: '#f9fafb'
+  height: '30px'
 }))
 
 // Man-days badge
