@@ -1,19 +1,19 @@
 <template>
   <!-- Sticky timeline header with grid overlay -->
-  <div class="relative sticky top-0 z-25 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+  <div class="relative sticky top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75">
     <!-- Grid overlay aligned with days (uses shared GridOverlay for consistency) -->
     <div class="absolute inset-0 pointer-events-none" :style="{ transform: `translateX(-${scrollLeft}px)` }">
       <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
     </div>
 
     <!-- Top: Month + Year -->
-    <div class="grid text-[12px] text-slate-700 select-none border-b border-slate-200 bg-white " :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
-      <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium border-x border-slate-300 " style="transform: translateX(1px);"> <span class="month-year">{{ monthWithYear(seg) }}</span></div>
+    <div class="grid text-[12px] text-toned select-none border-b border-default bg-elevated " :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
+      <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium border-x border-accented " style="transform: translateX(1px);"> <span class="month-year">{{ monthWithYear(seg) }}</span></div>
     </div>
     <!-- Bottom: Day (D MMM) -->
-    <div class="grid text-[11px] text-slate-700 select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
+    <div class="grid text-[11px] text-toned select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
       <div v-for="day in days" :key="day" class="text-center py-1.5">
-        <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-slate-900 text-white' : '']" v-html="dayShort(day)"></span>
+        <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-inverted text-inverted' : '']" v-html="dayShort(day)"></span>
       </div>
     </div>
   </div>
@@ -66,10 +66,7 @@ function isToday(day: string) {
   width: 15px;
   height: 1px;
   margin: auto;
-  background-color: rgb(51 65 85);
-}
-.bg-slate-900 .month-numeric::before {
-  background-color: white;
+  background-color: currentColor;
 }
 .cell-small  .month-txt {
   display: none;
