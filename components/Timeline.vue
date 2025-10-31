@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 w-full flex flex-col">
+  <div class="flex-1 w-full h-full flex flex-col overflow-hidden">
     <!-- Scrollable content with aligned rows -->
     <div ref="scrollArea" class="overflow-auto h-full flex-1 border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
       <TimelineHeader

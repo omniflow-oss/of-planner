@@ -1,5 +1,5 @@
 <template>
-  <footer class="w-full border-t border-default bg-default text-muted">
+  <footer class="w-full border-t border-default bg-default text-muted sticky z-50 bottom-0">
     <div class="mx-auto max-w-screen-xl px-4 py-2 text-xs flex items-center justify-between">
       <div class="truncate">Capacity Planner — prototype shell</div>
       <div class="opacity-70">v0.1 • Footer placeholder</div>
