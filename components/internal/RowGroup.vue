@@ -74,7 +74,7 @@
         >
           <div
             v-if="pxPerDay >= 44"
-            class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700"
+            class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700 dark:text-slate-400"
           >
             {{ Math.round(capacityDaily[i]*100) }}%
           </div>
@@ -99,7 +99,7 @@
             :name="groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user'"
             class="mr-2 text-slate-400 size-3"
           />
-          <div class="truncate font-medium text-slate-700">
+          <div class="truncate font-medium text-slate-700 dark:text-gray-500">
             {{ sr.label }}
           </div>
         </div>
@@ -585,9 +585,9 @@ const totalMDBadge = computed(() => {
 })
 function coverageClass(i: number) {
   const v = capacityDaily.value[i] || 0
-  if (v > 1) return 'bg-red-500/15'
-  if (Math.abs(v - 1) < 1e-6) return 'bg-green-500/15'
-  if (v > 0) return 'bg-amber-400/15'
+  if (v > 1) return 'bg-red-500/15 dark:bg-red-900/50'
+  if (Math.abs(v - 1) < 1e-6) return 'bg-green-500/15 dark:bg-green-900/60'
+  if (v > 0) return 'bg-amber-400/15 dark:bg-amber-400/50'
   return ''
 }
 
