@@ -10,6 +10,14 @@ describe('planner store actions', () => {
 
   it('creates people/projects with sequential ids', () => {
     const s = usePlannerStore()
+    
+    // Create initial data to establish base IDs
+    s.createPerson({ name: 'Alice' })
+    s.createPerson({ name: 'Bob' })
+    s.createProject({ name: 'Project A' })
+    s.createProject({ name: 'Project B' })
+    
+    // Now test sequential ID generation
     const p = s.createPerson({ name: 'Chloe' })
     const q = s.createPerson({ name: 'Dev' })
     expect(p.id).toBe('p3')
@@ -23,8 +31,14 @@ describe('planner store actions', () => {
 
   it('creates, updates and deletes assignments', () => {
     const s = usePlannerStore()
+    
+    // Create initial data that the test expects
+    const person = s.createPerson({ name: 'Alice' })
+    const project = s.createProject({ name: 'Project A' })
+    s.createAssignment({ person_id: person.id, project_id: project.id, start: s.view.start, end: addDaysISO(s.view.start, 1), allocation: 1 })
+    
     const base = s.view.start
-    const a = s.createAssignment({ person_id: 'p2', project_id: 'j2', start: addDaysISO(base, 2), end: base, allocation: 0.5 })
+    const a = s.createAssignment({ person_id: person.id, project_id: project.id, start: addDaysISO(base, 2), end: base, allocation: 0.5 })
     // clamped to ensure start <= end
     expect(a.start <= a.end).toBe(true)
     // id increments from existing a1 -> a2
@@ -59,10 +73,12 @@ describe('planner store actions', () => {
       projects: [{ id: 'j9', name: 'Zeta' }],
       assignments: [{ id: 'a9', person_id: 'p9', project_id: 'j9', start: newStart, end: addDaysISO(newStart, 1), allocation: 1 }]
     })
-    expect(s.people[0].id).toBe('p9')
+    expect(s.people).toHaveLength(1)
+    expect(s.people[0]?.id).toBe('p9')
     expect(s.isDataModified).toBe(false)
     s.resetToInitialData()
-    expect(s.people[0].id).toBe('p9')
+    expect(s.people).toHaveLength(1)
+    expect(s.people[0]?.id).toBe('p9')
     s.clearState()
     expect(s.people.length).toBe(0)
     expect(s.projects.length).toBe(0)
