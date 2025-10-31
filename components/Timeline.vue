@@ -79,7 +79,7 @@
         />
         <!-- Right: empty timeline track with grid overlay -->
         <div
-          class="relative border-b border-r pane-border timeline-bg"
+          class="relative border-b border-r pane-border "
           :style="{ height: emptyRowHeight+'px', width: timelineWidth+'px' }"
         >
           <GridOverlay
