@@ -9,18 +9,31 @@
     @dragend="onDragEnd"
     @mousedown.self="onMouseDown"
     @contextmenu.prevent.stop="onRightClick"
-
   >
-    <div class="h-full w-1.5" :style="{ background: color }"></div>
+    <div
+      class="h-full w-1.5"
+      :style="{ background: color }"
+    />
     <UTooltip :text="tooltipText">
       <div class="flex items-center gap-2 px-3 text-[12px] w-full">
         <span>{{ person?.name ?? assignment.person_id }}</span>
         <span class="px-1.5 rounded-full border border-default bg-elevated/80 text-[11px]">{{ allocBadge }}</span>
-        <span class="ml-auto pl-2 text-[11px] text-muted" :title="mdTitle">{{ mdBadge }}</span>
+        <span
+          class="ml-auto pl-2 text-[11px] text-muted"
+          :title="mdTitle"
+        >{{ mdBadge }}</span>
       </div>
     </UTooltip>
-    <div class="handle left" @mousedown.stop.prevent="onResizeStart('left', $event)" draggable="false"></div>
-    <div class="handle right" @mousedown.stop.prevent="onResizeStart('right', $event)" draggable="false"></div>
+    <div
+      class="handle left"
+      draggable="false"
+      @mousedown.stop.prevent="onResizeStart('left', $event)"
+    />
+    <div
+      class="handle right"
+      draggable="false"
+      @mousedown.stop.prevent="onResizeStart('right', $event)"
+    />
   </div>
 </template>
 
@@ -132,7 +145,7 @@ function onDrag(e: DragEvent) {
   applyDragByClientX((e as any).clientX)
 }
 
-function onDragEnd(e: DragEvent) {
+function onDragEnd(_e: DragEvent) {
   isDragging.value = false
   dragging = null
 }

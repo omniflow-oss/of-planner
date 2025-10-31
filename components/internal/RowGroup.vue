@@ -1,6 +1,9 @@
 <template>
-  <div class="grid" style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;" :style="{ width: timelineWidth+'px' }"
-  draggable="false"
+  <div
+    class="grid"
+    style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;"
+    :style="{ width: timelineWidth+'px' }"
+    draggable="false"
   >
     <!-- Group header row -->
     <div 
@@ -8,13 +11,36 @@
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
-      <UButton size="xs" variant="outline" :icon="expanded ? 'i-lucide-minus' : 'i-lucide-plus'" aria-label="Toggle" @click="expanded = !expanded" />
-      <UIcon :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'" class="text-slate-500 size-4" />
-      <span>{{ label }}  </span>
-      <UBadge class="ml-auto" size="xs" color="primary" variant="subtle">{{ itemCount }}</UBadge>
-      <UBadge class="ml-2" size="xs" color="neutral" variant="soft" :title="'Total man-days (visible window)'">{{ totalMDBadge }}</UBadge>
       <UButton
-        @click="handleAddClick"
+        size="xs"
+        variant="outline"
+        :icon="expanded ? 'i-lucide-minus' : 'i-lucide-plus'"
+        aria-label="Toggle"
+        @click="expanded = !expanded"
+      />
+      <UIcon
+        :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'"
+        class="text-slate-500 size-4"
+      />
+      <span>{{ label }}  </span>
+      <UBadge
+        class="ml-auto"
+        size="xs"
+        color="primary"
+        variant="subtle"
+      >
+        {{ itemCount }}
+      </UBadge>
+      <UBadge
+        class="ml-2"
+        size="xs"
+        color="neutral"
+        variant="soft"
+        :title="'Total man-days (visible window)'"
+      >
+        {{ totalMDBadge }}
+      </UBadge>
+      <UButton
         size="xs"
         color="primary"
         variant="soft"
@@ -22,57 +48,105 @@
         :title="groupType === 'person' ? 'Assigner un projet' : 'Ajouter une personne'"
         :icon="'i-lucide-plus'"
         aria-label="Add"
+        @click="handleAddClick"
       />
     </div>
-    <div class="relative border-b border-r pane-border timeline-bg disabled-rows" :style="{ height: headerHeight+'px', width: timelineWidth+'px' }">
-      <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
+    <div
+      class="relative border-b border-r pane-border timeline-bg disabled-rows"
+      :style="{ height: headerHeight+'px', width: timelineWidth+'px' }"
+    >
+      <GridOverlay
+        :days="days"
+        :px-per-day="pxPerDay"
+        :offsets="dayOffsets"
+        :week-starts="weekStarts"
+      />
       <!-- Per-day coverage overlays on header track -->
-      <template v-for="(day, i) in days" :key="'cap'+i">
+      <template
+        v-for="(day, i) in days"
+        :key="'cap'+i"
+      >
         <div 
           v-if="capacityDaily[i] > 0"
           class="absolute inset-y-0"
           :class="coverageClass(i)"
           :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }"
         >
-          <div v-if="pxPerDay >= 44" class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700">{{ Math.round(capacityDaily[i]*100) }}%</div>
+          <div
+            v-if="pxPerDay >= 44"
+            class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700"
+          >
+            {{ Math.round(capacityDaily[i]*100) }}%
+          </div>
         </div>
       </template>
       <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
     </div>
 
     <!-- Subrows -->
-    <template v-if="expanded" v-for="sr in filteredSubrows" :key="sr.key">
+    <template
+      v-for="sr in filteredSubrows"
+      v-if="expanded"
+      :key="sr.key"
+    >
       <!-- Left: label -->
-      <div class="border-b border-r pane-border sticky left-0 z-10 bg-default" :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }">
+      <div
+        class="border-b border-r pane-border sticky left-0 z-10 bg-default"
+        :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }"
+      >
         <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
-          <UIcon :name="groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user'" class="mr-2 text-slate-400 size-3" />
-          <div class="truncate font-medium text-slate-700">{{ sr.label }}</div>
+          <UIcon
+            :name="groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user'"
+            class="mr-2 text-slate-400 size-3"
+          />
+          <div class="truncate font-medium text-slate-700">
+            {{ sr.label }}
+          </div>
         </div>
       </div>
 
       <!-- Right: timeline track -->
-      <div class="relative border-b border-r pane-border timeline-bg" 
-           :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" 
-           :data-row-key="sr.key"
-           @contextmenu="handleContextMenu($event, sr)"
-           @mousedown="handleMouseDown($event, sr)"
-           @mousemove="updateDragCreate($event, sr)"
-           @mouseup="handleMouseUp($event, sr)"
-           @dragstart="cancelDragCreate"
-           >
-        <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
-        <AssignmentBar v-for="a in subAssignmentsLaned(sr)" :key="a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :peopleMap="peopleMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" @resize="(e: any) => onResizeEvent=e" />
+      <div
+        class="relative border-b border-r pane-border timeline-bg" 
+        :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" 
+        :data-row-key="sr.key"
+        @contextmenu="handleContextMenu($event, sr)"
+        @mousedown="handleMouseDown($event, sr)"
+        @mousemove="updateDragCreate($event, sr)"
+        @mouseup="handleMouseUp($event, sr)"
+        @dragstart="cancelDragCreate"
+      >
+        <GridOverlay
+          :days="days"
+          :px-per-day="pxPerDay"
+          :offsets="dayOffsets"
+          :week-starts="weekStarts"
+        />
+        <AssignmentBar
+          v-for="a in subAssignmentsLaned(sr)"
+          :key="a.id"
+          :assignment="a"
+          :start-i-s-o="startISO"
+          :px-per-day="pxPerDay"
+          :projects-map="projectsMap"
+          :people-map="peopleMap"
+          :top="laneTop(a._lane)"
+          @update="onUpdate"
+          @edit="onEdit"
+          @resize="(e: any) => onResizeEvent=e"
+        />
         
         <!-- Drag-to-create preview bar -->
-        <div v-if="dragState.active && dragState.rowKey === sr.key" 
-             class="absolute bg-blue-500/30 border border-blue-500 rounded-sm pointer-events-none"
-             :style="{
-               left: dragState.previewLeft + 'px',
-               top: '10px',
-               width: dragState.previewWidth + 'px',
-               height: '28px'
-             }">
-        </div>
+        <div
+          v-if="dragState.active && dragState.rowKey === sr.key" 
+          class="absolute bg-blue-500/30 border border-blue-500 rounded-sm pointer-events-none"
+          :style="{
+            left: dragState.previewLeft + 'px',
+            top: '10px',
+            width: dragState.previewWidth + 'px',
+            height: '28px'
+          }"
+        />
       </div>
     </template>
   </div>
@@ -82,8 +156,7 @@
 import { nextTick, onMounted, onUnmounted } from 'vue'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
-import LeftPaneCell from '@/components/internal/LeftPaneCell.vue'
-import { addDaysISO, businessDaysBetweenInclusive, businessOffset } from '@/composables/useDate'
+import { businessDaysBetweenInclusive } from '@/composables/useDate'
 import { computeLanes } from '@/utils/lanes'
 import { useTimelineGrid } from '@/composables/useTimeline'
 import { indexFromX, businessSegment } from '@/utils/grid'
@@ -107,8 +180,8 @@ const days = computed(() => props.days)
 const { dayOffsets, weekStarts } = useTimelineGrid(days, pxPerDay)
 function lineLeft(i:number){ return dayOffsets.value[i] ?? i*pxPerDay.value }
 function dayWidth(i:number){ const next = dayOffsets.value[i+1] ?? (lineLeft(i) + pxPerDay.value); return Math.max(0, next - lineLeft(i)) }
-const weekStartSet = computed(() => new Set(weekStarts.value))
-function isWeekStart(i:number){ return weekStartSet.value.has(i) }
+// const weekStartSet = computed(() => new Set(weekStarts.value))
+// function isWeekStart(i:number){ return weekStartSet.value.has(i) }
 
 // Calculate total timeline width to ensure timeline-bg resizes properly when scrolling
 const timelineWidth = computed(() => days.value.length * pxPerDay.value)
@@ -140,7 +213,7 @@ const autoScrollState = ref({
 })
 
 function isAddRow(sr:any) { return String(sr.key).includes('__add__') || sr.person_id === null || sr.project_id === null }
-function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
+// function cleanAddLabel(s: string) { return s.replace(/^\s*\+\s*/, '') }
 function subAssignmentsLaned(sr: { key:string; person_id: string|null; project_id: string|null }) {
   // Since we filtered out add rows, all rows here should have assignments
   const list = assignmentsRef.value.filter((a: any) => a.person_id === sr.person_id && a.project_id === sr.project_id)
@@ -209,8 +282,7 @@ function handleMouseDown(e: MouseEvent, sr: any) {
 function handleMouseUp(e: MouseEvent, sr: any) {
   if (e.button === 2) {
     // Right mouse button released
-    const wasDown = rightMouseState.value.isDown
-    const pressDuration = Date.now() - rightMouseState.value.startTime
+    // right-click released
     
     rightMouseState.value.isDown = false
     
@@ -384,10 +456,7 @@ function startAutoScroll(direction: number, timelineContainer: HTMLElement) {
       const activeRow = document.querySelector(`[data-row-key="${dragState.value.rowKey}"]`)
       if (activeRow) {
         // Re-trigger mouse position update to maintain correct drag state
-        const mouseEvent = new MouseEvent('mousemove', {
-          clientX: dragState.value.currentX + (activeRow.getBoundingClientRect().left),
-          clientY: 0
-        })
+        // maintain correct drag state after scroll
         updateDragFromScroll()
       }
     }
@@ -411,7 +480,7 @@ function updateDragFromScroll() {
   if (dragState.value.active && dragState.value.rowKey) {
     const activeRow = document.querySelector(`[data-row-key="${dragState.value.rowKey}"]`)
     if (activeRow) {
-      const rect = activeRow.getBoundingClientRect()
+      // const rect = activeRow.getBoundingClientRect()
       const x = dragState.value.currentX // Keep the relative mouse position
       dragState.value.endDayIndex = getDayIndexFromX(x)
       updatePreviewBar()
@@ -474,11 +543,11 @@ if (rowGroupControls) {
 }
 
 // Header aggregated lane count
-const headerLaneCount = computed(() => {
-  const list = assignmentsRef.value.filter((a: any) => (props.groupType === 'person' ? a.person_id === props.groupId : a.project_id === props.groupId))
-  const { laneCount } = computeLanes(props.startISO, list)
-  return laneCount
-})
+// const headerLaneCount = computed(() => {
+//   const list = assignmentsRef.value.filter((a: any) => (props.groupType === 'person' ? a.person_id === props.groupId : a.project_id === props.groupId))
+//   const { laneCount } = computeLanes(props.startISO, list)
+//   return laneCount
+// })
 
 // Force recalculation by triggering subAssignmentsLaned for all subrows
 function recalculateAllHeights() {
@@ -523,7 +592,7 @@ function coverageClass(i: number) {
 }
 
 // Global mouse event handlers for drag operations
-const handleGlobalMouseUp = (e: MouseEvent) => {
+const handleGlobalMouseUp = (_e: MouseEvent) => {
   if (dragState.value.active && dragState.value.rowKey) {
     // Find the original subrow data using the saved rowKey
     const originalSubrow = filteredSubrows.value.find(subrow => subrow.key === dragState.value.rowKey)

@@ -1,160 +1,357 @@
 <template>
   <div class="flex-1 w-full h-full flex flex-col overflow-hidden">
     <!-- Scrollable content with aligned rows -->
-    <div ref="scrollArea" class="overflow-auto h-full flex-1 border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
+    <div
+      ref="scrollArea"
+      class="overflow-auto h-full flex-1 border-y border-slate-200 rounded-md shadow-sm"
+      @scroll.passive="handleScroll"
+    >
       <TimelineHeader
         :days="days"
-        :dayColumns="dayColumns"
-        :monthSegments="monthSegments"
-        :monthColumns="monthColumns"
-        :todayISO="todayISO"
-        :dayLabel="dayLabel"
-        :pxPerDay="view.px_per_day"
-        :dayOffsets="dayOffsets"
-        :weekStarts="weekStarts"
-        :scrollLeft="scrollLeft"
-        :viewMode="view.mode"
-        @addNewProject="addNewProject"
-        @addNewPerson="addNewPerson"
-        @expandAll="expandAll"
-        @collapseAll="collapseAll"
+        :day-columns="dayColumns"
+        :month-segments="monthSegments"
+        :month-columns="monthColumns"
+        :today-i-s-o="todayISO"
+        :day-label="dayLabel"
+        :px-per-day="view.px_per_day"
+        :day-offsets="dayOffsets"
+        :week-starts="weekStarts"
+        :scroll-left="scrollLeft"
+        :view-mode="view.mode"
+        @add-new-project="addNewProject"
+        @add-new-person="addNewPerson"
+        @expand-all="expandAll"
+        @collapse-all="collapseAll"
       />
       <template v-if="view.mode==='person'">
-        <RowGroup v-for="p in people" :key="p.id" :label="p.name"
-          :groupType="'person'" :groupId="p.id"
-          :subrows="personSubrows(p.id)" :days="days" :pxPerDay="view.px_per_day"
-          :startISO="view.start" :projectsMap="projectsMap" :peopleMap="peopleMap"
-          @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" @edit="onEdit" @createPopover="onCreatePopover" />
+        <RowGroup
+          v-for="p in people"
+          :key="p.id"
+          :label="p.name"
+          :group-type="'person'"
+          :group-id="p.id"
+          :subrows="personSubrows(p.id)"
+          :days="days"
+          :px-per-day="view.px_per_day"
+          :start-i-s-o="view.start"
+          :projects-map="projectsMap"
+          :people-map="peopleMap"
+          @create="onCreate"
+          @update="onUpdate"
+          @create-from-sidebar="onAddFromSidebar"
+          @edit="onEdit"
+          @create-popover="onCreatePopover"
+        />
       </template>
       <template v-else>
-        <RowGroup v-for="proj in projects" :key="proj.id" :label="proj.name"
-          :groupType="'project'" :groupId="proj.id"
-          :subrows="projectSubrows(proj.id)" :days="days" :pxPerDay="view.px_per_day"
-          :startISO="view.start" :projectsMap="projectsMap" :peopleMap="peopleMap"
-          @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" @edit="onEdit" @createPopover="onCreatePopover" />
+        <RowGroup
+          v-for="proj in projects"
+          :key="proj.id"
+          :label="proj.name"
+          :group-type="'project'"
+          :group-id="proj.id"
+          :subrows="projectSubrows(proj.id)"
+          :days="days"
+          :px-per-day="view.px_per_day"
+          :start-i-s-o="view.start"
+          :projects-map="projectsMap"
+          :people-map="peopleMap"
+          @create="onCreate"
+          @update="onUpdate"
+          @create-from-sidebar="onAddFromSidebar"
+          @edit="onEdit"
+          @create-popover="onCreatePopover"
+        />
       </template>
 
       <!-- Empty rows to fill remaining screen space -->
-      <div v-for="n in emptyRowsCount" :key="'empty-' + n" class="grid" style="grid-template-columns: 240px 1fr;" :style="{ width: timelineWidth+'px' }">
+      <div
+        v-for="n in emptyRowsCount"
+        :key="'empty-' + n"
+        class="grid"
+        style="grid-template-columns: 240px 1fr;"
+        :style="{ width: timelineWidth+'px' }"
+      >
         <!-- Left: empty label -->
-        <div class="border-b border-r pane-border sticky left-0 z-10 bg-default" :style="{ height: emptyRowHeight+'px' }">
-        </div>
+        <div
+          class="border-b border-r pane-border sticky left-0 z-10 bg-default"
+          :style="{ height: emptyRowHeight+'px' }"
+        />
         <!-- Right: empty timeline track with grid overlay -->
-        <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: emptyRowHeight+'px', width: timelineWidth+'px' }">
-          <GridOverlay :days="days" :pxPerDay="view.px_per_day" :offsets="dayOffsets" :weekStarts="weekStarts" />
+        <div
+          class="relative border-b border-r pane-border timeline-bg"
+          :style="{ height: emptyRowHeight+'px', width: timelineWidth+'px' }"
+        >
+          <GridOverlay
+            :days="days"
+            :px-per-day="view.px_per_day"
+            :offsets="dayOffsets"
+            :week-starts="weekStarts"
+          />
         </div>
       </div>
     </div>
 
 
-      <div v-if="editOpen && editState" class="fixed inset-0 z-[1000] grid place-items-center bg-black/30">
-        <div class="bg-default text-default border border-default rounded-md shadow-lg w-[28rem] max-w-[95vw] p-4 overflow-visible">
-          <div class="flex items-center justify-between text-sm font-medium mb-3">
-            <div>Edit Assignment</div>
-            <UButton color="neutral" variant="ghost" size="xs" :icon="'i-lucide-x'" aria-label="Close" @click="closeEditModal" />
+    <div
+      v-if="editOpen && editState"
+      class="fixed inset-0 z-[1000] grid place-items-center bg-black/30"
+    >
+      <div class="bg-default text-default border border-default rounded-md shadow-lg w-[28rem] max-w-[95vw] p-4 overflow-visible">
+        <div class="flex items-center justify-between text-sm font-medium mb-3">
+          <div>Edit Assignment</div>
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :icon="'i-lucide-x'"
+            aria-label="Close"
+            @click="closeEditModal"
+          />
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center gap-2 text-sm">
+            <label class="w-20">Start</label>
+            <UInput
+              v-model="editState.start"
+              class="flex-1"
+              type="date"
+              size="xs"
+            />
           </div>
-          <div class="space-y-3">
-            <div class="flex items-center gap-2 text-sm">
-              <label class="w-20">Start</label>
-              <UInput class="flex-1" type="date" v-model="editState.start" size="xs" />
-            </div>
-            <div class="flex items-center gap-2 text-sm">
-              <label class="w-20">End</label>
-              <UInput class="flex-1" type="date" v-model="editState.end" size="xs" />
-            </div>
-            <div class="flex items-center gap-2 text-sm">
-              <label class="w-20">Allocation</label>
-              <USelect class="flex-1" size="xs" v-model="editState.allocation" :items="[
+          <div class="flex items-center gap-2 text-sm">
+            <label class="w-20">End</label>
+            <UInput
+              v-model="editState.end"
+              class="flex-1"
+              type="date"
+              size="xs"
+            />
+          </div>
+          <div class="flex items-center gap-2 text-sm">
+            <label class="w-20">Allocation</label>
+            <USelect
+              v-model="editState.allocation"
+              class="flex-1"
+              size="xs"
+              :items="[
                 { label: '100% (1)', value: 1 },
                 { label: '75% (¾)', value: 0.75 },
                 { label: '50% (½)', value: 0.5 },
                 { label: '25% (¼)', value: 0.25 }
-              ]" />
-            </div>
-          </div>
-          <div class="flex justify-between mt-4 pt-3 border-t border-default">
-            <UButton color="error" size="xs" @click="deleteAssignment">Delete</UButton>
-            <div class="flex gap-2">
-              <UButton variant="outline" size="xs" @click="closeEditModal">Cancel</UButton>
-              <UButton color="neutral" size="xs" @click="saveAssignmentChanges">Save</UButton>
-            </div>
+              ]"
+            />
           </div>
         </div>
-      </div>
-
-      <!-- New Project dialog -->
-      <div v-if="newProjectOpen" class="fixed inset-0 z-[1000] grid place-items-center bg-black/30">
-        <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
-          <div class="text-sm font-medium mb-2">New project</div>
-          <div class="space-y-2">
-            <UFormField label="Name" help="Enter a unique project name">
-              <UInput v-model="newProjectName" size="xs" placeholder="e.g. Aurora" />
-            </UFormField>
-            <div v-if="newProjectError" class="text-xs text-error">{{ newProjectError }}</div>
+        <div class="flex justify-between mt-4 pt-3 border-t border-default">
+          <UButton
+            color="error"
+            size="xs"
+            @click="deleteAssignment"
+          >
+            Delete
+          </UButton>
+          <div class="flex gap-2">
+            <UButton
+              variant="outline"
+              size="xs"
+              @click="closeEditModal"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              color="neutral"
+              size="xs"
+              @click="saveAssignmentChanges"
+            >
+              Save
+            </UButton>
           </div>
-          <div class="mt-3 flex justify-end gap-2">
-            <UButton size="xs" variant="outline" @click="newProjectOpen=false">Cancel</UButton>
-            <UButton size="xs" color="primary" @click="confirmCreateProject">Create</UButton>
-          </div>
-        </div>
-      </div>
-
-      <!-- New Person dialog -->
-      <div v-if="newPersonOpen" class="fixed inset-0 z-[1000] grid place-items-center bg-black/30">
-        <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
-          <div class="text-sm font-medium mb-2">New person</div>
-          <div class="space-y-2">
-            <UFormField label="Name" help="Enter a unique person name">
-              <UInput v-model="newPersonName" size="xs" placeholder="e.g. Ada" />
-            </UFormField>
-            <div v-if="newPersonError" class="text-xs text-error">{{ newPersonError }}</div>
-          </div>
-          <div class="mt-3 flex justify-end gap-2">
-            <UButton size="xs" variant="outline" @click="newPersonOpen=false">Cancel</UButton>
-            <UButton size="xs" color="primary" @click="confirmCreatePerson">Create</UButton>
-          </div>
-        </div>
-      </div>
-
-      <!-- Delete assignment confirm -->
-      <div v-if="deleteOpen" class="fixed inset-0 z-[1000] grid place-items-center bg-black/30">
-        <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
-          <div class="text-sm font-medium mb-2">Delete assignment</div>
-          <div class="text-sm">This action cannot be undone. Continue?</div>
-          <div class="mt-3 flex justify-end gap-2">
-            <UButton size="xs" variant="outline" @click="deleteOpen=false">Cancel</UButton>
-            <UButton size="xs" color="error" @click="confirmDeleteAssignment">Delete</UButton>
-          </div>
-        </div>
-      </div>
-
-    <!-- Create popover (moved from RowGroup.vue) -->
-    <div v-if="createOpen" class="fixed inset-0 z-[1000] grid place-items-center bg-black/30">
-      <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3 overflow-visible">
-        <div class="flex items-center justify-between text-xs mb-2">
-          <div>Quick create</div>
-          <UButton size="xs" variant="outline" :icon="'i-lucide-x'" aria-label="Close" @click.stop="closeCreateModal" />
-        </div>
-        <div class="mt-1 flex items-center gap-2 text-sm">
-          <label class="w-20">Durée</label>
-          <UInput size="xs" class="w-full" type="number" v-model.number="duration" min="1" />
-        </div>
-        <div class="mt-2 flex items-center gap-2 text-sm">
-          <label class="w-20">Allocation</label>
-          <USelect size="xs" class="w-full" v-model="allocation" :items="[
-            { label: '1', value: 1 },
-            { label: '0.75', value: 0.75 },
-            { label: '0.5', value: 0.5 },
-            { label: '0.25', value: 0.25 }
-          ]" />
-        </div>
-        <div class="mt-3 flex justify-end gap-2">
-          <UButton size="xs" variant="outline" @click.stop="closeCreateModal">Cancel</UButton>
-          <UButton size="xs" color="neutral" @click.stop="confirmCreate">Create</UButton>
         </div>
       </div>
     </div>
 
+    <!-- New Project dialog -->
+    <div
+      v-if="newProjectOpen"
+      class="fixed inset-0 z-[1000] grid place-items-center bg-black/30"
+    >
+      <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
+        <div class="text-sm font-medium mb-2">
+          New project
+        </div>
+        <div class="space-y-2">
+          <UFormField
+            label="Name"
+            help="Enter a unique project name"
+          >
+            <UInput
+              v-model="newProjectName"
+              size="xs"
+              placeholder="e.g. Aurora"
+            />
+          </UFormField>
+          <div
+            v-if="newProjectError"
+            class="text-xs text-error"
+          >
+            {{ newProjectError }}
+          </div>
+        </div>
+        <div class="mt-3 flex justify-end gap-2">
+          <UButton
+            size="xs"
+            variant="outline"
+            @click="newProjectOpen=false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            size="xs"
+            color="primary"
+            @click="confirmCreateProject"
+          >
+            Create
+          </UButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Person dialog -->
+    <div
+      v-if="newPersonOpen"
+      class="fixed inset-0 z-[1000] grid place-items-center bg-black/30"
+    >
+      <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
+        <div class="text-sm font-medium mb-2">
+          New person
+        </div>
+        <div class="space-y-2">
+          <UFormField
+            label="Name"
+            help="Enter a unique person name"
+          >
+            <UInput
+              v-model="newPersonName"
+              size="xs"
+              placeholder="e.g. Ada"
+            />
+          </UFormField>
+          <div
+            v-if="newPersonError"
+            class="text-xs text-error"
+          >
+            {{ newPersonError }}
+          </div>
+        </div>
+        <div class="mt-3 flex justify-end gap-2">
+          <UButton
+            size="xs"
+            variant="outline"
+            @click="newPersonOpen=false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            size="xs"
+            color="primary"
+            @click="confirmCreatePerson"
+          >
+            Create
+          </UButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete assignment confirm -->
+    <div
+      v-if="deleteOpen"
+      class="fixed inset-0 z-[1000] grid place-items-center bg-black/30"
+    >
+      <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
+        <div class="text-sm font-medium mb-2">
+          Delete assignment
+        </div>
+        <div class="text-sm">
+          This action cannot be undone. Continue?
+        </div>
+        <div class="mt-3 flex justify-end gap-2">
+          <UButton
+            size="xs"
+            variant="outline"
+            @click="deleteOpen=false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            size="xs"
+            color="error"
+            @click="confirmDeleteAssignment"
+          >
+            Delete
+          </UButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create popover (moved from RowGroup.vue) -->
+    <div
+      v-if="createOpen"
+      class="fixed inset-0 z-[1000] grid place-items-center bg-black/30"
+    >
+      <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3 overflow-visible">
+        <div class="flex items-center justify-between text-xs mb-2">
+          <div>Quick create</div>
+          <UButton
+            size="xs"
+            variant="outline"
+            :icon="'i-lucide-x'"
+            aria-label="Close"
+            @click.stop="closeCreateModal"
+          />
+        </div>
+        <div class="mt-1 flex items-center gap-2 text-sm">
+          <label class="w-20">Durée</label>
+          <UInput
+            v-model.number="duration"
+            size="xs"
+            class="w-full"
+            type="number"
+            min="1"
+          />
+        </div>
+        <div class="mt-2 flex items-center gap-2 text-sm">
+          <label class="w-20">Allocation</label>
+          <USelect
+            v-model="allocation"
+            size="xs"
+            class="w-full"
+            :items="[
+              { label: '1', value: 1 },
+              { label: '0.75', value: 0.75 },
+              { label: '0.5', value: 0.5 },
+              { label: '0.25', value: 0.25 }
+            ]"
+          />
+        </div>
+        <div class="mt-3 flex justify-end gap-2">
+          <UButton
+            size="xs"
+            variant="outline"
+            @click.stop="closeCreateModal"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            size="xs"
+            color="neutral"
+            @click.stop="confirmCreate"
+          >
+            Create
+          </UButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -534,7 +731,6 @@ async function initTimelineWithAssignments() {
   
   // Convert back to ISO dates
   const paddedStart = startDate.toISOString().slice(0, 10)
-  const paddedEnd = endDate.toISOString().slice(0, 10)
   
   // Calculate the number of calendar days needed
   const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
@@ -555,7 +751,7 @@ async function initTimelineWithAssignments() {
 }
 
 // Watch for assignment changes and re-initialize timeline if needed
-watch(assignments, async (newAssignments) => {
+watch(assignments, async (_newAssignments) => {
   const assignmentRange = calculateAssignmentDateRange()
   if (!assignmentRange) return
   

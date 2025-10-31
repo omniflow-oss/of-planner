@@ -5,19 +5,19 @@
       ref="fileInput"
       type="file"
       accept=".json"
-      @change="handleFileSelect"
       class="hidden"
-    />
+      @change="handleFileSelect"
+    >
     
     <!-- Custom File Input Button -->
     <UButton 
-      @click="triggerFileInput"
       :disabled="loading"
       color="neutral"
       variant="outline"
       size="xs"
       :leading-icon="'i-lucide-folder-open'"
       title="Upload JSON data file"
+      @click="triggerFileInput"
     >
       Choose File
     </UButton>
@@ -25,12 +25,12 @@
     <!-- Load Sample Data Button (only show when no data exists) -->
     <UButton 
       v-if="!store.hasData"
-      @click="loadSampleData"
       :disabled="loading"
       color="primary"
       size="xs"
       :leading-icon="'i-lucide-database'"
       title="Load sample data from /public/planner-data.json (5 people, 5 projects, 6 assignments)"
+      @click="loadSampleData"
     >
       Load Sample
     </UButton>
@@ -38,44 +38,47 @@
     <!-- Clear Data Button (only show when data exists but can't be reset) -->
     <UButton 
       v-if="store.hasData && !store.canReset"
-      @click="clearAllData"
       :disabled="loading"
       color="error"
       variant="outline"
       size="xs"
       :leading-icon="'i-lucide-trash-2'"
       title="Clear all data (people, projects, assignments)"
+      @click="clearAllData"
     >
       Clear
     </UButton>
 
-     <!-- Reset Data Button (only show when data can be reset) -->
+    <!-- Reset Data Button (only show when data can be reset) -->
     <UButton 
       v-if="store.canReset"
-      @click="resetData"
       :disabled="loading"
       color="warning"
       variant="outline"
       size="xs"
       :leading-icon="'i-lucide-rotate-ccw'"
       title="Reset all changes back to initially loaded data"
+      @click="resetData"
     >
       Reset
     </UButton>
     <!-- Download Button (only show when data is modified) -->
     <UButton 
       v-if="store.shouldShowDownload"
-      @click="downloadData" 
-      color="success"
+      color="success" 
       size="xs"
       :leading-icon="'i-lucide-download'"
       title="Download modified data as JSON"
+      @click="downloadData"
     >
       Download
     </UButton>
 
     <!-- Loading State -->
-    <div v-if="loading" class="text-sm text-blue-600">
+    <div
+      v-if="loading"
+      class="text-sm text-blue-600"
+    >
       Loading...
     </div>
 
@@ -84,7 +87,10 @@
       People: {{ store.people.length }} | 
       Projects: {{ store.projects.length }} | 
       Assignments: {{ store.assignments.length }}
-      <span v-if="store.isDataModified" class="text-orange-600 ml-2">●</span>
+      <span
+        v-if="store.isDataModified"
+        class="text-orange-600 ml-2"
+      >●</span>
     </div>
   </div>
 </template>

@@ -1,6 +1,6 @@
 <template>
   <!-- <main class="flex-1 p-3"> -->
-    <Timeline />
+  <Timeline />
   <!-- </main> -->
 </template>
 

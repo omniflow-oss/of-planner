@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
-import { getSampleData, getEmptyData, getMinimalData } from './test-data'
+import { getSampleData, getMinimalData } from './test-data'
 
 describe('Planner Store with JSON data', () => {
   beforeEach(() => {

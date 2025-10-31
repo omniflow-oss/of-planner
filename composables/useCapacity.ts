@@ -1,6 +1,6 @@
 import { computed, type Ref } from 'vue'
 import type { Assignment } from '@/types/planner'
-import { clampToWindow, manDays } from '@/utils/alloc'
+import { clampToWindow } from '@/utils/alloc'
 
 type Group = { type: 'person' | 'project'; id: string }
 
@@ -32,4 +32,3 @@ export function useCapacity(assignmentsRef: Ref<Assignment[]>, daysRef: Ref<stri
 
   return { daily, totalMD, formattedDaily }
 }
-
