@@ -1,13 +1,45 @@
 <template>
   <div class="grid border-b" style=" grid-template-columns: 240px 1fr;" :style="{ width: timelineWidth+'px' }">
-    <!-- Left empty spacer to match content structure -->
-    <div class="border-b border-r pane-border sticky left-0 z-30 bg-default"></div>
+    <!-- Left spacer with timeline controls -->
+    <div class="border-b border-r pane-border sticky left-0 z-30 bg-default">
+      <div class="py-3 px-3 text-center h-full flex flex-col justify-center">
+        <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2 justify-center">
+          {{ viewMode === 'person' ? 'People View' : 'Project View' }} 
+          <!-- Add Project Button (only show in project view) -->
+          <UButton 
+            v-if="viewMode === 'project'"
+            size="xs"
+            color="primary"
+            @click="emit('addNewProject')"
+            :leading-icon="'i-lucide-plus'"
+            title="Add a new project to the timeline"
+          >
+            Add Project
+          </UButton>
+          <!-- Add Person Button (only show in people view) -->
+          <UButton 
+            v-if="viewMode === 'person'"
+            size="xs"
+            color="primary"
+            @click="emit('addNewPerson')"
+            :leading-icon="'i-lucide-plus'"
+            title="Add a new person to the timeline"
+          >
+            Add Person
+          </UButton>
+          <!-- Expand/Collapse all -->
+          <span class="mx-1 w-px h-4 bg-slate-200"></span>
+          <UButton size="xs" variant="outline" color="neutral" :leading-icon="'i-lucide-chevrons-down'" @click="emit('expandAll')">Expand all</UButton>
+          <UButton size="xs" variant="outline" color="neutral" :leading-icon="'i-lucide-chevrons-up'" @click="emit('collapseAll')">Collapse all</UButton>
+        </div>          
+      </div>
+    </div>
 
     <!-- Sticky timeline header with grid overlay -->
     <div class="relative top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75" :style="{ width: (timelineWidth - 240)+'px' }">
 
       <!-- Grid overlay aligned with days (uses shared GridOverlay for consistency) -->
-      <div class="absolute inset-0 pointer-events-none" style="top: 30px;">
+      <div class="absolute inset-0 pointer-events-none" style="top: 26px;">
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
       </div>
 
@@ -17,7 +49,7 @@
       </div>
       <!-- Bottom: Day (D MMM) -->
       <div class="grid text-[11px] text-highlighted select-none" :style="{ gridTemplateColumns: dayColumns }">
-        <div v-for="day in days" :key="day" class="text-center py-1.5">
+        <div v-for="day in days" :key="day" class="text-center flex items-end justify-center pb-1.5 pt-1">
           <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-inverted text-inverted' : '']" v-html="dayShort(day)"></span>
         </div>
       </div>
@@ -39,6 +71,15 @@ const props = defineProps<{
   pxPerDay: number
   dayOffsets: number[]
   weekStarts: number[]
+  // View mode and button handlers
+  viewMode: 'person' | 'project'
+}>()
+
+const emit = defineEmits<{
+  addNewProject: []
+  addNewPerson: []
+  expandAll: []
+  collapseAll: []
 }>()
 
 // Calculate timeline width to match timeline content
@@ -81,6 +122,9 @@ function isToday(day: string) {
 }
 .cell-small  .month-numeric {
   display: block;
+}
+.month-year-header{
+  overflow: hidden;
 }
 .month-year-header::after {
   height: 30px;
