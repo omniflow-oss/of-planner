@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import type { PlannerState, Assignment, Person, Project, Allocation, ViewMode, ExternalPlannerData } from '@/types/planner'
-import { addDaysISO, clampDateRange, parseISO, toISO } from '@/composables/useDate'
+import { clampDateRange, toISO } from '@/composables/useDate'
 
 // Generate sequential IDs based on existing data
 function generateSequentialId(prefix: string, existingItems: { id: string }[]): string {
