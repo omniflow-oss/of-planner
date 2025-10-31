@@ -36,7 +36,7 @@
     </div>
 
     <!-- Sticky timeline header with grid overlay -->
-    <div class="relative top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75" :style="{ width: (timelineWidth - 240)+'px' }">
+    <div class="relative top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75 flex flex-col justify-between" :style="{ width: (timelineWidth - 240)+'px' }">
 
       <!-- Grid overlay aligned with days (uses shared GridOverlay for consistency) -->
       <div class="absolute inset-0 pointer-events-none" style="top: 26px;">
