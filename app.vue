@@ -1,6 +1,6 @@
 <template>
   <UApp>
-    <div class="min-h-screen flex flex-col bg-white text-slate-900 text-[13.5px]">
+    <div class="min-h-screen flex flex-col bg-default text-default text-[13.5px]">
       <AppHeader 
         @go-to-today="handleGoToToday"
         @add-weeks="handleAddWeeks"

@@ -55,7 +55,7 @@
     </div>
 
     <!-- Scrollable content with aligned rows -->
-    <div ref="scrollArea" class="overflow-auto h-full flex-1  border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
+    <div ref="scrollArea" class="overflow-auto h-full flex-1 border-y border-default rounded-md shadow-sm" @scroll.passive="handleScroll">
       <template v-if="view.mode==='person'">
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
           :groupType="'person'" :groupId="p.id"
