@@ -10,9 +10,14 @@ describe('planner store', () => {
 
   it('creates assignment with clamped dates and selects it', () => {
     const s = usePlannerStore()
+    
+    // Create initial data that the test expects
+    const person = s.createPerson({ name: 'Test Person' })
+    const project = s.createProject({ name: 'Test Project' })
+    
     const start = s.view.start
     const end = addDaysISO(start, 4)
-    const a = s.createAssignment({ person_id: s.people[0].id, project_id: s.projects[0].id, start: end, end: start, allocation: 1 })
+    const a = s.createAssignment({ person_id: person.id, project_id: project.id, start: end, end: start, allocation: 1 })
     // should clamp so start <= end
     expect(a.start <= a.end).toBe(true)
     // selected id should be new assignment
@@ -21,7 +26,13 @@ describe('planner store', () => {
 
   it('updates and clamps when end < start', () => {
     const s = usePlannerStore()
-    const a = s.assignments[0]
+    
+    // Create initial data that the test expects
+    const person = s.createPerson({ name: 'Test Person' })
+    const project = s.createProject({ name: 'Test Project' })
+    const start = s.view.start
+    const a = s.createAssignment({ person_id: person.id, project_id: project.id, start, end: addDaysISO(start, 2), allocation: 1 })
+    
     s.updateAssignment(a.id, { start: addDaysISO(a.start, 3), end: addDaysISO(a.start, 1) })
     const updated = s.assignments.find(x => x.id === a.id)!
     expect(updated.end >= updated.start).toBe(true)

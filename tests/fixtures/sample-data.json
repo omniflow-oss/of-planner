@@ -1,0 +1,61 @@
+{
+  "people": [
+    { "id": "p1", "name": "Alice Johnson" },
+    { "id": "p2", "name": "Bob Smith" },
+    { "id": "p3", "name": "Carol Williams" }
+  ],
+  "projects": [
+    { 
+      "id": "j1", 
+      "name": "Website Redesign", 
+      "color": "#3b82f6", 
+      "emoji": "🌐" 
+    },
+    { 
+      "id": "j2", 
+      "name": "Mobile App", 
+      "color": "#10b981", 
+      "emoji": "📱" 
+    },
+    { 
+      "id": "j3", 
+      "name": "Database Migration", 
+      "color": "#f59e0b", 
+      "emoji": "🗄️" 
+    }
+  ],
+  "assignments": [
+    {
+      "id": "a1",
+      "person_id": "p1",
+      "project_id": "j1",
+      "start": "2025-11-01",
+      "end": "2025-11-05",
+      "allocation": 1
+    },
+    {
+      "id": "a2",
+      "person_id": "p2",
+      "project_id": "j1",
+      "start": "2025-11-04",
+      "end": "2025-11-08",
+      "allocation": 0.5
+    },
+    {
+      "id": "a3",
+      "person_id": "p1",
+      "project_id": "j2",
+      "start": "2025-11-11",
+      "end": "2025-11-15",
+      "allocation": 0.75
+    },
+    {
+      "id": "a4",
+      "person_id": "p3",
+      "project_id": "j3",
+      "start": "2025-11-18",
+      "end": "2025-11-22",
+      "allocation": 1
+    }
+  ]
+}
