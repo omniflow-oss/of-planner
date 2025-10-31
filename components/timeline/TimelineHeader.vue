@@ -7,11 +7,11 @@
     </div>
 
     <!-- Top: Month + Year -->
-    <div class="grid text-[12px] text-toned select-none border-b border-default bg-elevated " :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
+    <div class="grid text-[12px] text-highlighted select-none border-b border-default bg-default " :style="{ gridTemplateColumns: monthColumns, transform: `translateX(-${scrollLeft}px)` }">
       <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium border-x border-accented " style="transform: translateX(1px);"> <span class="month-year">{{ monthWithYear(seg) }}</span></div>
     </div>
     <!-- Bottom: Day (D MMM) -->
-    <div class="grid text-[11px] text-toned select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
+    <div class="grid text-[11px] text-highlighted select-none" :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }">
       <div v-for="day in days" :key="day" class="text-center py-1.5">
         <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-inverted text-inverted' : '']" v-html="dayShort(day)"></span>
       </div>
