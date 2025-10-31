@@ -12,7 +12,14 @@ describe('AssignmentBar interactions', () => {
 
   it('emits update when dragged by ~1 day (snap)', async () => {
     const pxPerDay = 40
-    const wrapper = mount(AssignmentBar as any, { props: { assignment, startISO, pxPerDay, projectsMap } })
+    const wrapper = mount(AssignmentBar as any, {
+      props: { assignment, startISO, pxPerDay, projectsMap },
+      global: {
+        stubs: {
+          UTooltip: { template: '<div><slot /></div>' },
+        },
+      },
+    })
     await wrapper.trigger('mousedown', { clientX: 0 })
     // simulate drag ~1 day to the right
     window.dispatchEvent(new MouseEvent('mousemove', { clientX: pxPerDay + 2 }))
@@ -25,4 +32,3 @@ describe('AssignmentBar interactions', () => {
     expect(last.start).toBe(addDaysISO(startISO, 1))
   })
 })
-
