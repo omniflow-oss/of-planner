@@ -54,10 +54,10 @@
       <div class="relative border-b border-r pane-border timeline-bg" 
            :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" 
            :data-row-key="sr.key"
-           @contextmenu.prevent.stop="onEmptyClick($event, sr)"
-           @mousedown="startDragCreate($event, sr)"
+           @contextmenu="handleContextMenu($event, sr)"
+           @mousedown="handleMouseDown($event, sr)"
            @mousemove="updateDragCreate($event, sr)"
-           @mouseup="endDragCreate($event, sr)"
+           @mouseup="handleMouseUp($event, sr)"
            @dragstart="cancelDragCreate"
            >
         <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
@@ -175,9 +175,80 @@ function handleAddClick() {
   emit('createFromSidebar', addRowData)
 }
 
+// Consolidated interaction and right-click state
+const rightMouseState = ref({
+  isDown: false,
+  startTime: 0,
+  timer: null as number | null,
+  blocked: false,
+  interactionCounter: 0
+})
+
+// Handle all mouse down events (left and right buttons)
+function handleMouseDown(e: MouseEvent, sr: any) {
+  if (e.button === 2) {
+    // Right mouse button pressed
+    rightMouseState.value.isDown = true
+    rightMouseState.value.startTime = Date.now()
+    rightMouseState.value.blocked = false // Start unblocked
+    
+    console.log('RowGroup: Right mousedown started')
+    
+    // Start timer to block context menu after long press threshold
+    rightMouseState.value.timer = window.setTimeout(() => {
+      if (rightMouseState.value.isDown) {
+        rightMouseState.value.blocked = true
+        console.log('RowGroup: Right mouse long press detected, blocking context menu')
+      }
+    }, 200) // 200ms threshold for long press
+    
+    return
+  }
+  
+  // Left mouse button or other - delegate to drag create
+  startDragCreate(e, sr)
+}
+
+// Handle all mouse up events (left and right buttons)
+function handleMouseUp(e: MouseEvent, sr: any) {
+  if (e.button === 2) {
+    // Right mouse button released
+    const wasDown = rightMouseState.value.isDown
+    const pressDuration = Date.now() - rightMouseState.value.startTime
+    
+    rightMouseState.value.isDown = false
+    
+    // Clear the long press timer
+    if (rightMouseState.value.timer) {
+      clearTimeout(rightMouseState.value.timer)
+      rightMouseState.value.timer = null
+    }
+    
+    console.log('RowGroup: Right mouseup, press duration:', pressDuration + 'ms', 'wasDown:', wasDown)
+    
+    // Reset block state after a short delay to allow contextmenu event to fire
+    setTimeout(() => {
+      rightMouseState.value.blocked = false
+      console.log('RowGroup: Reset rightClickBlocked after mouseup')
+    }, 10)
+    
+    return
+  }
+  
+  // Left mouse button or other - delegate to drag end
+  endDragCreate(e, sr)
+}
+
 // Drag-to-create functions
 function startDragCreate(e: MouseEvent, sr: any) {
+  // Only trigger on left mouse button (button 0)
+  if (e.button !== 0) return
   if (onResizeEvent.value) return
+  
+  // Increment interaction counter and block right clicks
+  rightMouseState.value.interactionCounter++
+  rightMouseState.value.blocked = true
+  console.log('RowGroup: startDragCreate, counter:', rightMouseState.value.interactionCounter, 'rightClickBlocked:', rightMouseState.value.blocked)
   
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = e.clientX - rect.left
@@ -225,7 +296,7 @@ function endDragCreate(e: MouseEvent, sr: any) {
   
   // If drag is not active, handle as regular click
   if (!dragState.value.active) {
-    onEmptyClick(e, sr)
+    // onEmptyClick(e, sr)
     resetDragState()
     return
   }
@@ -274,6 +345,18 @@ function cancelDragCreate() {
 }
 
 function resetDragState() {
+  // Decrement interaction counter and unblock right clicks
+  if (rightMouseState.value.interactionCounter > 0) {
+    rightMouseState.value.interactionCounter--
+  }
+  
+  // Only unblock right clicks when counter reaches 0
+  if (rightMouseState.value.interactionCounter === 0) {
+    rightMouseState.value.blocked = false
+  }
+  
+  console.log('RowGroup: resetDragState, counter:', rightMouseState.value.interactionCounter, 'rightClickBlocked:', rightMouseState.value.blocked)
+  
   dragState.value.active = false
   dragState.value.isLongClick = false
   dragState.value.rowKey = ''
@@ -360,6 +443,29 @@ function updatePreviewBar() {
   const seg = businessSegment(props.startISO, startDay, endDay, pxPerDay.value)
   dragState.value.previewLeft = seg.left
   dragState.value.previewWidth = seg.width
+}
+
+// Handle context menu - only show create popup on simple right-click
+function handleContextMenu(e: MouseEvent, sr: any) {
+  // Always prevent default context menu
+  e.preventDefault()
+  e.stopPropagation()
+  
+  console.log('RowGroup: handleContextMenu called', {
+    active: dragState.value.active,
+    isLongClick: dragState.value.isLongClick,
+    hasTimer: !!dragState.value.longClickTimer,
+    counter: rightMouseState.value.interactionCounter,
+    rightClickBlocked: rightMouseState.value.blocked
+  })
+  
+  // Only show create popup if right clicks are not blocked
+  if (!rightMouseState.value.blocked && !dragState.value.active && !dragState.value.isLongClick && !dragState.value.longClickTimer && rightMouseState.value.interactionCounter === 0) {
+    console.log('RowGroup: Showing create popup on simple right-click')
+    onEmptyClick(e, sr)
+  } else {
+    console.log('RowGroup: Ignoring right-click - blocked or during interaction')
+  }
 }
 
 // Empty click to show create popover (now handled by Timeline.vue)
@@ -533,6 +639,9 @@ onMounted(() => {
 onUnmounted(() => {
   if (dragState.value.longClickTimer) {
     clearTimeout(dragState.value.longClickTimer)
+  }
+  if (rightMouseState.value.timer) {
+    clearTimeout(rightMouseState.value.timer)
   }
   stopAutoScroll()
   document.removeEventListener('mouseup', handleGlobalMouseUp)
