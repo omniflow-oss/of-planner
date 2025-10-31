@@ -1,43 +1,5 @@
 <template>
   <div class="flex-1 w-full flex flex-col">
-    <!-- Header rows: Month+Year (top) / Day (bottom) (right only) -->
-    <div >
-      <!-- Left placeholders to match 2 header rows: month+year / day -->
-      <div class="flex flex-col border-r">
-        <div class="py-3 px-3 text-center my-auto">
-          <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">
-            {{ view.mode === 'person' ? 'People View' : 'Project View' }} 
-              <!-- Add Project Button (only show in project view) -->
-              <UButton 
-                v-if="view.mode === 'project'"
-                size="xs"
-                color="primary"
-                @click="addNewProject"
-                :leading-icon="'i-lucide-plus'"
-                title="Add a new project to the timeline"
-              >
-                Add Project
-              </UButton>
-            <!-- Add Person Button (only show in people view) -->
-            <UButton 
-              v-if="view.mode === 'person'"
-              size="xs"
-              color="primary"
-              @click="addNewPerson"
-              :leading-icon="'i-lucide-plus'"
-              title="Add a new person to the timeline"
-            >
-              Add Person
-            </UButton>
-            <!-- Expand/Collapse all -->
-            <span class="mx-1 w-px h-4 bg-slate-200"></span>
-            <UButton size="xs" variant="outline" color="neutral" :leading-icon="'i-lucide-chevrons-down'" @click="expandAll()">Expand all</UButton>
-            <UButton size="xs" variant="outline" color="neutral" :leading-icon="'i-lucide-chevrons-up'" @click="collapseAll()">Collapse all</UButton>
-          </div>          
-        </div>     
-      </div>
-    </div>
-
     <!-- Scrollable content with aligned rows -->
     <div ref="scrollArea" class="overflow-auto h-full flex-1 border-y border-slate-200 rounded-md shadow-sm" @scroll.passive="handleScroll">
       <TimelineHeader
@@ -51,6 +13,11 @@
         :dayOffsets="dayOffsets"
         :weekStarts="weekStarts"
         :scrollLeft="scrollLeft"
+        :viewMode="view.mode"
+        @addNewProject="addNewProject"
+        @addNewPerson="addNewPerson"
+        @expandAll="expandAll"
+        @collapseAll="collapseAll"
       />
       <template v-if="view.mode==='person'">
         <RowGroup v-for="p in people" :key="p.id" :label="p.name"
@@ -506,8 +473,8 @@ function calculateAssignmentDateRange() {
     return null
   }
   
-  let earliestDate = assignments.value[0].start
-  let latestDate = assignments.value[0].end
+  let earliestDate = assignments.value[0]!.start
+  let latestDate = assignments.value[0]!.end
   
   for (const assignment of assignments.value) {
     if (assignment.start < earliestDate) earliestDate = assignment.start
