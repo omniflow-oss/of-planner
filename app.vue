@@ -12,7 +12,6 @@
     </div>
     <UToaster />
   </UApp>
-  
 </template>
 
 <script setup lang="ts">

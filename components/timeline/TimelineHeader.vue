@@ -1,5 +1,10 @@
 <template>
-  <div class="grid border-b" style=" grid-template-columns: 240px 1fr;" :style="{ width: timelineWidth+'px' }">
+  <!-- eslint-disable vue/no-v-html -->
+  <div
+    class="grid border-b"
+    style=" grid-template-columns: 240px 1fr;"
+    :style="{ width: timelineWidth+'px' }"
+  >
     <!-- Left spacer with timeline controls -->
     <div class="border-b border-r pane-border sticky left-0 z-30 bg-default">
       <div class="py-3 px-3 text-center h-full flex flex-col justify-center">
@@ -10,9 +15,9 @@
             v-if="viewMode === 'project'"
             size="xs"
             color="primary"
-            @click="emit('addNewProject')"
             :leading-icon="'i-lucide-plus'"
             title="Add a new project to the timeline"
+            @click="emit('addNewProject')"
           >
             Add Project
           </UButton>
@@ -21,36 +26,82 @@
             v-if="viewMode === 'person'"
             size="xs"
             color="primary"
-            @click="emit('addNewPerson')"
             :leading-icon="'i-lucide-plus'"
             title="Add a new person to the timeline"
+            @click="emit('addNewPerson')"
           >
             Add Person
           </UButton>
           <!-- Expand/Collapse all -->
-          <span class="mx-1 w-px h-4 bg-slate-200"></span>
-          <UButton size="xs" variant="outline" color="neutral" :leading-icon="'i-lucide-chevrons-down'" @click="emit('expandAll')">Expand all</UButton>
-          <UButton size="xs" variant="outline" color="neutral" :leading-icon="'i-lucide-chevrons-up'" @click="emit('collapseAll')">Collapse all</UButton>
+          <span class="mx-1 w-px h-4 bg-slate-200" />
+          <UButton
+            size="xs"
+            variant="outline"
+            color="neutral"
+            :leading-icon="'i-lucide-chevrons-down'"
+            @click="emit('expandAll')"
+          >
+            Expand all
+          </UButton>
+          <UButton
+            size="xs"
+            variant="outline"
+            color="neutral"
+            :leading-icon="'i-lucide-chevrons-up'"
+            @click="emit('collapseAll')"
+          >
+            Collapse all
+          </UButton>
         </div>          
       </div>
     </div>
 
     <!-- Sticky timeline header with grid overlay -->
-    <div class="relative top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75 flex flex-col justify-between" :style="{ width: (timelineWidth - 240)+'px' }">
-
+    <div
+      class="relative top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75 flex flex-col justify-between"
+      :style="{ width: (timelineWidth - 240)+'px' }"
+    >
       <!-- Grid overlay aligned with days (uses shared GridOverlay for consistency) -->
-      <div class="absolute inset-0 pointer-events-none" style="top: 26px;">
-        <GridOverlay :days="days" :pxPerDay="pxPerDay" :offsets="dayOffsets" :weekStarts="weekStarts" />
+      <div
+        class="absolute inset-0 pointer-events-none"
+        style="top: 26px;"
+      >
+        <GridOverlay
+          :days="days"
+          :px-per-day="pxPerDay"
+          :offsets="dayOffsets"
+          :week-starts="weekStarts"
+        />
       </div>
 
       <!-- Top: Month + Year -->
-      <div class="grid text-[12px] text-highlighted select-none border-b border-default bg-default " :style="{ gridTemplateColumns: monthColumns }">
-        <div v-for="seg in monthSegments" :key="seg.key" class="text-center py-1 font-medium  border-accented month-year-header relative" > {{ monthWithYear(seg) }}</div>
+      <div
+        class="grid text-[12px] text-highlighted select-none border-b border-default bg-default "
+        :style="{ gridTemplateColumns: monthColumns }"
+      >
+        <div
+          v-for="seg in monthSegments"
+          :key="seg.key"
+          class="text-center py-1 font-medium  border-accented month-year-header relative"
+        >
+          {{ monthWithYear(seg) }}
+        </div>
       </div>
       <!-- Bottom: Day (D MMM) -->
-      <div class="grid text-[11px] text-highlighted select-none" :style="{ gridTemplateColumns: dayColumns }">
-        <div v-for="day in days" :key="day" class="text-center py-1.5">
-          <span :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-inverted text-inverted' : '']" v-html="dayShort(day)"></span>
+      <div
+        class="grid text-[11px] text-highlighted select-none"
+        :style="{ gridTemplateColumns: dayColumns }"
+      >
+        <div
+          v-for="day in days"
+          :key="day"
+          class="text-center py-1.5"
+        >
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <span
+            :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-inverted text-inverted' : '']"
+            v-html="dayShort(day)"
+          />
         </div>
       </div>
     </div>

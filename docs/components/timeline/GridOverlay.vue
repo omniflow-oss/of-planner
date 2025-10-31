@@ -5,7 +5,11 @@
       class="grid h-full"
       :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }"
     >
-      <div v-for="(iso, idx) in days" :key="iso + ':' + idx" class="relative h-full">
+      <div
+        v-for="(iso, idx) in days"
+        :key="iso + ':' + idx"
+        class="relative h-full"
+      >
         <div :class="['absolute inset-y-0 left-0 border-l', isWeekStart(iso) ? weekBorderClass : dayBorderClass]" />
       </div>
     </div>
@@ -16,12 +20,18 @@
       class="grid h-full pointer-events-none"
       :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }"
     >
-      <div v-for="(iso, idx) in days" :key="'t:'+iso+':'+idx" class="relative">
-        <div v-if="idx === todayIndex" :class="['absolute inset-y-0 left-0 w-[2px]', todayClass]" />
+      <div
+        v-for="(iso, idx) in days"
+        :key="'t:'+iso+':'+idx"
+        class="relative"
+      >
+        <div
+          v-if="idx === todayIndex"
+          :class="['absolute inset-y-0 left-0 w-[2px]', todayClass]"
+        />
       </div>
     </div>
   </div>
-  
 </template>
 
 <script setup lang="ts">

@@ -1,8 +1,22 @@
 <template>
   <div class="pointer-events-none">
-    <div v-for="(day, i) in days" :key="'bg'+i" class="day-bg" :style="{ left: left(i)+'px', width: width(i)+'px' }" />
-    <div v-for="(day, i) in days" :key="'v'+i" :class="['grid-v', isWeekStart(i)?'week':'']" :style="{ left: left(i)+'px' }" />
-    <div v-if="todayIdx>=0 && todayIdx<days.length" class="today-line" :style="{ left: left(todayIdx)+'px' }" />
+    <div
+      v-for="(day, i) in days"
+      :key="'bg'+i"
+      class="day-bg"
+      :style="{ left: left(i)+'px', width: width(i)+'px' }"
+    />
+    <div
+      v-for="(day, i) in days"
+      :key="'v'+i"
+      :class="['grid-v', isWeekStart(i)?'week':'']"
+      :style="{ left: left(i)+'px' }"
+    />
+    <div
+      v-if="todayIdx>=0 && todayIdx<days.length"
+      class="today-line"
+      :style="{ left: left(todayIdx)+'px' }"
+    />
   </div>
 </template>
 
