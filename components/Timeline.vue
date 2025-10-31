@@ -33,6 +33,17 @@
           :startISO="view.start" :projectsMap="projectsMap" :peopleMap="peopleMap"
           @create="onCreate" @update="onUpdate" @createFromSidebar="onAddFromSidebar" @edit="onEdit" @createPopover="onCreatePopover" />
       </template>
+
+      <!-- Empty rows to fill remaining screen space -->
+      <div v-for="n in emptyRowsCount" :key="'empty-' + n" class="grid" style="grid-template-columns: 240px 1fr;" :style="{ width: timelineWidth+'px' }">
+        <!-- Left: empty label -->
+        <div class="border-b border-r pane-border sticky left-0 z-10 bg-default" :style="{ height: emptyRowHeight+'px' }">
+        </div>
+        <!-- Right: empty timeline track with grid overlay -->
+        <div class="relative border-b border-r pane-border timeline-bg" :style="{ height: emptyRowHeight+'px', width: timelineWidth+'px' }">
+          <GridOverlay :days="days" :pxPerDay="view.px_per_day" :offsets="dayOffsets" :weekStarts="weekStarts" />
+        </div>
+      </div>
     </div>
 
 
@@ -155,6 +166,7 @@ import { useTimeline } from '@/composables/useTimeline'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
 import RowGroup from '@/components/internal/RowGroup.vue'
+import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 
 const store = usePlannerStore()
 const { people, projects, view, assignments } = storeToRefs(store)
@@ -175,6 +187,35 @@ const {
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
+
+// Timeline width calculation
+const timelineWidth = computed(() => days.value.length * view.value.px_per_day)
+
+// Empty rows to fill remaining screen space
+const emptyRowHeight = 44 // Base row height
+const emptyRowsCount = computed(() => {
+  // Include windowHeight in dependency to trigger recalculation on resize
+  if (!scrollArea.value || windowHeight.value === 0) return 3 // Default to 3 empty rows if no scroll area yet
+  
+  // Get the height of the scroll area container
+  const containerHeight = scrollArea.value.clientHeight
+  
+  // Calculate current content height (header + existing rows)
+  const headerHeight = 70 // Approximate timeline header height
+  const currentGroups = view.value.mode === 'person' ? people.value : projects.value
+  const estimatedContentHeight = headerHeight + (currentGroups.length * emptyRowHeight * 2) // rough estimate including subrows
+  
+  // Calculate how much space is left
+  const remainingHeight = containerHeight - estimatedContentHeight
+  
+  // If there's remaining space, calculate how many empty rows we can fit
+  if (remainingHeight > emptyRowHeight) {
+    return Math.floor(remainingHeight / emptyRowHeight)
+  }
+  
+  // Always show at least 2 empty rows for better UX
+  return Math.max(2, Math.floor(containerHeight / emptyRowHeight / 4))
+})
 
 function personProjects(personId: string) {
   const set = new Set(assignments.value.filter(a => a.person_id === personId).map(a => a.project_id))
@@ -542,11 +583,25 @@ watch(assignments, async (newAssignments) => {
 
 
 // Initialize timeline and auto-scroll to today
+// Reactive trigger for empty rows recalculation
+const windowHeight = ref(0)
+
+// Update window height on resize
+const updateWindowHeight = () => {
+  if (typeof window !== 'undefined') {
+    windowHeight.value = window.innerHeight
+  }
+}
+
 onMounted(async () => { 
   // Initialize timeline considering existing assignments
   await initTimelineWithAssignments()
   
-  // No global listeners needed here
+  // Setup window resize listener for empty rows calculation
+  updateWindowHeight()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateWindowHeight)
+  }
   
   // Auto-scroll to today on app initialization
   await nextTick()
@@ -561,7 +616,10 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  // No cleanup necessary for modal listeners
+  // Cleanup window resize listener
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateWindowHeight)
+  }
 })
 
 // Expand/Collapse handlers
