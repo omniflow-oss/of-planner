@@ -10,7 +10,7 @@ export function useCapacity(assignmentsRef: Ref<Assignment[]>, daysRef: Ref<stri
       // For person view: include all assignments (including time off) for the person
       return assignmentsRef.value.filter(a => a.person_id === group.id)
     } else {
-      // For project view: include all assignments for users in this project to get accurate capacity
+      // For project view: include project assignments + time off for people assigned to this project
       // Get all people who are assigned to this project
       const projectPeople = new Set(
         assignmentsRef.value
@@ -18,8 +18,11 @@ export function useCapacity(assignmentsRef: Ref<Assignment[]>, daysRef: Ref<stri
           .map(a => a.person_id)
       )
       
-      // Include all assignments (including time off) for these people
-      return assignmentsRef.value.filter(a => projectPeople.has(a.person_id))
+      // Include: 1) assignments to this project, 2) time off for people assigned to this project
+      return assignmentsRef.value.filter(a => 
+        a.project_id === group.id || // Assignments to this project
+        (a.project_id === 'TIMEOFF' && projectPeople.has(a.person_id)) // Time off for project team members
+      )
     }
   })
 
