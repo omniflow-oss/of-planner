@@ -217,6 +217,7 @@ function onRightClick(e: MouseEvent) {
   position: absolute; 
   top: 0; 
   width: 8px; 
+  min-width: 8px;
   height: 100%; 
   background: transparent; 
   cursor: ew-resize; 

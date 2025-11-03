@@ -3,7 +3,7 @@
     <!-- Scrollable content with aligned rows -->
     <div
       ref="scrollArea"
-      class="overflow-auto h-full flex-1 border-y border-slate-200 rounded-md shadow-sm"
+      class="overflow-auto h-full flex flex-col flex-1 border-y border-slate-200 rounded-md shadow-sm"
       @scroll.passive="handleScroll"
     >
       <TimelineHeader
@@ -15,8 +15,7 @@
         :day-label="dayLabel"
         :px-per-day="view.px_per_day"
         :day-offsets="dayOffsets"
-        :week-starts="weekStarts"
-        :scroll-left="scrollLeft"
+        :week-starts="weekStarts"      
         :view-mode="view.mode"
         @add-new-project="addNewProject"
         @add-new-person="addNewPerson"
@@ -64,23 +63,20 @@
         />
       </template>
 
-      <!-- Empty rows to fill remaining screen space -->
-      <div
-        v-for="n in emptyRowsCount"
-        :key="'empty-' + n"
-        class="grid"
-        style="grid-template-columns: 240px 1fr;"
+      <!-- empty rows filler -->
+      <div class="grid emtpty-rows-filler" 
+        style="grid-template-columns: 240px 1fr; height: 100%;"
         :style="{ width: timelineWidth+'px' }"
       >
         <!-- Left: empty label -->
         <div
           class="border-b border-r pane-border sticky left-0 z-10 bg-default"
-          :style="{ height: emptyRowHeight+'px' }"
+          :style="{ height: '100%' }"
         />
         <!-- Right: empty timeline track with grid overlay -->
         <div
           class="relative border-b border-r pane-border "
-          :style="{ height: emptyRowHeight+'px', width: timelineWidth+'px' }"
+          :style="{ height: '100%', width: timelineWidth+'px' }"
         >
           <GridOverlay
             :days="days"
@@ -89,7 +85,7 @@
             :week-starts="weekStarts"
           />
         </div>
-      </div>
+      </div>      
     </div>
 
 
@@ -388,31 +384,7 @@ const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id,
 // Timeline width calculation
 const timelineWidth = computed(() => days.value.length * view.value.px_per_day)
 
-// Empty rows to fill remaining screen space
-const emptyRowHeight = 44 // Base row height
-const emptyRowsCount = computed(() => {
-  // Include windowHeight in dependency to trigger recalculation on resize
-  if (!scrollArea.value || windowHeight.value === 0) return 3 // Default to 3 empty rows if no scroll area yet
-  
-  // Get the height of the scroll area container
-  const containerHeight = scrollArea.value.clientHeight
-  
-  // Calculate current content height (header + existing rows)
-  const headerHeight = 70 // Approximate timeline header height
-  const currentGroups = view.value.mode === 'person' ? people.value : projects.value
-  const estimatedContentHeight = headerHeight + (currentGroups.length * emptyRowHeight * 2) // rough estimate including subrows
-  
-  // Calculate how much space is left
-  const remainingHeight = containerHeight - estimatedContentHeight
-  
-  // If there's remaining space, calculate how many empty rows we can fit
-  if (remainingHeight > emptyRowHeight) {
-    return Math.floor(remainingHeight / emptyRowHeight)
-  }
-  
-  // Always show at least 2 empty rows for better UX
-  return Math.max(2, Math.floor(containerHeight / emptyRowHeight / 4))
-})
+
 
 function personProjects(personId: string) {
   const set = new Set(assignments.value.filter(a => a.person_id === personId).map(a => a.project_id))
@@ -616,16 +588,10 @@ const assignmentsKey = Symbol.for('assignmentsRef')
 provide(assignmentsKey, assignments)
 
 const scrollArea = ref<HTMLElement | null>(null)
-const scrollLeft = ref(0);
 
 const { onScroll, init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
-
-  if (scrollArea.value) {
-    scrollLeft.value = scrollArea.value.scrollLeft
-  }
-  
   // Hide modals when scrolling to keep UX coherent on large moves
   editOpen.value = false
   createOpen.value = false
@@ -779,25 +745,11 @@ watch(assignments, async (_newAssignments) => {
 
 
 // Initialize timeline and auto-scroll to today
-// Reactive trigger for empty rows recalculation
-const windowHeight = ref(0)
 
-// Update window height on resize
-const updateWindowHeight = () => {
-  if (typeof window !== 'undefined') {
-    windowHeight.value = window.innerHeight
-  }
-}
 
 onMounted(async () => { 
   // Initialize timeline considering existing assignments
   await initTimelineWithAssignments()
-  
-  // Setup window resize listener for empty rows calculation
-  updateWindowHeight()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('resize', updateWindowHeight)
-  }
   
   // Auto-scroll to today on app initialization
   await nextTick()
@@ -808,13 +760,6 @@ onMounted(async () => {
         timelineEvents.goToTodayEvent.value = null
       }
     })
-  }
-})
-
-onUnmounted(() => {
-  // Cleanup window resize listener
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', updateWindowHeight)
   }
 })
 
