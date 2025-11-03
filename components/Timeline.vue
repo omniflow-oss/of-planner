@@ -17,10 +17,9 @@
         :day-offsets="dayOffsets"
         :week-starts="weekStarts"      
         :view-mode="view.mode"
-        @add-new-project="addNewProject"
-        @add-new-person="addNewPerson"
-        @expand-all="expandAll"
-        @collapse-all="collapseAll"
+        :expanded="allExpanded"
+        :has-data="hasData"
+        @toggle-expand-all="toggleExpandAll"
       />
       <template v-if="view.mode==='person'">
         <RowGroup
@@ -64,15 +63,39 @@
       </template>
 
       <!-- empty rows filler -->
-      <div class="grid emtpty-rows-filler" 
+      <div class="grid emtpty-rows-filler sticky bottom-0 z-10" 
         style="grid-template-columns: 240px 1fr; height: 100%;"
         :style="{ width: timelineWidth+'px' }"
       >
         <!-- Left: empty label -->
         <div
-          class="border-b border-r pane-border sticky left-0 z-10 bg-default"
+          class="border-b border-r pane-border sticky left-0 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
           :style="{ height: '100%' }"
-        />
+        >
+          <UButton 
+            v-if="view.mode === 'project'"
+            size="sm"
+            color="primary"
+            variant="outline"
+            :leading-icon="'i-lucide-plus'"
+            title="Add a new project"
+            @click="addNewProject"
+          >
+            Add Project
+          </UButton>
+          
+          <UButton 
+            v-if="view.mode === 'person'"
+            size="sm"
+            color="primary"
+            variant="outline"
+            :leading-icon="'i-lucide-plus'"
+            title="Add a new person"
+            @click="addNewPerson"
+          >
+            Add Person
+          </UButton>
+        </div>
         <!-- Right: empty timeline track with grid overlay -->
         <div
           class="relative border-b border-r pane-border "
@@ -363,6 +386,7 @@ import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 
 const store = usePlannerStore()
 const { people, projects, view, assignments } = storeToRefs(store)
+const hasData = computed(() => store.hasData)
 
 const {
   todayISO,
@@ -618,6 +642,19 @@ const rowGroupControls = {
 }
 provide('rowGroupControls', rowGroupControls)
 
+// Watch for view mode changes and apply the correct expand/collapse state
+watch(() => view.value.mode, (newMode) => {
+  nextTick(() => {
+    if (expandState.value[newMode]) {
+      // Apply expand state
+      rowGroupControls.expandAllToken.value = Date.now()
+    } else {
+      // Apply collapse state
+      rowGroupControls.collapseAllToken.value = Date.now()
+    }
+  })
+})
+
 // Watch for go to today events
 watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
   if (todayISO) {
@@ -769,7 +806,30 @@ onMounted(async () => {
   }
 })
 
-// Expand/Collapse handlers
-function expandAll() { rowGroupControls.expandAllToken.value = Date.now() }
-function collapseAll() { rowGroupControls.collapseAllToken.value = Date.now() }
+// Expand/Collapse state and handlers (separate for each view)
+const expandState = ref({
+  person: true,  // Default to expanded for person view
+  project: true  // Default to expanded for project view
+})
+
+// Computed property to get current view's expand state
+const allExpanded = computed(() => expandState.value[view.value.mode])
+
+function expandAll() { 
+  rowGroupControls.expandAllToken.value = Date.now()
+  expandState.value[view.value.mode] = true
+}
+
+function collapseAll() { 
+  rowGroupControls.collapseAllToken.value = Date.now()
+  expandState.value[view.value.mode] = false
+}
+
+function toggleExpandAll() {
+  if (allExpanded.value) {
+    collapseAll()
+  } else {
+    expandAll()
+  }
+}
 </script>

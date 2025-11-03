@@ -12,48 +12,20 @@
           
           <!-- Add Project Button (only show in project view) -->
           
-          <!-- Expand/Collapse all -->
-          
-          <UButton
-            size="xs"
-            variant="outline"
-            color="neutral"
-            :leading-icon="'i-lucide-chevrons-down'"
-            title="Expand all"
-            @click="emit('expandAll')"
-          >
-          </UButton>
-          <UButton
-            size="xs"
-            variant="outline"
-            color="neutral"
-            :leading-icon="'i-lucide-chevrons-up'"
-            title="Collapse all"
-            @click="emit('collapseAll')"
-          >            
-          </UButton>
-          <span class="mx-auto">
+          <span>
             {{ viewMode === 'person' ? 'People View' : 'Project View' }} 
           </span>
-          <UButton 
-            v-if="viewMode === 'project'"
-            class="ml-auto"
+          
+          <!-- Expand/Collapse all toggle (only show when there's data) -->
+          <UButton
+            v-if="hasData"
             size="xs"
-            color="primary"
-            :leading-icon="'i-lucide-plus'"
-            title="Add a new project to the timeline"
-            @click="emit('addNewProject')"
-          >
-          </UButton>
-          <!-- Add Person Button (only show in people view) -->
-          <UButton 
-            v-if="viewMode === 'person'"
-            size="xs"
+            variant="outline"
+            color="neutral"
             class="ml-auto"
-            color="primary"
-            :leading-icon="'i-lucide-plus'"
-            title="Add a new person to the timeline"
-            @click="emit('addNewPerson')"
+            :leading-icon="expanded ? 'i-lucide-chevrons-up' : 'i-lucide-chevrons-down'"
+            :title="expanded ? 'Collapse all' : 'Expand all'"
+            @click="emit('toggleExpandAll')"
           >
           </UButton>
         </div>          
@@ -80,7 +52,7 @@
 
       <!-- Top: Month + Year -->
       <div
-        class="grid text-[12px] text-highlighted select-none border-b border-default bg-default "
+        class="grid text-[12px] text-highlighted select-none border-b-3 border-default bg-default "
         :style="{ gridTemplateColumns: monthColumns }"
       >
         <div
@@ -128,13 +100,12 @@ const props = defineProps<{
   weekStarts: number[]
   // View mode and button handlers
   viewMode: 'person' | 'project'
+  expanded: boolean
+  hasData: boolean
 }>()
 
 const emit = defineEmits<{
-  addNewProject: []
-  addNewPerson: []
-  expandAll: []
-  collapseAll: []
+  toggleExpandAll: []
 }>()
 
 // Calculate timeline width to match timeline content
