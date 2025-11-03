@@ -14,7 +14,7 @@
       <UButton
         size="xs"
         variant="outline"
-        :icon="expanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+        :icon="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
         aria-label="Toggle"
         @click="expanded = !expanded"
       />
@@ -23,16 +23,16 @@
         class="text-slate-500 size-4"
       />
       <span>{{ label }}  </span>
-      <UBadge
+      <!-- <UBadge
         class="ml-auto"
         size="xs"
         color="primary"
         variant="subtle"
       >
         {{ itemCount }}
-      </UBadge>
+      </UBadge> -->
       <UBadge
-        class="ml-2"
+        class="ml-2 ml-auto"
         size="xs"
         color="neutral"
         variant="soft"
@@ -99,7 +99,7 @@
             :name="groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user'"
             class="mr-2 text-slate-400 size-3"
           />
-          <div class="truncate font-medium text-slate-700 dark:text-gray-500">
+          <div class="truncate font-medium text-slate-500 dark:text-gray-500">
             {{ sr.label }}
           </div>
         </div>

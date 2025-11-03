@@ -8,49 +8,53 @@
     <!-- Left spacer with timeline controls -->
     <div class="border-b border-r pane-border sticky left-0 z-30 bg-default">
       <div class="py-3 px-3 text-center h-full flex flex-col justify-center">
-        <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2 justify-center">
-          {{ viewMode === 'person' ? 'People View' : 'Project View' }} 
+        <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2 ">
+          
           <!-- Add Project Button (only show in project view) -->
-          <UButton 
-            v-if="viewMode === 'project'"
-            size="xs"
-            color="primary"
-            :leading-icon="'i-lucide-plus'"
-            title="Add a new project to the timeline"
-            @click="emit('addNewProject')"
-          >
-            Add Project
-          </UButton>
-          <!-- Add Person Button (only show in people view) -->
-          <UButton 
-            v-if="viewMode === 'person'"
-            size="xs"
-            color="primary"
-            :leading-icon="'i-lucide-plus'"
-            title="Add a new person to the timeline"
-            @click="emit('addNewPerson')"
-          >
-            Add Person
-          </UButton>
+          
           <!-- Expand/Collapse all -->
-          <span class="mx-1 w-px h-4 bg-slate-200" />
+          
           <UButton
             size="xs"
             variant="outline"
             color="neutral"
             :leading-icon="'i-lucide-chevrons-down'"
+            title="Expand all"
             @click="emit('expandAll')"
           >
-            Expand all
           </UButton>
           <UButton
             size="xs"
             variant="outline"
             color="neutral"
             :leading-icon="'i-lucide-chevrons-up'"
+            title="Collapse all"
             @click="emit('collapseAll')"
+          >            
+          </UButton>
+          <span class="mx-auto">
+            {{ viewMode === 'person' ? 'People View' : 'Project View' }} 
+          </span>
+          <UButton 
+            v-if="viewMode === 'project'"
+            class="ml-auto"
+            size="xs"
+            color="primary"
+            :leading-icon="'i-lucide-plus'"
+            title="Add a new project to the timeline"
+            @click="emit('addNewProject')"
           >
-            Collapse all
+          </UButton>
+          <!-- Add Person Button (only show in people view) -->
+          <UButton 
+            v-if="viewMode === 'person'"
+            size="xs"
+            class="ml-auto"
+            color="primary"
+            :leading-icon="'i-lucide-plus'"
+            title="Add a new person to the timeline"
+            @click="emit('addNewPerson')"
+          >
           </UButton>
         </div>          
       </div>
@@ -95,7 +99,7 @@
         <div
           v-for="day in days"
           :key="day"
-          class="text-center py-1.5"
+          class="text-center py-1.5 whitespace-nowrap"
         >
           <!-- eslint-disable-next-line vue/no-v-html -->
           <span
@@ -176,6 +180,7 @@ function isToday(day: string) {
 }
 .month-year-header{
   overflow: hidden;
+  height:26px;
 }
 .month-year-header::after {
   height: 30px;
