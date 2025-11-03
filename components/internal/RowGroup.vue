@@ -122,6 +122,18 @@
           :offsets="dayOffsets"
           :week-starts="weekStarts"
         />
+        <!-- Timeoff background overlays for this specific user (project view only) -->
+        <template
+          v-if="groupType === 'project'"
+          v-for="(day, i) in days"
+          :key="'timeoff-sub'+i"
+        >
+          <div 
+            v-if="hasUserTimeoffOnDay(sr.person_id, day)"
+            class="absolute inset-y-0 timeoff-hashed"
+            :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }"
+          />
+        </template>
         <AssignmentBar
           v-for="a in subAssignmentsLaned(sr)"
           :key="a.id"
@@ -581,7 +593,7 @@ const capacityDaily = computed(() => capacityApi.daily.value)
 const totalMD = computed(() => capacityApi.totalMD.value)
 const totalMDBadge = computed(() => {
   const val = totalMD.value
-  const suffix = props.groupType === 'project' ? 'pd' : 'd'
+  const suffix = 'd'
   return Number.isInteger(val) ? `${val}${suffix}` : `${Math.round(val * 10) / 10}${suffix}`
 })
 function coverageClass(i: number) {
@@ -598,6 +610,19 @@ function coverageClass(i: number) {
     if (v > 0) return 'bg-amber-400/15 dark:bg-amber-400/50'
     return ''
   }
+}
+
+// Check if a specific user has timeoff on a specific day
+function hasUserTimeoffOnDay(personId: string | null, dayISO: string) {
+  if (!personId) return false
+  
+  // Check if this specific user has timeoff assignment on this day
+  return assignmentsRef.value.some((a: any) => 
+    a.project_id === 'TIMEOFF' && 
+    a.person_id === personId &&
+    dayISO >= a.start && 
+    dayISO <= a.end
+  )
 }
 
 // Global mouse event handlers for drag operations
@@ -703,5 +728,25 @@ defineExpose({ rowHeights })
   pointer-events: none;
   background-color: transparent;
 } 
+
+.timeoff-hashed {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(156, 163, 175, 0.15) 0px,
+    rgba(156, 163, 175, 0.15) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.dark .timeoff-hashed {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(75, 85, 99, 0.4) 0px,
+    rgba(75, 85, 99, 0.4) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
 
 </style>
