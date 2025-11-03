@@ -76,7 +76,7 @@
             v-if="pxPerDay >= 44"
             class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700 dark:text-slate-400"
           >
-            {{ Math.round(capacityDaily[i]*100) }}%
+            {{ groupType === 'project' ? capacityDaily[i]  + 'd' : Math.round(capacityDaily[i]*100) + '%' }}
           </div>
         </div>
       </template>
@@ -581,14 +581,23 @@ const capacityDaily = computed(() => capacityApi.daily.value)
 const totalMD = computed(() => capacityApi.totalMD.value)
 const totalMDBadge = computed(() => {
   const val = totalMD.value
-  return Number.isInteger(val) ? `${val}d` : `${Math.round(val * 10) / 10}d`
+  const suffix = props.groupType === 'project' ? 'pd' : 'd'
+  return Number.isInteger(val) ? `${val}${suffix}` : `${Math.round(val * 10) / 10}${suffix}`
 })
 function coverageClass(i: number) {
   const v = capacityDaily.value[i] || 0
-  if (v > 1) return 'bg-red-500/15 dark:bg-red-900/50'
-  if (Math.abs(v - 1) < 1e-6) return 'bg-green-500/15 dark:bg-green-900/60'
-  if (v > 0) return 'bg-amber-400/15 dark:bg-amber-400/50'
-  return ''
+  
+  if (props.groupType === 'project') {
+    // For project view: uniform blue background for any capacity events
+    if (v > 0) return 'bg-blue-500/15 dark:bg-blue-900/50'
+    return ''
+  } else {
+    // For person view: original color logic
+    if (v > 1) return 'bg-red-500/15 dark:bg-red-900/50'
+    if (Math.abs(v - 1) < 1e-6) return 'bg-green-500/15 dark:bg-green-900/60'
+    if (v > 0) return 'bg-amber-400/15 dark:bg-amber-400/50'
+    return ''
+  }
 }
 
 // Global mouse event handlers for drag operations

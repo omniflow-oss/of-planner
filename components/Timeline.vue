@@ -3,7 +3,7 @@
     <!-- Scrollable content with aligned rows -->
     <div
       ref="scrollArea"
-      class="overflow-auto h-full flex flex-col flex-1 border-y border-slate-200 rounded-md shadow-sm"
+      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm"
       @scroll.passive="handleScroll"
     >
       <TimelineHeader
@@ -404,7 +404,7 @@ function personSubrows(personId: string) {
   // Add time off row for each person (first in the list)
   const timeOffRow = { key: `${personId}:TIMEOFF`, label: 'Time Off', person_id: personId, project_id: 'TIMEOFF', isTimeOff: true }
   
-  return [timeOffRow, ...rows, { key: `${personId}:__add__`, label: 'Assigner un projet', person_id: personId, project_id: null }]
+  return [timeOffRow, ...rows, { key: `${personId}:__add__`, label: 'Assign a project', person_id: personId, project_id: null }]
 }
 function projectSubrows(projectId: string) {
   const peopleIds = projectPeople(projectId)

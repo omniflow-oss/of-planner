@@ -3,7 +3,7 @@
     :class="[
       'absolute flex items-center overflow-hidden rounded-full bar-shadow border text-default',
       isTimeOff 
-        ? 'border-red-300 bg-red-100 dark:bg-red-200 dark:text-red-900' 
+        ? 'border-gray-500 bg-gray-300 dark:bg-gray-600 dark:text-gray-100' 
         : 'border-default bg-default dark:bg-gray-300 dark:text-gray-800',
       { 'dragging': isDragging }
     ]"
@@ -22,17 +22,17 @@
     />
     <UTooltip :text="tooltipText">
       <div class="flex items-center gap-2 px-3 text-[12px] w-full">
-        <span :class="isTimeOff ? 'text-red-800 dark:text-red-900' : 'dark:text-gray-700'">{{ person?.name ?? assignment.person_id }}</span>
+        <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">{{ person?.name ?? assignment.person_id }}</span>
         <span :class="[
           'px-1.5 rounded-full border text-[11px]',
           isTimeOff 
-            ? 'border-red-400 bg-red-200 dark:bg-red-300 dark:text-red-900 text-red-800'
+            ? 'border-gray-600 bg-gray-400 dark:bg-gray-500 dark:text-gray-100 text-gray-900'
             : 'border-default bg-elevated/80 dark:bg-gray-200 dark:border-gray-400 dark:text-gray-800'
         ]">{{ allocBadge }}</span>
         <span
           :class="[
             'ml-auto pl-2 text-[11px]',
-            isTimeOff ? 'text-red-600 dark:text-red-800' : 'text-muted dark:text-gray-700'
+            isTimeOff ? 'text-gray-800 dark:text-gray-300' : 'text-muted dark:text-gray-700'
           ]"
           :title="mdTitle"
         >{{ mdBadge }}</span>
