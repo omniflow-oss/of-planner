@@ -1,14 +1,14 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
   <div
-    class="header-grid grid border-b sticky top-0 z-20 "
+    class="header-grid grid border-b sticky top-0 z-20"
     style=" grid-template-columns: 240px 1fr;"
     :style="{ width: timelineWidth+'px' }"
   >
     <!-- Left spacer with timeline controls -->
     <div class="border-b border-r pane-border sticky left-0 z-30 bg-default">
       <div class="py-3 px-3 text-center h-full flex flex-col justify-center">
-        <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2 ">
+        <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">
           
           <!-- Add Project Button (only show in project view) -->
           

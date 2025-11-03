@@ -5,9 +5,23 @@ import { clampToWindow } from '@/utils/alloc'
 type Group = { type: 'person' | 'project'; id: string }
 
 export function useCapacity(assignmentsRef: Ref<Assignment[]>, daysRef: Ref<string[]>, group: Group) {
-  const filtered = computed(() =>
-    assignmentsRef.value.filter(a => group.type === 'person' ? a.person_id === group.id : a.project_id === group.id)
-  )
+  const filtered = computed(() => {
+    if (group.type === 'person') {
+      // For person view: include all assignments (including time off) for the person
+      return assignmentsRef.value.filter(a => a.person_id === group.id)
+    } else {
+      // For project view: include all assignments for users in this project to get accurate capacity
+      // Get all people who are assigned to this project
+      const projectPeople = new Set(
+        assignmentsRef.value
+          .filter(a => a.project_id === group.id)
+          .map(a => a.person_id)
+      )
+      
+      // Include all assignments (including time off) for these people
+      return assignmentsRef.value.filter(a => projectPeople.has(a.person_id))
+    }
+  })
 
   const daily = computed<number[]>(() => {
     const days = daysRef.value

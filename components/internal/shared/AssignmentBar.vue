@@ -1,8 +1,13 @@
 <template>
   <div 
-    class="absolute flex items-center overflow-hidden rounded-full bar-shadow border border-default bg-default dark:bg-gray-300 text-default dark:text-gray-800" 
-    :style="barStyle" 
-    :class="{ 'dragging': isDragging }"
+    :class="[
+      'absolute flex items-center overflow-hidden rounded-full bar-shadow border text-default',
+      isTimeOff 
+        ? 'border-red-300 bg-red-100 dark:bg-red-200 dark:text-red-900' 
+        : 'border-default bg-default dark:bg-gray-300 dark:text-gray-800',
+      { 'dragging': isDragging }
+    ]"
+    :style="barStyle"
     draggable="true"
     @dragstart="onDragStart"
     @drag="onDrag"
@@ -11,15 +16,24 @@
     @contextmenu.prevent.stop="onRightClick"
   >
     <div
+      v-if="!isTimeOff"
       class="h-full w-1.5"
       :style="{ background: color }"
     />
     <UTooltip :text="tooltipText">
       <div class="flex items-center gap-2 px-3 text-[12px] w-full">
-        <span class="dark:text-gray-700">{{ person?.name ?? assignment.person_id }}</span>
-        <span class="px-1.5 rounded-full border border-default bg-elevated/80 dark:bg-gray-200 dark:border-gray-400 text-[11px] dark:text-gray-800">{{ allocBadge }}</span>
+        <span :class="isTimeOff ? 'text-red-800 dark:text-red-900' : 'dark:text-gray-700'">{{ person?.name ?? assignment.person_id }}</span>
+        <span :class="[
+          'px-1.5 rounded-full border text-[11px]',
+          isTimeOff 
+            ? 'border-red-400 bg-red-200 dark:bg-red-300 dark:text-red-900 text-red-800'
+            : 'border-default bg-elevated/80 dark:bg-gray-200 dark:border-gray-400 dark:text-gray-800'
+        ]">{{ allocBadge }}</span>
         <span
-          class="ml-auto pl-2 text-[11px] text-muted dark:text-gray-700"
+          :class="[
+            'ml-auto pl-2 text-[11px]',
+            isTimeOff ? 'text-red-600 dark:text-red-800' : 'text-muted dark:text-gray-700'
+          ]"
           :title="mdTitle"
         >{{ mdBadge }}</span>
       </div>
@@ -47,6 +61,9 @@ const props = defineProps<{ assignment: Assignment; startISO: string; pxPerDay: 
 const emit = defineEmits(['update', 'edit', 'delete', 'resize'])
 const project = computed(() => props.projectsMap[props.assignment.project_id])
 const person = computed(() => props.peopleMap?.[props.assignment.person_id])
+
+// Check if this is a time off assignment
+const isTimeOff = computed(() => props.assignment.project_id === 'TIMEOFF')
 
 // Generate unique color per user based on their person_id
 const color = computed(() => generateUserColor(props.assignment.person_id))

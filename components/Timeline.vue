@@ -397,8 +397,14 @@ function projectPeople(projectId: string) {
 
 function personSubrows(personId: string) {
   const projIds = personProjects(personId)
-  const rows = projIds.map(pid => ({ key: `${personId}:${pid}`, label: projectName(pid), person_id: personId, project_id: pid }))
-  return [...rows, { key: `${personId}:__add__`, label: 'Assigner un projet', person_id: personId, project_id: null }]
+  // Filter out time off project ID to prevent duplicates
+  const regularProjIds = projIds.filter(pid => pid !== 'TIMEOFF')
+  const rows = regularProjIds.map(pid => ({ key: `${personId}:${pid}`, label: projectName(pid), person_id: personId, project_id: pid }))
+  
+  // Add time off row for each person (first in the list)
+  const timeOffRow = { key: `${personId}:TIMEOFF`, label: 'Time Off', person_id: personId, project_id: 'TIMEOFF', isTimeOff: true }
+  
+  return [timeOffRow, ...rows, { key: `${personId}:__add__`, label: 'Assigner un projet', person_id: personId, project_id: null }]
 }
 function projectSubrows(projectId: string) {
   const peopleIds = projectPeople(projectId)

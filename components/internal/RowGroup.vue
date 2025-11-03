@@ -32,7 +32,7 @@
         {{ itemCount }}
       </UBadge> -->
       <UBadge
-        class="ml-2 ml-auto"
+        class="ml-auto"
         size="xs"
         color="neutral"
         variant="soft"
@@ -96,10 +96,10 @@
       >
         <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
           <UIcon
-            :name="groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user'"
-            class="mr-2 text-slate-400 size-3"
+            :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
+            :class="sr.isTimeOff ? 'mr-2 text-red-400 size-3' : 'mr-2 text-slate-400 size-3'"
           />
-          <div class="truncate font-medium text-slate-500 dark:text-gray-500">
+          <div :class="sr.isTimeOff ? 'truncate font-medium text-red-500 dark:text-red-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
             {{ sr.label }}
           </div>
         </div>
