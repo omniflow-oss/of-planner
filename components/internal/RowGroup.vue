@@ -14,7 +14,7 @@
       <UButton
         size="xs"
         variant="outline"
-        :icon="expanded ? 'i-lucide-minus' : 'i-lucide-plus'"
+        :icon="expanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
         aria-label="Toggle"
         @click="expanded = !expanded"
       />

@@ -1,7 +1,7 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
   <div
-    class="grid border-b sticky top-0 z-20 "
+    class="header-grid grid border-b sticky top-0 z-20 "
     style=" grid-template-columns: 240px 1fr;"
     :style="{ width: timelineWidth+'px' }"
   >
