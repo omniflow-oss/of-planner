@@ -14,7 +14,7 @@
       <UButton
         size="xs"
         variant="outline"
-        :icon="expanded ? 'i-lucide-minus' : 'i-lucide-plus'"
+        :icon="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
         aria-label="Toggle"
         @click="expanded = !expanded"
       />
@@ -23,16 +23,16 @@
         class="text-slate-500 size-4"
       />
       <span>{{ label }}  </span>
-      <UBadge
+      <!-- <UBadge
         class="ml-auto"
         size="xs"
         color="primary"
         variant="subtle"
       >
         {{ itemCount }}
-      </UBadge>
+      </UBadge> -->
       <UBadge
-        class="ml-2"
+        class="ml-auto"
         size="xs"
         color="neutral"
         variant="soft"
@@ -76,7 +76,7 @@
             v-if="pxPerDay >= 44"
             class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700 dark:text-slate-400"
           >
-            {{ Math.round(capacityDaily[i]*100) }}%
+            {{ groupType === 'project' ? capacityDaily[i]  + 'd' : Math.round(capacityDaily[i]*100) + '%' }}
           </div>
         </div>
       </template>
@@ -96,10 +96,10 @@
       >
         <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
           <UIcon
-            :name="groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user'"
-            class="mr-2 text-slate-400 size-3"
+            :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
+            :class="sr.isTimeOff ? 'mr-2 text-red-400 size-3' : 'mr-2 text-slate-400 size-3'"
           />
-          <div class="truncate font-medium text-slate-700 dark:text-gray-500">
+          <div :class="sr.isTimeOff ? 'truncate font-medium text-red-500 dark:text-red-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
             {{ sr.label }}
           </div>
         </div>
@@ -581,14 +581,23 @@ const capacityDaily = computed(() => capacityApi.daily.value)
 const totalMD = computed(() => capacityApi.totalMD.value)
 const totalMDBadge = computed(() => {
   const val = totalMD.value
-  return Number.isInteger(val) ? `${val}d` : `${Math.round(val * 10) / 10}d`
+  const suffix = props.groupType === 'project' ? 'pd' : 'd'
+  return Number.isInteger(val) ? `${val}${suffix}` : `${Math.round(val * 10) / 10}${suffix}`
 })
 function coverageClass(i: number) {
   const v = capacityDaily.value[i] || 0
-  if (v > 1) return 'bg-red-500/15 dark:bg-red-900/50'
-  if (Math.abs(v - 1) < 1e-6) return 'bg-green-500/15 dark:bg-green-900/60'
-  if (v > 0) return 'bg-amber-400/15 dark:bg-amber-400/50'
-  return ''
+  
+  if (props.groupType === 'project') {
+    // For project view: uniform blue background for any capacity events
+    if (v > 0) return 'bg-blue-500/15 dark:bg-blue-900/50'
+    return ''
+  } else {
+    // For person view: original color logic
+    if (v > 1) return 'bg-red-500/15 dark:bg-red-900/50'
+    if (Math.abs(v - 1) < 1e-6) return 'bg-green-500/15 dark:bg-green-900/60'
+    if (v > 0) return 'bg-amber-400/15 dark:bg-amber-400/50'
+    return ''
+  }
 }
 
 // Global mouse event handlers for drag operations

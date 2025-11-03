@@ -1,20 +1,24 @@
 <template>
   <div
-    class="flex items-center gap-2"
+    class="flex items-center justify-between gap-4 w-full"
     role="tablist"
     aria-label="View mode"
   >
-    <UFieldGroup size="xs">
+    <UFieldGroup size="sm" class="mx-auto">
       <UButton
-        :variant="mode==='person' ? 'solid' : 'ghost'"
-        color="neutral"
+        size="sm"
+        :variant="mode==='person' ? 'solid' : 'outline'"
+        color="primary"
+        class="font-medium px-4"
         @click="setMode('person')"
       >
         People
       </UButton>
       <UButton
-        :variant="mode==='project' ? 'solid' : 'ghost'"
-        color="neutral"
+        size="sm"
+        :variant="mode==='project' ? 'solid' : 'outline'"
+        color="primary"
+        class="font-medium px-4"
         @click="setMode('project')"
       >
         Projects
@@ -46,8 +50,9 @@
       />
       <UButton
         size="xs"
-        variant="outline"
-        class="ml-1"
+        variant="solid"
+        color="primary"
+        class="ml-1 font-medium"
         :leading-icon="'i-lucide-calendar'"
         @click="today"
       >

@@ -83,7 +83,7 @@
     </div>
 
     <!-- Status Display -->
-    <div class="text-sm text-gray-600">
+    <div class="text-xs text-gray-600">
       People: {{ store.people.length }} | 
       Projects: {{ store.projects.length }} | 
       Assignments: {{ store.assignments.length }}
