@@ -5,8 +5,18 @@
 .today-line { position: absolute; top: 0; bottom: -1px; width: 2px; background-color: var(--ring-color-inverted); opacity: .9; }
 .header-grid .today-line { background-color: var(--divide-color-accented); }
 .dark .header-grid .today-line { background-color: var(--ring-color-inverted);}
-.header-grid .today-line:after { position: absolute; content: ''; display: block; bottom: -4px; left: -4px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--ring-color-inverted); box-shadow: 0 0 4px rgba(0,0,0,.1); }
-
+.header-grid .today-line:after { 
+  position: absolute; 
+  content: ''; 
+  display: block; 
+  bottom: -4px; 
+  left: -4px; 
+  width: 10px; 
+  height: 10px; 
+  border-radius: 50%;
+  background-color: var(--ring-color-inverted); 
+  box-shadow: 0 0 4px rgba(0,0,0,.1); 
+}
 .grid-v { position: absolute; top: 0; bottom: -1px; width: 1px; background-color: var(--divide-color-muted); }
 .header-grid .grid-v { bottom: 0;}
 
