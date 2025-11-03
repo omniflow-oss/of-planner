@@ -1,13 +1,13 @@
 <template>
   <div
-    class="grid"
+    class="grid rows-group relative z-2"
     style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;"
     :style="{ width: timelineWidth+'px' }"
     draggable="false"
   >
     <!-- Group header row -->
     <div 
-      class="px-3 py-2 border-b border-r pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
+      class="px-3 py-2 border-b border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
@@ -52,7 +52,7 @@
       />
     </div>
     <div
-      class="relative border-b border-r pane-border timeline-bg disabled-rows"
+      class="relative border-b border-r-2 pane-border timeline-bg disabled-rows"
       :style="{ height: headerHeight+'px', width: timelineWidth+'px' }"
     >
       <GridOverlay
@@ -91,7 +91,7 @@
     >
       <!-- Left: label -->
       <div
-        class="border-b border-r pane-border sticky left-0 z-10 bg-default"
+        class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default"
         :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }"
       >
         <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
@@ -107,7 +107,7 @@
 
       <!-- Right: timeline track -->
       <div
-        class="relative border-b border-r pane-border timeline-bg" 
+        class="relative border-b border-r-2 pane-border timeline-bg"
         :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" 
         :data-row-key="sr.key"
         @contextmenu="handleContextMenu($event, sr)"

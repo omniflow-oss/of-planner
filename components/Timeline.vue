@@ -63,13 +63,13 @@
       </template>
 
       <!-- empty rows filler -->
-      <div class="grid emtpty-rows-filler sticky bottom-0 z-10" 
+      <div class="grid empty-rows-filler sticky bottom-0 z-10" 
         style="grid-template-columns: 240px 1fr; height: 100%;"
         :style="{ width: timelineWidth+'px' }"
       >
         <!-- Left: empty label -->
         <div
-          class="border-b border-r pane-border sticky left-0 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
+          class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
           :style="{ height: '100%' }"
         >
           <UButton 
@@ -99,6 +99,7 @@
         <!-- Right: empty timeline track with grid overlay -->
         <div
           class="relative border-b border-r pane-border "
+          :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
           :style="{ height: '100%', width: timelineWidth+'px' }"
         >
           <GridOverlay
