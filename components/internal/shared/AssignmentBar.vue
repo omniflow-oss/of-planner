@@ -97,16 +97,31 @@ const tooltipText = computed(() => {
 
 // Dragging state
 const isDragging = ref(false)
-let dragging: { startX: number; startIndex: number; initialStart: string; initialEnd: string } | null = null
+let dragging: { 
+  startX: number; 
+  startIndex: number; 
+  initialStart: string; 
+  initialEnd: string;
+  lastValidClientX: number;
+  scrollContainer: HTMLElement | null;
+  initialScrollLeft: number;
+} | null = null
 let resizing: { side: 'left'|'right'; startX: number; startStart: string; startEnd: string } | null = null
 
 function onDragStart(e: DragEvent) {
   isDragging.value = true
+  
+  // Find the scrollable timeline container
+  const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
+  
   dragging = { 
     startX: e.clientX, 
     startIndex: startIndex.value,
     initialStart: props.assignment.start,
-    initialEnd: props.assignment.end
+    initialEnd: props.assignment.end,
+    lastValidClientX: e.clientX,
+    scrollContainer,
+    initialScrollLeft: scrollContainer?.scrollLeft || 0
   }
   
   // Set drag effect and create a transparent drag image
@@ -121,11 +136,34 @@ function onDragStart(e: DragEvent) {
     e.dataTransfer.setDragImage(dragImage, 0, 0)
     setTimeout(() => document.body.removeChild(dragImage), 0)
   }
+  
+  // Add global mouse tracking for more reliable position updates
+  document.addEventListener('mousemove', onGlobalMouseMove, { passive: true })
+}
+
+function onGlobalMouseMove(e: MouseEvent) {
+  if (!dragging) return
+  
+  // Update last valid position
+  dragging.lastValidClientX = e.clientX
+  
+  // Apply drag with current mouse position, accounting for scroll changes
+  applyDragByClientX(e.clientX)
 }
 
 function applyDragByClientX(clientX: number) {
-  if (!dragging || clientX === 0) return
-  const deltaPx = clientX - dragging.startX
+  if (!dragging) return
+  
+  // Use clientX if valid, otherwise use last known position
+  const effectiveClientX = clientX > 0 ? clientX : dragging.lastValidClientX
+  if (effectiveClientX === 0) return
+  
+  // Account for scroll changes since drag started
+  const currentScrollLeft = dragging.scrollContainer?.scrollLeft || 0
+  const scrollDelta = currentScrollLeft - dragging.initialScrollLeft
+  
+  // Adjust for scroll change in pixel calculation
+  const deltaPx = (effectiveClientX - dragging.startX) + scrollDelta
   const deltaDays = Math.round(deltaPx / props.pxPerDay)
   
   // Calculate new start position by adding business days from the timeline start
@@ -159,11 +197,21 @@ function applyDragByClientX(clientX: number) {
 }
 
 function onDrag(e: DragEvent) {
-  applyDragByClientX((e as any).clientX)
+  // Update last valid position if clientX is available
+  if (e.clientX > 0 && dragging) {
+    dragging.lastValidClientX = e.clientX
+  }
+  
+  // Apply drag with current or last known position
+  applyDragByClientX(e.clientX)
 }
 
 function onDragEnd(_e: DragEvent) {
   isDragging.value = false
+  
+  // Remove global mouse tracking
+  document.removeEventListener('mousemove', onGlobalMouseMove)
+  
   dragging = null
 }
 
@@ -171,11 +219,18 @@ function onDragEnd(_e: DragEvent) {
 function onMouseDown(e: MouseEvent) {
   // Ignore when clicking on resize handles; they have their own mousedown handlers
   isDragging.value = true
+  
+  // Find the scrollable timeline container
+  const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
+  
   dragging = {
     startX: e.clientX,
     startIndex: startIndex.value,
     initialStart: props.assignment.start,
     initialEnd: props.assignment.end,
+    lastValidClientX: e.clientX,
+    scrollContainer,
+    initialScrollLeft: scrollContainer?.scrollLeft || 0
   }
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
