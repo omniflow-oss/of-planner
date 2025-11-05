@@ -18,6 +18,18 @@
             placeholder="e.g. Aurora"
           />
         </UFormField>
+        <UFormField
+          label="Estimated Time (days)"
+          help="Expected total time for the project"
+        >
+          <UInput
+            v-model.number="estimatedDays"
+            size="xs"
+            type="number"
+            min="1"
+            placeholder="e.g. 30"
+          />
+        </UFormField>
         <div
           v-if="error"
           class="text-xs text-error"
@@ -53,10 +65,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  create: [string]
+  create: [{ name: string; estimatedDays: number | null }]
 }>()
 
 const projectName = ref('')
+const estimatedDays = ref<number | null>(null)
 const error = ref('')
 
 function handleCreate() {
@@ -65,12 +78,13 @@ function handleCreate() {
     error.value = 'Name is required'
     return 
   }
-  emit('create', name)
+  emit('create', { name, estimatedDays: estimatedDays.value })
 }
 
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
     projectName.value = ''
+    estimatedDays.value = null
     error.value = ''
   }
 })

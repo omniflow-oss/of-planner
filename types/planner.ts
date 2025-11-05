@@ -1,7 +1,7 @@
 export type Allocation = 1 | 0.75 | 0.5 | 0.25
 
 export type Person = { id: string; name: string; avatar?: string | null }
-export type Project = { id: string; name: string; color?: string | null; emoji?: string | null }
+export type Project = { id: string; name: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }
 
 export type Assignment = {
   id: string

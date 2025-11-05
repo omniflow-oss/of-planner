@@ -16,6 +16,7 @@
       :header-height="headerHeight"
       :capacity-daily="capacityDaily"
       :total-m-d-badge="totalMDBadge"
+      :badge-color="badgeColor"
       :line-left="lineLeft"
       :day-width="dayWidth"
       :coverage-class="coverageClass"
@@ -85,7 +86,7 @@ const props = defineProps<{
   startISO: string
   days: string[]
   pxPerDay: number
-  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null }>
+  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }>
   peopleMap?: Record<string, { id: string; name: string }>
 }>()
 
@@ -207,7 +208,46 @@ const totalMD = computed(() => capacityApi.totalMD.value)
 const totalMDBadge = computed(() => {
   const val = totalMD.value
   const suffix = 'd'
-  return Number.isInteger(val) ? `${val}${suffix}` : `${Math.round(val * 10) / 10}${suffix}`
+  const currentTotal = Number.isInteger(val) ? `${val}` : `${Math.round(val * 10) / 10}`
+  
+  // For project view, add estimated time if available
+  if (props.groupType === 'project') {
+    const project = props.projectsMap[props.groupId]
+    if (project?.estimatedDays) {
+      return `${currentTotal}/${project.estimatedDays}d`
+    }
+  }
+  
+  return `${currentTotal}d`
+})
+
+const badgeColor = computed((): 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' => {
+  // Only apply color logic for project view
+  if (props.groupType !== 'project') {
+    return 'neutral'
+  }
+  
+  const project = props.projectsMap[props.groupId]
+  if (!project?.estimatedDays) {
+    return 'neutral'
+  }
+  
+  const currentTotal = totalMD.value
+  const estimated = project.estimatedDays
+  const remaining = estimated - currentTotal
+  
+  // If over estimated time (remaining < 0), show red
+  if (remaining < 0) {
+    return 'error'
+  }
+  
+  // If less than 5 days remaining, show orange
+  if (remaining < 5) {
+    return 'warning'
+  }
+  
+  // Otherwise neutral/default
+  return 'neutral'
 })
 
 function coverageClass(i: number) {

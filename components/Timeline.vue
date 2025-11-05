@@ -280,9 +280,9 @@ function handleConfirmCreate(payload: { person_id: string|null; project_id: stri
   modals.closeCreateModal()
 }
 
-function handleCreateProject(name: string) {
+function handleCreateProject(input: { name: string; estimatedDays: number | null }) {
   try {
-    actions.createProject(name)
+    actions.createProject(input)
     modals.closeNewProjectModal()
     
     // Scroll to bottom to show the new project

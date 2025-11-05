@@ -34,7 +34,7 @@
       <UBadge
         class="ml-auto"
         size="xs"
-        color="neutral"
+        :color="badgeColor"
         variant="soft"
         :title="'Total man-days (visible window)'"
       >
@@ -98,6 +98,7 @@ defineProps<{
   headerHeight: number
   capacityDaily: number[]
   totalMDBadge: string
+  badgeColor: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
   lineLeft: (i: number) => number
   dayWidth: (i: number) => number
   coverageClass: (i: number) => string

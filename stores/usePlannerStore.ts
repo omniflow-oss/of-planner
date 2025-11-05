@@ -99,13 +99,14 @@ export const usePlannerStore = defineStore('planner', {
       return p
     },
 
-    createProject(input: { name: string; color?: string; emoji?: string }) {
+    createProject(input: { name: string; color?: string; emoji?: string; estimatedDays?: number | null }) {
       const id = generateSequentialId('j', this.projects)
       const p: Project = { 
         id, 
         name: input.name, 
         color: input.color || '#3b82f6', 
-        emoji: input.emoji || '📋' 
+        emoji: input.emoji || '📋',
+        estimatedDays: input.estimatedDays || null
       }
       this.projects.push(p)
       this.isDataModified = true
