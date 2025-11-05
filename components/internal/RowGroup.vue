@@ -91,7 +91,6 @@
         handle=".drag-handle"
         @end="onSortEnd"
         tag="div"
-        filter=".disable-drag"
       >
         <div 
           v-for="sr in sortableSubrows" 
@@ -107,9 +106,7 @@
               <!-- Drag handle -->
               <UIcon
                 name="i-lucide-grip-vertical"
-                :class="sr.isTimeOff 
-                  ? 'drag-handle mr-2 text-slate-300 size-3 cursor-not-allowed opacity-50' 
-                  : 'drag-handle mr-2 text-slate-400 size-3 cursor-grab hover:text-slate-600'"
+                :class="getDragHandleClasses(sr.isTimeOff)"
               />
               <UIcon
                 :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
@@ -269,6 +266,17 @@ const filteredSubrows = computed(() => {
   return props.subrows.filter(sr => !isAddRow(sr))
 })
 
+// Computed class string for drag handles based on timeoff status
+const getDragHandleClasses = (isTimeOff: boolean) => {
+  const baseClasses = 'drag-handle mr-2 size-3'
+  
+  if (isTimeOff) {
+    return `${baseClasses} text-slate-300 cursor-not-allowed opacity-50`
+  } else {
+    return `${baseClasses} text-slate-400 cursor-grab hover:text-slate-600`
+  }
+}
+
 // Sortable subrows for drag and drop
 const sortableSubrows = ref<typeof props.subrows>([])
 
@@ -305,7 +313,7 @@ watch(filteredSubrows, (newSubrows) => {
 }, { immediate: true })
 
 // Handle drag end event
-function onSortEnd(event: any) {  
+function onSortEnd() {  
   // Ensure disable-drag items (timeoff rows) always stay at the top
   const disabledItems = sortableSubrows.value.filter(sr => sr.isTimeOff)
   const enabledItems = sortableSubrows.value.filter(sr => !sr.isTimeOff)

@@ -889,13 +889,13 @@ function toggleExpandAll() {
 }
 
 // Drag-and-drop sort handlers
-function onPersonSortEnd(event: any) {
-  const newOrder = sortablePeople.value.map(p => p.id);
+function onPersonSortEnd() {
+  const newOrder = sortablePeople.value.map(p => p.id)
   store.updatePeopleSortOrder(newOrder)
 }
 
-function onProjectSortEnd(event: any) {
-  const newOrder = sortableProjects.value.map(p => p.id);
+function onProjectSortEnd() {
+  const newOrder = sortableProjects.value.map(p => p.id)
   store.updateProjectsSortOrder(newOrder)
 }
 </script>
