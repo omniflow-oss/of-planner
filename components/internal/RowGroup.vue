@@ -13,6 +13,11 @@
         draggable="false"
         style="-webkit-user-select: none; user-select: none;"
       >
+        <UIcon
+          name="i-lucide-grip-vertical"
+          class="group-drag-handle text-slate-400 size-3 cursor-grab hover:text-slate-600"
+          title="Drag to reorder groups"
+        />
         <UButton
           size="xs"
           variant="outline"

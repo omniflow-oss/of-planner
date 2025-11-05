@@ -25,44 +25,60 @@
         @toggle-expand-all="toggleExpandAll"
       />
       <template v-if="view.mode==='person'">
-        <RowGroup
-          v-for="p in people"
-          :key="p.id"
-          :label="p.name"
-          :group-type="'person'"
-          :group-id="p.id"
-          :subrows="personSubrows(p.id)"
-          :days="days"
-          :px-per-day="view.px_per_day"
-          :start-i-s-o="view.start"
-          :projects-map="projectsMap"
-          :people-map="peopleMap"
-          @create="onCreate"
-          @update="onUpdate"
-          @create-from-sidebar="onAddFromSidebar"
-          @edit="onEdit"
-          @create-popover="onCreatePopover"
-        />
+        <VueDraggableNext
+          :list="sortablePeople"
+          item-key="id"
+          handle=".group-drag-handle"
+          @end="onPersonSortEnd"
+          tag="div"
+        >
+          <RowGroup
+            v-for="p in sortablePeople"
+            :key="p.id"
+            :label="p.name"
+            :group-type="'person'"
+            :group-id="p.id"
+            :subrows="personSubrows(p.id)"
+            :days="days"
+            :px-per-day="view.px_per_day"
+            :start-i-s-o="view.start"
+            :projects-map="projectsMap"
+            :people-map="peopleMap"
+            @create="onCreate"
+            @update="onUpdate"
+            @create-from-sidebar="onAddFromSidebar"
+            @edit="onEdit"
+            @create-popover="onCreatePopover"
+          />
+        </VueDraggableNext>
       </template>
       <template v-else>
-        <RowGroup
-          v-for="proj in projects"
-          :key="proj.id"
-          :label="proj.name"
-          :group-type="'project'"
-          :group-id="proj.id"
-          :subrows="projectSubrows(proj.id)"
-          :days="days"
-          :px-per-day="view.px_per_day"
-          :start-i-s-o="view.start"
-          :projects-map="projectsMap"
-          :people-map="peopleMap"
-          @create="onCreate"
-          @update="onUpdate"
-          @create-from-sidebar="onAddFromSidebar"
-          @edit="onEdit"
-          @create-popover="onCreatePopover"
-        />
+        <VueDraggableNext
+          :list="sortableProjects"
+          item-key="id"
+          handle=".group-drag-handle"
+          @end="onProjectSortEnd"
+          tag="div"
+        >
+          <RowGroup
+            v-for="proj in sortableProjects"
+            :key="proj.id"
+            :label="proj.name"
+            :group-type="'project'"
+            :group-id="proj.id"
+            :subrows="projectSubrows(proj.id)"
+            :days="days"
+            :px-per-day="view.px_per_day"
+            :start-i-s-o="view.start"
+            :projects-map="projectsMap"
+            :people-map="peopleMap"
+            @create="onCreate"
+            @update="onUpdate"
+            @create-from-sidebar="onAddFromSidebar"
+            @edit="onEdit"
+            @create-popover="onCreatePopover"
+          />
+        </VueDraggableNext>
       </template>
       </div>
 
@@ -390,10 +406,24 @@ import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
 import RowGroup from '@/components/internal/RowGroup.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
+import { VueDraggableNext } from 'vue-draggable-next'
 
 const store = usePlannerStore()
 const { people, projects, view, assignments } = storeToRefs(store)
 const hasData = computed(() => store.hasData)
+
+// Sortable arrays for drag-and-drop reordering
+const sortablePeople = ref<typeof people.value>([])
+const sortableProjects = ref<typeof projects.value>([])
+
+// Update sortable arrays when store data changes
+watch(people, (newPeople) => {
+  sortablePeople.value = [...newPeople]
+}, { immediate: true })
+
+watch(projects, (newProjects) => {
+  sortableProjects.value = [...newProjects]
+}, { immediate: true })
 
 const {
   todayISO,
@@ -838,5 +868,16 @@ function toggleExpandAll() {
   } else {
     expandAll()
   }
+}
+
+// Drag-and-drop sort handlers
+function onPersonSortEnd(event: any) {
+  console.log('Person drag ended, new order:', sortablePeople.value.map(p => p.id))
+  // TODO: Persist the new order in store if needed
+}
+
+function onProjectSortEnd(event: any) {
+  console.log('Project drag ended, new order:', sortableProjects.value.map(p => p.id))
+  // TODO: Persist the new order in store if needed
 }
 </script>
