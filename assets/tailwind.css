@@ -6,16 +6,17 @@
 .header-grid .today-line { background-color: var(--divide-color-accented); }
 .dark .header-grid .today-line { background-color: var(--ring-color-inverted);}
 .header-grid .today-line:after { 
-  position: absolute; 
+  position: sticky;
   content: ''; 
   display: block; 
-  bottom: -4px; 
-  left: -4px; 
   width: 10px; 
+  top: 100%;
+  transform: translateY(50%) translateX(-4px);
   height: 10px; 
   border-radius: 50%;
   background-color: var(--ring-color-inverted); 
   box-shadow: 0 0 4px rgba(0,0,0,.1); 
+  z-index: -1;
 }
 .grid-v { position: absolute; top: 0; bottom: -1px; width: 1px; background-color: var(--divide-color-muted); }
 .header-grid .grid-v { bottom: 0;}
@@ -29,5 +30,16 @@
 .day-bg.weekend { background-color: color-mix(in lab, var(--background-color-default) 92%, white); }
 body{  overflow-x: hidden; }
 .cell-text { background-color: var(--background-color-elevated); }
-.empty-rows-filler .day-bg { visibility: hidden; }
-.empty-rows-filler .data-empty .day-bg { visibility: visible; }
+/* .empty-rows-filler .day-bg { visibility: hidden; } */
+/* .empty-rows-filler .data-empty .day-bg { visibility: visible; } */
+
+/* Chrome, Safari and Opera */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* IE, Edge and Firefox */
+.scrollbar-hidden {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

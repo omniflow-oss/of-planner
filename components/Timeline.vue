@@ -1,11 +1,14 @@
 <template>
-  <div class="flex-1 w-full h-full flex flex-col overflow-hidden">
+  <div class="flex-1 w-full h-full flex flex-col overflow-hidden relative">
     <!-- Scrollable content with aligned rows -->
     <div
       ref="scrollArea"
-      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm"
+      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm scrollbar-hidden"
       @scroll.passive="handleScroll"
     >
+      <div class="relative"
+        :style="{ width: timelineWidth+'px' }"
+      >
       <TimelineHeader
         :days="days"
         :day-columns="dayColumns"
@@ -61,57 +64,60 @@
           @create-popover="onCreatePopover"
         />
       </template>
+      </div>
 
       <!-- empty rows filler -->
-      <div class="grid empty-rows-filler sticky bottom-0 z-10" 
-        style="grid-template-columns: 240px 1fr; height: 100%;"
-        :style="{ width: timelineWidth+'px' }"
+           <!-- Left: empty label -->
+      <div
+        style="width: 240px;"
+        class="border-t pane-border absolute left-0 bottom-0 border-r-2  z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
       >
-        <!-- Left: empty label -->
-        <div
-          class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
-          :style="{ height: '100%' }"
+        <UButton 
+          v-if="view.mode === 'project'"
+          size="sm"
+          color="primary"
+          variant="outline"
+          :leading-icon="'i-lucide-plus'"
+          title="Add a new project"
+          @click="addNewProject"
         >
-          <UButton 
-            v-if="view.mode === 'project'"
-            size="sm"
-            color="primary"
-            variant="outline"
-            :leading-icon="'i-lucide-plus'"
-            title="Add a new project"
-            @click="addNewProject"
-          >
-            Add Project
-          </UButton>
-          
-          <UButton 
-            v-if="view.mode === 'person'"
-            size="sm"
-            color="primary"
-            variant="outline"
-            :leading-icon="'i-lucide-plus'"
-            title="Add a new person"
-            @click="addNewPerson"
-          >
-            Add Person
-          </UButton>
-        </div>
+          Add Project
+        </UButton>
+        
+        <UButton 
+          v-if="view.mode === 'person'"
+          size="sm"
+          color="primary"
+          variant="outline"
+          :leading-icon="'i-lucide-plus'"
+          title="Add a new person"
+          @click="addNewPerson"
+        >
+          Add Person
+        </UButton>
+      </div>
+      <div class="grid empty-rows-filler sticky bottom-0 z-1" 
+        style="grid-template-columns: 240px 1fr; height: 100%; left:240px;"
+        :style="{ width: timelineWidth+'px' }"
+        
+      >    
         <!-- Right: empty timeline track with grid overlay -->
         <div
-          class="relative border-b border-r pane-border "
+          class="relative border-b border-r pane-border w-full h-full"
+          style="min-height: 60px;"
           :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
-          :style="{ height: '100%', width: timelineWidth+'px' }"
         >
           <GridOverlay
             :days="days"
             :px-per-day="view.px_per_day"
             :offsets="dayOffsets"
             :week-starts="weekStarts"
+            
           />
         </div>
-      </div>      
+      </div> 
+      <div class="empty-sidebar absolute z-1 top-0 bottom-0 bg-default border-r-2 pane-border" style="width: 240px;"></div>     
     </div>
-
 
     <div
       v-if="editOpen && editState"

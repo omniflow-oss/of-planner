@@ -1,8 +1,7 @@
 <template>
   <div
-    class="grid rows-group relative z-2"
-    style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;"
-    :style="{ width: timelineWidth+'px' }"
+    class="grid rows-group relative z-2 full-width"
+    style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;"  
     draggable="false"
   >
     <!-- Group header row -->
@@ -52,8 +51,8 @@
       />
     </div>
     <div
-      class="relative border-b border-r-2 pane-border timeline-bg disabled-rows"
-      :style="{ height: headerHeight+'px', width: timelineWidth+'px' }"
+      class="relative border-b border-r-2 pane-border timeline-bg disabled-rows full-width"
+      :style="{ height: headerHeight+'px' }"
     >
       <GridOverlay
         :days="days"
@@ -107,8 +106,8 @@
 
       <!-- Right: timeline track -->
       <div
-        class="relative border-b border-r-2 pane-border timeline-bg"
-        :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" 
+        class="relative border-b border-r-2 pane-border timeline-bg full-width"
+        :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }" 
         :data-row-key="sr.key"
         @contextmenu="handleContextMenu($event, sr)"
         @mousedown="handleMouseDown($event, sr)"
