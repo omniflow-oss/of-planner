@@ -5,7 +5,10 @@
       isTimeOff 
         ? 'border-gray-500 bg-gray-300 dark:bg-gray-600 dark:text-gray-100' 
         : 'border-default bg-default dark:bg-gray-300 dark:text-gray-800',
-      { 'dragging': isDragging }
+      { 
+        'dragging': isDragging,
+        'resizing': isResizing
+      }
     ]"
     :style="barStyle"
     draggable="true"
@@ -95,12 +98,19 @@ const tooltipText = computed(() => {
   return `${proj} • ${p} • ${allocBadge.value} • ${props.assignment.start} → ${props.assignment.end}`
 })
 
-// Dragging state
+// Dragging and resizing state
 const isDragging = ref(false)
+const isResizing = ref(false)
 let dragging: { startX: number; startIndex: number; initialStart: string; initialEnd: string } | null = null
 let resizing: { side: 'left'|'right'; startX: number; startStart: string; startEnd: string } | null = null
 
 function onDragStart(e: DragEvent) {
+  // Prevent drag when resizing is active
+  if (resizing) {
+    e.preventDefault()
+    return
+  }
+  
   isDragging.value = true
   dragging = { 
     startX: e.clientX, 
@@ -169,7 +179,9 @@ function onDragEnd(_e: DragEvent) {
 
 // Mouse-based drag (for environments/tests not using HTML5 drag)
 function onMouseDown(e: MouseEvent) {
-  // Ignore when clicking on resize handles; they have their own mousedown handlers
+  // Ignore when resizing is active or when clicking on resize handles
+  if (resizing) return
+  
   isDragging.value = true
   dragging = {
     startX: e.clientX,
@@ -190,21 +202,63 @@ function onMouseUp() {
 }
 
 function onResizeStart(side: 'left'|'right', e: MouseEvent) {
+  // Prevent drag from interfering with resize
+  isDragging.value = false
+  isResizing.value = true
+  if (dragging) dragging = null
+  
   resizing = { side, startX: e.clientX, startStart: props.assignment.start, startEnd: props.assignment.end }
   window.addEventListener('mousemove', onResize)
   window.addEventListener('mouseup', onResizeEnd)
 }
+
 function onResize(e: MouseEvent) {
   emit('resize', true);
   if (!resizing) return
+  
   const deltaPx = e.clientX - resizing.startX
   const deltaDays = Math.round(deltaPx / props.pxPerDay)
+  
   if (resizing.side === 'left') {
-    const newStart = addDaysISO(resizing.startStart, deltaDays)
-    emit('update', { id: props.assignment.id, start: newStart })
+    // Left resize: change start date while keeping end date fixed
+    let newStart = resizing.startStart
+    let businessDaysToAdd = deltaDays
+    
+    // Move forward/backward to reach the target business day
+    while (businessDaysToAdd !== 0) {
+      if (businessDaysToAdd > 0) {
+        newStart = addDaysISO(newStart, 1)
+        if (!isWeekendISO(newStart)) businessDaysToAdd--
+      } else {
+        newStart = addDaysISO(newStart, -1)
+        if (!isWeekendISO(newStart)) businessDaysToAdd++
+      }
+    }
+    
+    // Ensure new start is not after the end date
+    if (newStart <= resizing.startEnd) {
+      emit('update', { id: props.assignment.id, start: newStart })
+    }
   } else {
-    const newEnd = addDaysISO(resizing.startEnd, deltaDays)
-    emit('update', { id: props.assignment.id, end: newEnd })
+    // Right resize: change end date while keeping start date fixed
+    let newEnd = resizing.startEnd
+    let businessDaysToAdd = deltaDays
+    
+    // Move forward/backward to reach the target business day
+    while (businessDaysToAdd !== 0) {
+      if (businessDaysToAdd > 0) {
+        newEnd = addDaysISO(newEnd, 1)
+        if (!isWeekendISO(newEnd)) businessDaysToAdd--
+      } else {
+        newEnd = addDaysISO(newEnd, -1)
+        if (!isWeekendISO(newEnd)) businessDaysToAdd++
+      }
+    }
+    
+    // Ensure new end is not before the start date
+    if (newEnd >= resizing.startStart) {
+      emit('update', { id: props.assignment.id, end: newEnd })
+    }
   }
 }
 function onResizeEndEvent() {  
@@ -214,6 +268,7 @@ function onResizeEndEvent() {
 }
 
 function onResizeEnd() {  
+  isResizing.value = false
   resizing = null
   window.removeEventListener('mousemove', onResize)
   window.removeEventListener('mouseup', onResizeEnd)
@@ -239,16 +294,34 @@ function onRightClick(e: MouseEvent) {
   background: transparent; 
   cursor: ew-resize; 
   z-index: 10;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, border 0.2s ease;
 }
+
+.handle:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
 .left { left: -2px; }
 .right { right: -2px; }
 
-/* Dragging states */
+/* Dragging and resizing states */
 .dragging {
   opacity: 0.7;
   transform: rotate(2deg);
   box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
   z-index: 1000;
+}
+
+.resizing {
+  box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.resizing .handle {
+  background: rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.6);
 }
 
 /* Make the entire bar draggable by default */
