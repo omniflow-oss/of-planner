@@ -112,14 +112,14 @@
                 name="i-lucide-grip-vertical"
                 class="drag-handle mr-2 size-3"
                 :class="sr.isTimeOff 
-                  ? 'text-slate-300 cursor-not-allowed opacity-50'
+                  ? 'invisible cursor-not-allowed opacity-50'
                   : 'text-slate-400 cursor-grab hover:text-slate-600'"
               />
               <UIcon
                 :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
-                :class="sr.isTimeOff ? 'mr-2 text-red-400 size-3' : 'mr-2 text-slate-400 size-3'"
+                :class="sr.isTimeOff ? 'mr-2 text-orange-400 size-3' : 'mr-2 text-slate-400 size-3'"
               />
-              <div :class="sr.isTimeOff ? 'truncate font-medium text-red-500 dark:text-red-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
+              <div :class="sr.isTimeOff ? 'truncate font-medium text-orange-400 dark:text-orange-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
                 {{ sr.label }}
               </div>
             </div>
@@ -127,7 +127,8 @@
 
           <!-- Right: timeline track -->
           <div
-            class="relative border-b border-r-2 pane-border timeline-bg"
+            class="relative border-b border-r-2 pane-border"
+            :class="{'bg-violet-100/60 dark:bg-violet-50/10': sr.isTimeOff,'timeline-bg':!sr.isTimeOff}"
             :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }" 
             :data-row-key="sr.key"
             @contextmenu="handleContextMenu($event, sr)"

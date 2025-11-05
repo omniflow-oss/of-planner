@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
 import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import { generateUserColor } from '@/utils/colors'
 import type { Assignment } from '@/types/planner'
@@ -108,7 +108,17 @@ let dragging: {
 } | null = null
 let resizing: { side: 'left'|'right'; startX: number; startStart: string; startEnd: string } | null = null
 
+// Centralized cleanup function for drag event listeners
+function cleanupDragListeners() {
+  document.removeEventListener('mousemove', onGlobalMouseMove)
+}
+
 function onDragStart(e: DragEvent) {
+  // Prevent duplicate drag initialization
+  if (isDragging.value || dragging) {
+    cleanupDragListeners()
+  }
+  
   isDragging.value = true
   
   // Find the scrollable timeline container
@@ -137,6 +147,8 @@ function onDragStart(e: DragEvent) {
     setTimeout(() => document.body.removeChild(dragImage), 0)
   }
   
+  // Remove any existing listener before adding new one to prevent duplicates
+  document.removeEventListener('mousemove', onGlobalMouseMove)
   // Add global mouse tracking for more reliable position updates
   document.addEventListener('mousemove', onGlobalMouseMove, { passive: true })
 }
@@ -209,8 +221,8 @@ function onDrag(e: DragEvent) {
 function onDragEnd(_e: DragEvent) {
   isDragging.value = false
   
-  // Remove global mouse tracking
-  document.removeEventListener('mousemove', onGlobalMouseMove)
+  // Remove global mouse tracking using centralized cleanup
+  cleanupDragListeners()
   
   dragging = null
 }
@@ -282,6 +294,15 @@ function onRightClick(e: MouseEvent) {
     y: e.clientY 
   })
 }
+
+// Component cleanup to prevent memory leaks
+onUnmounted(() => {
+  cleanupDragListeners()
+  
+  // Cleanup mouse-based drag listeners if they exist
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
+})
 </script>
 
 <style scoped>
