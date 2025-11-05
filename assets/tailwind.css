@@ -27,7 +27,7 @@
   correct visual alignment of the today line. Please do not remove or modify
   without verifying timeline grid rendering.
 */
-.grid-v.today-line { bottom: -2px;}
+.today-line { bottom: -2px;}
 
 .grid-v.week { background-color: var(--divide-color-accented); width: 2px; }
 .timeline-bg { background-color: var(--background-color-muted); }

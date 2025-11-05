@@ -49,7 +49,7 @@
           color="primary"
           variant="soft"
           class="ml-2"
-          :title="groupType === 'person' ? 'Assign project' : 'Add person'"
+          :title="groupType === 'person' ? 'Assign project' : 'Assign person'"
           :icon="'i-lucide-plus'"
           aria-label="Add"
           @click="handleAddClick"
@@ -354,14 +354,12 @@ function handleDragHandleKeydown(e: KeyboardEvent) {
     }, 200)
     
     // Future enhancement: Could implement arrow key navigation to move items up/down
-    console.log(`Keyboard reorder activated for ${props.label}. Full keyboard reordering could be implemented as a future enhancement.`)
   }
   
   // Handle arrow keys for future keyboard navigation implementation
   if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
     e.preventDefault()
     // Future enhancement: Implement actual reordering with arrow keys
-    console.log(`Arrow key navigation for ${props.label}. Could be implemented to move groups up/down.`)
   }
 }
 
