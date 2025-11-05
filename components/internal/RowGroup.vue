@@ -1,6 +1,6 @@
 <template>
   <div
-    class="grid rows-group relative z-2 full-width"
+    class="grid rows-group relative z-2"
     style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;"  
     draggable="false"
   >
@@ -51,7 +51,7 @@
       />
     </div>
     <div
-      class="relative border-b border-r-2 pane-border timeline-bg disabled-rows full-width"
+      class="relative border-b border-r-2 pane-border timeline-bg disabled-rows"
       :style="{ height: headerHeight+'px' }"
     >
       <GridOverlay
@@ -106,7 +106,7 @@
 
       <!-- Right: timeline track -->
       <div
-        class="relative border-b border-r-2 pane-border timeline-bg full-width"
+        class="relative border-b border-r-2 pane-border timeline-bg"
         :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }" 
         :data-row-key="sr.key"
         @contextmenu="handleContextMenu($event, sr)"

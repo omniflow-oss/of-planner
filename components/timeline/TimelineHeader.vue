@@ -1,7 +1,7 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
   <div
-    class="header-grid grid sticky top-0 z-20 full-width"
+    class="header-grid grid sticky top-0 z-20"
     style=" grid-template-columns: 240px 1fr;"
   >
     <!-- Left spacer with timeline controls -->
@@ -33,7 +33,7 @@
 
     <!-- Sticky timeline header with grid overlay -->
     <div
-      class="relative border-b top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75 flex flex-col justify-between full-width"
+      class="relative border-b top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75 flex flex-col justify-between"
     >
       <!-- Grid overlay aligned with days (uses shared GridOverlay for consistency) -->
       <div
