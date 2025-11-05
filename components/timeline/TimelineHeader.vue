@@ -120,7 +120,7 @@ function dayShort(iso: string) {
   const day = d.getUTCDate()
   const mon = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
   const monNumeric = d.toLocaleString('en-US', { month: 'numeric' })
-  return `${day} <span class="month-txt">${mon}</span> <span class="month-numeric">${monNumeric}</span>`
+  return `<span class="font-medium">${day}</span> <span class="month-txt">${mon}</span> <span class="month-numeric">${monNumeric}</span>`
 }
 
 function isToday(day: string) {
