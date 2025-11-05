@@ -80,19 +80,34 @@
     </div>   
     <div class="draggable-container">
       <!-- Subrows -->
-      <template
-        v-for="sr in filteredSubrows"
+      <VueDraggableNext
         v-if="expanded"
-        :key="sr.key"
+        :list="sortableSubrows"
+        item-key="key"
+        handle=".drag-handle"
+        @end="onSortEnd"
+        tag="div"
+        filter=".disable-drag"
       >
-      <div class="grid border-b pane-border drag-row"
+        <div 
+          v-for="sr in sortableSubrows" 
+          :key="sr.key"
+          class="grid border-b pane-border drag-row"
+          :class="{'disable-drag': sr.isTimeOff }"
           style="grid-template-columns: 240px 1fr;"
         >
           <!-- Left: label -->
           <div
             class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default"
           >
-            <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
+            <div class="flex items-center h-full px-3 pl-7 py-2 text-sm text-default">
+              <!-- Drag handle -->
+              <UIcon
+                name="i-lucide-grip-vertical"
+                :class="sr.isTimeOff 
+                  ? 'drag-handle mr-2 text-slate-300 size-3 cursor-not-allowed opacity-50' 
+                  : 'drag-handle mr-2 text-slate-400 size-3 cursor-grab hover:text-slate-600'"
+              />
               <UIcon
                 :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
                 :class="sr.isTimeOff ? 'mr-2 text-red-400 size-3' : 'mr-2 text-slate-400 size-3'"
@@ -159,13 +174,14 @@
             />
           </div>
         </div>
-      </template>
+      </VueDraggableNext>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted } from 'vue'
+import { VueDraggableNext } from 'vue-draggable-next'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import { businessDaysBetweenInclusive } from '@/composables/useDate'
@@ -178,7 +194,7 @@ const props = defineProps<{
   label: string
   groupType: 'person'|'project'
   groupId: string
-  subrows: { key: string; label: string; person_id: string|null; project_id: string|null }[]
+  subrows: { key: string; label: string; person_id: string|null; project_id: string|null; isTimeOff?: boolean }[]
   startISO: string
   days: string[]
   pxPerDay: number
@@ -245,6 +261,29 @@ function onEdit(payload: { assignment: any; x: number; y: number }) { emit('edit
 const filteredSubrows = computed(() => {
   return props.subrows.filter(sr => !isAddRow(sr))
 })
+
+// Sortable subrows for drag and drop
+const sortableSubrows = ref<typeof props.subrows>([])
+
+// Update sortableSubrows when filteredSubrows changes
+watch(filteredSubrows, (newSubrows) => {
+  sortableSubrows.value = [...newSubrows]
+  console.log('Updated sortableSubrows:', sortableSubrows.value.length, 'items')
+}, { immediate: true })
+
+// Handle drag end event
+function onSortEnd(event: any) {
+  console.log('Drag ended, new order:', sortableSubrows.value.map(sr => sr.key))
+  
+  // Ensure disable-drag items (timeoff rows) always stay at the top
+  const disabledItems = sortableSubrows.value.filter(sr => sr.isTimeOff)
+  const enabledItems = sortableSubrows.value.filter(sr => !sr.isTimeOff)
+  
+  // Reorder: disabled items first, then enabled items
+  sortableSubrows.value = [...disabledItems, ...enabledItems]
+  
+  console.log('Corrected order (disabled first):', sortableSubrows.value.map(sr => sr.key))
+}
 
 // Handle the + button click in the header
 function handleAddClick() {
@@ -751,6 +790,17 @@ defineExpose({ rowHeights })
 .header-row,
 .drag-row {
   background-color: var(--background-color-default);
+}
+
+.disable-drag {
+  /* Visual indication that this row cannot be dragged */
+  opacity: 0.8;
+}
+
+.disable-drag .drag-handle {
+  /* Ensure disabled drag handles look disabled */
+  cursor: not-allowed !important;
+  opacity: 0.5;
 }
 
 </style>
