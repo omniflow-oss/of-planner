@@ -9,8 +9,11 @@ export function useTimelineSorting() {
   const sortablePeople = ref<typeof people.value>([])
   const sortableProjects = ref<typeof projects.value>([])
 
-  // Update sortable arrays when store data changes, respecting sort order
-  watch([people, peopleSortOrder], ([newPeople, sortOrder]) => {
+  // Function to update sortable people array
+  function updateSortablePeople() {
+    const newPeople = people.value
+    const sortOrder = peopleSortOrder.value
+    
     if (sortOrder.length === 0) {
       sortablePeople.value = [...newPeople]
     } else {
@@ -25,9 +28,13 @@ export function useTimelineSorting() {
       const unordered = newPeople.filter(p => !sortOrderSet.has(p.id))
       sortablePeople.value = [...ordered, ...unordered]
     }
-  }, { immediate: true, deep: true })
+  }
 
-  watch([projects, projectsSortOrder], ([newProjects, sortOrder]) => {
+  // Function to update sortable projects array
+  function updateSortableProjects() {
+    const newProjects = projects.value
+    const sortOrder = projectsSortOrder.value
+    
     if (sortOrder.length === 0) {
       sortableProjects.value = [...newProjects]
     } else {
@@ -42,7 +49,16 @@ export function useTimelineSorting() {
       const unordered = newProjects.filter(p => !sortOrderSet.has(p.id))
       sortableProjects.value = [...ordered, ...unordered]
     }
-  }, { immediate: true, deep: true })
+  }
+
+  // Watch for changes using watchEffect for better reactivity
+  watchEffect(() => {
+    updateSortablePeople()
+  })
+
+  watchEffect(() => {
+    updateSortableProjects()
+  })
 
   // Drag-and-drop sort handlers
   function onPersonSortEnd() {

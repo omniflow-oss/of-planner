@@ -148,12 +148,14 @@
     
     <NewProjectModal
       :open="modals.newProjectOpen.value"
+      :external-error="modals.newProjectError.value"
       @close="modals.closeNewProjectModal"
       @create="handleCreateProject"
     />
     
     <NewPersonModal
       :open="modals.newPersonOpen.value"
+      :external-error="modals.newPersonError.value"
       @close="modals.closeNewPersonModal"
       @create="handleCreatePerson"
     />
@@ -263,7 +265,6 @@ function handleConfirmDelete() {
 
 function handleCloseCreate() {
   modals.closeCreateModal()
-  actions.onUpdate({ id: '', start: '', end: '' }) // Close any pending updates
 }
 
 function handleConfirmCreate(payload: { person_id: string|null; project_id: string|null; start: string; duration: number; allocation: 1|0.75|0.5|0.25 }) {
@@ -286,8 +287,9 @@ function handleCreateProject(name: string) {
       }
     })
   } catch (error) {
-    // Error handling can be improved with better modal state management
-    console.error('Error creating project:', error)
+    // Display error message to user in the modal
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create project'
+    modals.setNewProjectError(errorMessage)
   }
 }
 
@@ -306,8 +308,9 @@ function handleCreatePerson(name: string) {
       }
     })
   } catch (error) {
-    // Error handling can be improved with better modal state management
-    console.error('Error creating person:', error)
+    // Display error message to user in the modal
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create person'
+    modals.setNewPersonError(errorMessage)
   }
 }
 

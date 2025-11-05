@@ -48,6 +48,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   open: boolean
+  externalError?: string
 }>()
 
 const emit = defineEmits<{
@@ -71,6 +72,13 @@ watch(() => props.open, (isOpen) => {
   if (isOpen) {
     personName.value = ''
     error.value = ''
+  }
+})
+
+// Watch for external errors
+watch(() => props.externalError, (newError) => {
+  if (newError) {
+    error.value = newError
   }
 })
 </script>

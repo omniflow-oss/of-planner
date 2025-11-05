@@ -11,6 +11,10 @@ export function useTimelineModals() {
   // Modal data
   const editState = ref<{ id: string; start: string; end: string; allocation: 1|0.75|0.5|0.25 } | null>(null)
   const createState = ref<{ dayISO: string; person_id: string|null; project_id: string|null } | null>(null)
+  
+  // Error states
+  const newProjectError = ref<string>('')
+  const newPersonError = ref<string>('')
 
   function openEditModal(assignment: Assignment) {
     closeAllModals()
@@ -31,12 +35,22 @@ export function useTimelineModals() {
 
   function openNewProjectModal() {
     closeAllModals()
+    newProjectError.value = ''
     newProjectOpen.value = true
   }
 
   function openNewPersonModal() {
     closeAllModals()
+    newPersonError.value = ''
     newPersonOpen.value = true
+  }
+
+  function setNewProjectError(error: string) {
+    newProjectError.value = error
+  }
+
+  function setNewPersonError(error: string) {
+    newPersonError.value = error
   }
 
   function openDeleteModal() {
@@ -61,10 +75,12 @@ export function useTimelineModals() {
 
   function closeNewProjectModal() {
     newProjectOpen.value = false
+    newProjectError.value = ''
   }
 
   function closeNewPersonModal() {
     newPersonOpen.value = false
+    newPersonError.value = ''
   }
 
   function closeDeleteModal() {
@@ -82,6 +98,8 @@ export function useTimelineModals() {
     // Data
     editState,
     createState,
+    newProjectError,
+    newPersonError,
     
     // Actions
     openEditModal,
@@ -94,6 +112,8 @@ export function useTimelineModals() {
     closeCreateModal,
     closeNewProjectModal,
     closeNewPersonModal,
-    closeDeleteModal
+    closeDeleteModal,
+    setNewProjectError,
+    setNewPersonError
   }
 }
