@@ -15,6 +15,7 @@
         title="Drag to reorder groups"
         tabindex="0"
         role="button"
+        aria-hidden="false"
         :aria-label="`Drag to reorder ${label} group. Use arrow keys to move up or down, or press Enter to activate drag mode.`"
         @keydown="handleDragHandleKeydown"
       />
