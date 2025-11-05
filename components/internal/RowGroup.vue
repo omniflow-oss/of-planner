@@ -97,8 +97,7 @@
         <div 
           v-for="sr in sortableSubrows" 
           :key="sr.key"
-          class="grid border-b pane-border drag-row"
-          :class="{'disable-drag': sr.isTimeOff }"
+          class="grid border-b pane-border drag-row"          
           style="grid-template-columns: 240px 1fr;"
         >
           <!-- Left: label -->
