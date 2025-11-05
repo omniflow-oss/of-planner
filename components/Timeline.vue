@@ -6,7 +6,10 @@
       class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm scrollbar-hidden"
       @scroll.passive="handleScroll"
     >
-      <div class="relative" :style="{ width: timelineWidth+'px' }">
+      <div
+        class="relative"
+        :style="{ width: timelineWidth+'px' }"
+      >
         <TimelineHeader
           :days="days"
           :day-columns="dayColumns"
@@ -27,8 +30,8 @@
             :list="sortablePeople"
             item-key="id"
             handle=".group-drag-handle"
-            @end="sorting.onPersonSortEnd"
             tag="div"
+            @end="sorting.onPersonSortEnd"
           >
             <RowGroup
               v-for="p in sortablePeople"
@@ -55,8 +58,8 @@
             :list="sortableProjects"
             item-key="id"
             handle=".group-drag-handle"
-            @end="sorting.onProjectSortEnd"
             tag="div"
+            @end="sorting.onProjectSortEnd"
           >
             <RowGroup
               v-for="proj in sortableProjects"
@@ -110,7 +113,8 @@
         </UButton>
       </div>
       
-      <div class="grid empty-rows-filler sticky bottom-0 z-1" 
+      <div
+        class="grid empty-rows-filler sticky bottom-0 z-1"
         style="grid-template-columns: 240px 1fr; height: 100%; left:240px;"
         :style="{ width: timelineWidth+'px' }"
       >    
@@ -127,7 +131,10 @@
           />
         </div>
       </div> 
-      <div class="empty-sidebar absolute z-1 top-0 bottom-0 bg-default border-r-2 pane-border" style="width: 240px;"></div>     
+      <div
+        class="empty-sidebar absolute z-1 top-0 bottom-0 bg-default border-r-2 pane-border"
+        style="width: 240px;"
+      />     
     </div>
 
     <!-- Modals -->
@@ -249,9 +256,10 @@ function handleCreatePopover(payload: { key: string; x: number; y: number; dayIS
   modals.openCreateModal({ dayISO: payload.dayISO, person_id: payload.person_id, project_id: payload.project_id })
 }
 
-function handleSaveEdit() {
+function handleSaveEdit(editData: { start: string; end: string; allocation: 1|0.75|0.5|0.25 }) {
   if (!modals.editState.value) return
-  const { id, start, end, allocation } = modals.editState.value
+  const { id } = modals.editState.value
+  const { start, end, allocation } = editData
   actions.updateAssignment(id, { start, end, allocation })
   modals.closeEditModal()
 }
@@ -322,7 +330,7 @@ provide(assignmentsKey, assignments)
 
 const scrollArea = ref<HTMLElement | null>(null)
 
-const { onScroll, init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
+const { onScroll, init: _init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
   // Hide modals when scrolling to keep UX coherent on large moves
