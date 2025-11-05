@@ -890,14 +890,12 @@ function toggleExpandAll() {
 
 // Drag-and-drop sort handlers
 function onPersonSortEnd(event: any) {
-  const newOrder = sortablePeople.value.map(p => p.id)
-  console.log('Person drag ended, new order:', newOrder)
+  const newOrder = sortablePeople.value.map(p => p.id);
   store.updatePeopleSortOrder(newOrder)
 }
 
 function onProjectSortEnd(event: any) {
-  const newOrder = sortableProjects.value.map(p => p.id)
-  console.log('Project drag ended, new order:', newOrder)
+  const newOrder = sortableProjects.value.map(p => p.id);
   store.updateProjectsSortOrder(newOrder)
 }
 </script>

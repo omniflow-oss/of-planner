@@ -80,7 +80,6 @@
             </div>
           </div>
         </template>
-        <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
       </div>
     </div>   
     <div class="draggable-container">
@@ -303,14 +302,10 @@ watch(filteredSubrows, (newSubrows) => {
       store.updateSubrowSortOrder(props.groupId, newOrder)
     }
   }
-  
-  console.log('Updated sortableSubrows:', sortableSubrows.value.length, 'items')
 }, { immediate: true })
 
 // Handle drag end event
-function onSortEnd(event: any) {
-  console.log('Drag ended, new order:', sortableSubrows.value.map(sr => sr.key))
-  
+function onSortEnd(event: any) {  
   // Ensure disable-drag items (timeoff rows) always stay at the top
   const disabledItems = sortableSubrows.value.filter(sr => sr.isTimeOff)
   const enabledItems = sortableSubrows.value.filter(sr => !sr.isTimeOff)
@@ -321,8 +316,6 @@ function onSortEnd(event: any) {
   // Save the new order to the store
   const newOrder = sortableSubrows.value.map(sr => sr.key)
   store.updateSubrowSortOrder(props.groupId, newOrder)
-  
-  console.log('Corrected order (disabled first):', newOrder)
 }
 
 // Handle the + button click in the header
