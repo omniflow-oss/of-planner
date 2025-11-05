@@ -409,20 +409,38 @@ import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
 
 const store = usePlannerStore()
-const { people, projects, view, assignments } = storeToRefs(store)
+const { people, projects, view, assignments, peopleSortOrder, projectsSortOrder } = storeToRefs(store)
 const hasData = computed(() => store.hasData)
 
 // Sortable arrays for drag-and-drop reordering
 const sortablePeople = ref<typeof people.value>([])
 const sortableProjects = ref<typeof projects.value>([])
 
-// Update sortable arrays when store data changes
-watch(people, (newPeople) => {
-  sortablePeople.value = [...newPeople]
+// Update sortable arrays when store data changes, respecting sort order
+watch([people, peopleSortOrder], ([newPeople, sortOrder]) => {
+  if (sortOrder.length === 0) {
+    sortablePeople.value = [...newPeople]
+  } else {
+    // Sort according to stored order, placing unordered items at the end
+    const ordered = sortOrder
+      .map(id => newPeople.find(p => p.id === id))
+      .filter(Boolean) as typeof newPeople
+    const unordered = newPeople.filter(p => !sortOrder.includes(p.id))
+    sortablePeople.value = [...ordered, ...unordered]
+  }
 }, { immediate: true })
 
-watch(projects, (newProjects) => {
-  sortableProjects.value = [...newProjects]
+watch([projects, projectsSortOrder], ([newProjects, sortOrder]) => {
+  if (sortOrder.length === 0) {
+    sortableProjects.value = [...newProjects]
+  } else {
+    // Sort according to stored order, placing unordered items at the end
+    const ordered = sortOrder
+      .map(id => newProjects.find(p => p.id === id))
+      .filter(Boolean) as typeof newProjects
+    const unordered = newProjects.filter(p => !sortOrder.includes(p.id))
+    sortableProjects.value = [...ordered, ...unordered]
+  }
 }, { immediate: true })
 
 const {
@@ -872,12 +890,14 @@ function toggleExpandAll() {
 
 // Drag-and-drop sort handlers
 function onPersonSortEnd(event: any) {
-  console.log('Person drag ended, new order:', sortablePeople.value.map(p => p.id))
-  // TODO: Persist the new order in store if needed
+  const newOrder = sortablePeople.value.map(p => p.id)
+  console.log('Person drag ended, new order:', newOrder)
+  store.updatePeopleSortOrder(newOrder)
 }
 
 function onProjectSortEnd(event: any) {
-  console.log('Project drag ended, new order:', sortableProjects.value.map(p => p.id))
-  // TODO: Persist the new order in store if needed
+  const newOrder = sortableProjects.value.map(p => p.id)
+  console.log('Project drag ended, new order:', newOrder)
+  store.updateProjectsSortOrder(newOrder)
 }
 </script>

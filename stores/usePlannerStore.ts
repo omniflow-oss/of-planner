@@ -41,7 +41,12 @@ export const usePlannerStore = defineStore('planner', {
     meta: { version: '2.9.0' },
     isDataModified: false,
     // Store initial data for reset functionality
-    _initialData: null
+    _initialData: null,
+    // Sort orders for drag-and-drop
+    peopleSortOrder: [],
+    projectsSortOrder: [],
+    // Subrow sort orders for each group (key: groupId, value: array of subrow keys)
+    subrowSortOrders: {}
   }),
   getters: {
     byPerson: (s) => (personId: string) => s.assignments.filter(a => a.person_id === personId),
@@ -154,6 +159,9 @@ export const usePlannerStore = defineStore('planner', {
       if (data.projects) this.projects = [...data.projects]
       if (data.assignments) this.assignments = [...data.assignments]
       
+      // Initialize sort orders
+      this.initializeSortOrders()
+      
       // Reset modified flag after loading
       this.isDataModified = false
 
@@ -175,6 +183,9 @@ export const usePlannerStore = defineStore('planner', {
         if (data.people) this.people = [...data.people]
         if (data.projects) this.projects = [...data.projects]
         if (data.assignments) this.assignments = [...data.assignments]
+        
+        // Initialize sort orders
+        this.initializeSortOrders()
         
         // Reset modified flag after loading
         this.isDataModified = false
@@ -209,6 +220,37 @@ export const usePlannerStore = defineStore('planner', {
       // Mark as not modified after download
       this.isDataModified = false
       
+    },
+
+    // Sort order management for drag-and-drop
+    updatePeopleSortOrder(newOrder: string[]) {
+      this.peopleSortOrder = [...newOrder]
+      this.isDataModified = true
+    },
+
+    updateProjectsSortOrder(newOrder: string[]) {
+      this.projectsSortOrder = [...newOrder]
+      this.isDataModified = true
+    },
+
+    // Subrow sort order management
+    updateSubrowSortOrder(groupId: string, newOrder: string[]) {
+      this.subrowSortOrders[groupId] = [...newOrder]
+      this.isDataModified = true
+    },
+
+    getSubrowSortOrder(groupId: string): string[] {
+      return this.subrowSortOrders[groupId] || []
+    },
+
+    // Initialize sort orders when data is loaded
+    initializeSortOrders() {
+      if (this.peopleSortOrder.length === 0) {
+        this.peopleSortOrder = this.people.map(p => p.id)
+      }
+      if (this.projectsSortOrder.length === 0) {
+        this.projectsSortOrder = this.projects.map(p => p.id)
+      }
     }
   }
 })

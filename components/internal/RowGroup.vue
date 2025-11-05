@@ -194,6 +194,7 @@ import { computeLanes } from '@/utils/lanes'
 import { useTimelineGrid } from '@/composables/useTimeline'
 import { indexFromX, businessSegment } from '@/utils/grid'
 import { useCapacity } from '@/composables/useCapacity'
+import { usePlannerStore } from '@/stores/usePlannerStore'
 
 const props = defineProps<{
   label: string
@@ -207,6 +208,9 @@ const props = defineProps<{
   peopleMap?: Record<string, { id: string; name: string }>
 }>()
 const emit = defineEmits(['create','update','createFromSidebar','edit','createPopover'])
+
+// Access the store for subrow sort persistence
+const store = usePlannerStore()
 
 const pxPerDay = computed(() => props.pxPerDay)
 const days = computed(() => props.days)
@@ -270,9 +274,37 @@ const filteredSubrows = computed(() => {
 // Sortable subrows for drag and drop
 const sortableSubrows = ref<typeof props.subrows>([])
 
-// Update sortableSubrows when filteredSubrows changes
+// Update sortableSubrows when filteredSubrows changes, respecting stored sort order
 watch(filteredSubrows, (newSubrows) => {
-  sortableSubrows.value = [...newSubrows]
+  const storedOrder = store.getSubrowSortOrder(props.groupId)
+  
+  if (storedOrder.length === 0) {
+    // No stored order, initialize with current order
+    const initialOrder = newSubrows.map(sr => sr.key)
+    store.updateSubrowSortOrder(props.groupId, initialOrder)
+    sortableSubrows.value = [...newSubrows]
+  } else {
+    // Apply stored order, placing unordered items at the end
+    const ordered = storedOrder
+      .map(key => newSubrows.find(sr => sr.key === key))
+      .filter(Boolean) as typeof newSubrows
+    const unordered = newSubrows.filter(sr => !storedOrder.includes(sr.key))
+    
+    // Ensure disable-drag items (timeoff rows) always stay at the top
+    const disabledOrdered = ordered.filter(sr => sr.isTimeOff)
+    const enabledOrdered = ordered.filter(sr => !sr.isTimeOff)
+    const disabledUnordered = unordered.filter(sr => sr.isTimeOff)
+    const enabledUnordered = unordered.filter(sr => !sr.isTimeOff)
+    
+    sortableSubrows.value = [...disabledOrdered, ...disabledUnordered, ...enabledOrdered, ...enabledUnordered]
+    
+    // Update stored order if there are new unordered items
+    if (unordered.length > 0) {
+      const newOrder = sortableSubrows.value.map(sr => sr.key)
+      store.updateSubrowSortOrder(props.groupId, newOrder)
+    }
+  }
+  
   console.log('Updated sortableSubrows:', sortableSubrows.value.length, 'items')
 }, { immediate: true })
 
@@ -287,7 +319,11 @@ function onSortEnd(event: any) {
   // Reorder: disabled items first, then enabled items
   sortableSubrows.value = [...disabledItems, ...enabledItems]
   
-  console.log('Corrected order (disabled first):', sortableSubrows.value.map(sr => sr.key))
+  // Save the new order to the store
+  const newOrder = sortableSubrows.value.map(sr => sr.key)
+  store.updateSubrowSortOrder(props.groupId, newOrder)
+  
+  console.log('Corrected order (disabled first):', newOrder)
 }
 
 // Handle the + button click in the header
@@ -439,16 +475,18 @@ function endDragCreate(e: MouseEvent, sr: any) {
     const endDay = days.value[endIndex]
     
     // Calculate duration using business days (matching Timeline's onCreate expectation)
-    const duration = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
-    
-    // Emit create event with duration (as expected by Timeline.onCreate)
-    emit('create', {
-      person_id: sr.person_id,
-      project_id: sr.project_id,
-      start: startDay,
-      duration: duration,
-      allocation: 1 // Default allocation
-    })
+    if (startDay && endDay) {
+      const duration = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
+      
+      // Emit create event with duration (as expected by Timeline.onCreate)
+      emit('create', {
+        person_id: sr.person_id,
+        project_id: sr.project_id,
+        start: startDay,
+        duration: duration,
+        allocation: 1 // Default allocation
+      })
+    }
   }
   
   resetDragState()
@@ -555,9 +593,11 @@ function updatePreviewBar() {
   if (startIndex < 0 || endIndex < 0 || startIndex >= days.value.length || endIndex >= days.value.length) return
   const startDay = days.value[startIndex]
   const endDay = days.value[endIndex]
-  const seg = businessSegment(props.startISO, startDay, endDay, pxPerDay.value)
-  dragState.value.previewLeft = seg.left
-  dragState.value.previewWidth = seg.width
+  if (startDay && endDay) {
+    const seg = businessSegment(props.startISO, startDay, endDay, pxPerDay.value)
+    dragState.value.previewLeft = seg.left
+    dragState.value.previewWidth = seg.width
+  }
 }
 
 // Handle context menu - only show create popup on simple right-click
@@ -684,16 +724,18 @@ const handleGlobalMouseUp = (_e: MouseEvent) => {
         const endDay = days.value[endIndex]
         
         // Calculate duration using business days
-        const duration = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
-        
-        // Emit create event
-        emit('create', {
-          person_id: originalSubrow.person_id,
-          project_id: originalSubrow.project_id,
-          start: startDay,
-          duration: duration,
-          allocation: 1
-        })
+        if (startDay && endDay) {
+          const duration = Math.max(1, businessDaysBetweenInclusive(startDay, endDay))
+          
+          // Emit create event
+          emit('create', {
+            person_id: originalSubrow.person_id,
+            project_id: originalSubrow.project_id,
+            start: startDay,
+            duration: duration,
+            allocation: 1
+          })
+        }
       }
     }
     
@@ -797,15 +839,5 @@ defineExpose({ rowHeights })
   background-color: var(--background-color-default);
 }
 
-.disable-drag {
-  /* Visual indication that this row cannot be dragged */
-  opacity: 0.8;
-}
-
-.disable-drag .drag-handle {
-  /* Ensure disabled drag handles look disabled */
-  cursor: not-allowed !important;
-  opacity: 0.5;
-}
 
 </style>
