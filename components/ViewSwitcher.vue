@@ -4,7 +4,10 @@
     role="tablist"
     aria-label="View mode"
   >
-    <UFieldGroup size="sm" class="mx-auto">
+    <UFieldGroup
+      size="sm"
+      class="mx-auto"
+    >
       <UButton
         size="sm"
         :variant="mode==='person' ? 'solid' : 'outline'"
