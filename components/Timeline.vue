@@ -3,7 +3,7 @@
     <!-- Scrollable content with aligned rows -->
     <div
       ref="scrollArea"
-      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm"
+      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm relative"
       @scroll.passive="handleScroll"
     >
       <TimelineHeader
@@ -21,51 +21,71 @@
         :has-data="hasData"
         @toggle-expand-all="toggleExpandAll"
       />
-      <template v-if="view.mode==='person'">
-        <RowGroup
-          v-for="p in people"
-          :key="p.id"
-          :label="p.name"
-          :group-type="'person'"
-          :group-id="p.id"
-          :subrows="personSubrows(p.id)"
-          :days="days"
-          :px-per-day="view.px_per_day"
-          :start-i-s-o="view.start"
-          :projects-map="projectsMap"
-          :people-map="peopleMap"
-          @create="onCreate"
-          @update="onUpdate"
-          @create-from-sidebar="onAddFromSidebar"
-          @edit="onEdit"
-          @create-popover="onCreatePopover"
-        />
-      </template>
-      <template v-else>
-        <RowGroup
-          v-for="proj in projects"
-          :key="proj.id"
-          :label="proj.name"
-          :group-type="'project'"
-          :group-id="proj.id"
-          :subrows="projectSubrows(proj.id)"
-          :days="days"
-          :px-per-day="view.px_per_day"
-          :start-i-s-o="view.start"
-          :projects-map="projectsMap"
-          :people-map="peopleMap"
-          @create="onCreate"
-          @update="onUpdate"
-          @create-from-sidebar="onAddFromSidebar"
-          @edit="onEdit"
-          @create-popover="onCreatePopover"
-        />
-      </template>
+      <div class="z-10 relative" >
+        <template v-if="view.mode==='person'">
+          <RowGroup
+            v-for="p in people"
+            :key="p.id"
+            :label="p.name"
+            :group-type="'person'"
+            :group-id="p.id"
+            :subrows="personSubrows(p.id)"
+            :days="days"
+            :px-per-day="view.px_per_day"
+            :start-i-s-o="view.start"
+            :projects-map="projectsMap"
+            :people-map="peopleMap"
+            @create="onCreate"
+            @update="onUpdate"
+            @create-from-sidebar="onAddFromSidebar"
+            @edit="onEdit"
+            @create-popover="onCreatePopover"
+          />
+        </template>
+        <template v-else>
+          <RowGroup
+            v-for="proj in projects"
+            :key="proj.id"
+            :label="proj.name"
+            :group-type="'project'"
+            :group-id="proj.id"
+            :subrows="projectSubrows(proj.id)"
+            :days="days"
+            :px-per-day="view.px_per_day"
+            :start-i-s-o="view.start"
+            :projects-map="projectsMap"
+            :people-map="peopleMap"
+            @create="onCreate"
+            @update="onUpdate"
+            @create-from-sidebar="onAddFromSidebar"
+            @edit="onEdit"
+            @create-popover="onCreatePopover"
+          />
+        </template>
+        <div class="grid empty-rows-filler absolute z-0" 
+          style="grid-template-columns: 240px 1fr; bottom: 0; height:100%; top:0; left:240px;" 
+          :style="{ width: timelineWidth+'px' }"
+        >
+          <div
+            class="relative border-r pane-border full-height"
+            :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
+            :style="{ width: timelineWidth+'px' }"
+          >
+            <GridOverlay
+              :days="days"
+              :px-per-day="view.px_per_day"
+              :offsets="dayOffsets"
+              :week-starts="weekStarts"
+            />
+          
+        </div>      
+      </div>
+      </div>
 
       <!-- empty rows filler -->
-      <div class="grid empty-rows-filler sticky bottom-0 z-10" 
-        style="grid-template-columns: 240px 1fr; height: 100%;"
-        :style="{ width: timelineWidth+'px' }"
+      <div class="grid empty-rows-filler sticky bottom-0 z-20" 
+        style="grid-template-columns: 240px 1fr; bottom: 0; height:100%; top:0; " 
+          :style="{ width: timelineWidth+'px' }"
       >
         <!-- Left: empty label -->
         <div
@@ -98,7 +118,7 @@
         </div>
         <!-- Right: empty timeline track with grid overlay -->
         <div
-          class="relative border-b border-r pane-border "
+          class="sticky border-b border-r-2 pane-border  disabled-rows"
           :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
           :style="{ height: '100%', width: timelineWidth+'px' }"
         >
@@ -109,8 +129,13 @@
             :week-starts="weekStarts"
           />
         </div>
-      </div>      
-    </div>
+    
+      </div>  
+              
+   
+
+      
+     </div>
 
 
     <div

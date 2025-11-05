@@ -108,6 +108,7 @@
       <!-- Right: timeline track -->
       <div
         class="relative border-b border-r-2 pane-border timeline-bg"
+        :class="{ 'timeoff-row': sr.isTimeOff }"
         :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px', width: timelineWidth+'px' }" 
         :data-row-key="sr.key"
         @contextmenu="handleContextMenu($event, sr)"
