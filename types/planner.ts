@@ -31,6 +31,9 @@ export type PlannerState = {
   meta: { version: '2.9.0' }
   isDataModified: boolean
   _initialData: ExternalPlannerData | null
+  peopleSortOrder: string[]
+  projectsSortOrder: string[]
+  subrowSortOrders: Record<string, string[]>
 }
 
 export type ExternalPlannerData = {
