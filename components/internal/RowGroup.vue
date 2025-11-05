@@ -1,10 +1,10 @@
 <template>
   <div
-    class="grid rows-group relative z-2"
+    class="grid rows-group relative z-2 drag-group-row"
     style="-webkit-user-select: none; user-select: none;"  
     draggable="false"
   >
-    <div class="grid border-b pane-border"
+    <div class="grid border-b pane-border header-row"
       style="grid-template-columns: 240px 1fr;"
     >
        <!-- Group header row -->
@@ -85,7 +85,7 @@
       v-if="expanded"
       :key="sr.key"
     >
-     <div class="grid border-b pane-border"
+     <div class="grid border-b pane-border drag-row"
         style="grid-template-columns: 240px 1fr;"
       >
         <!-- Left: label -->
