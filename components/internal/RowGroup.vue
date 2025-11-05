@@ -78,88 +78,89 @@
         <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
       </div>
     </div>   
-
-    <!-- Subrows -->
-    <template
-      v-for="sr in filteredSubrows"
-      v-if="expanded"
-      :key="sr.key"
-    >
-     <div class="grid border-b pane-border drag-row"
-        style="grid-template-columns: 240px 1fr;"
+    <div class="draggable-container">
+      <!-- Subrows -->
+      <template
+        v-for="sr in filteredSubrows"
+        v-if="expanded"
+        :key="sr.key"
       >
-        <!-- Left: label -->
-        <div
-          class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default"
+      <div class="grid border-b pane-border drag-row"
+          style="grid-template-columns: 240px 1fr;"
         >
-          <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
-            <UIcon
-              :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
-              :class="sr.isTimeOff ? 'mr-2 text-red-400 size-3' : 'mr-2 text-slate-400 size-3'"
-            />
-            <div :class="sr.isTimeOff ? 'truncate font-medium text-red-500 dark:text-red-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
-              {{ sr.label }}
+          <!-- Left: label -->
+          <div
+            class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default"
+          >
+            <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
+              <UIcon
+                :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
+                :class="sr.isTimeOff ? 'mr-2 text-red-400 size-3' : 'mr-2 text-slate-400 size-3'"
+              />
+              <div :class="sr.isTimeOff ? 'truncate font-medium text-red-500 dark:text-red-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
+                {{ sr.label }}
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Right: timeline track -->
-        <div
-          class="relative border-b border-r-2 pane-border timeline-bg"
-          :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }" 
-          :data-row-key="sr.key"
-          @contextmenu="handleContextMenu($event, sr)"
-          @mousedown="handleMouseDown($event, sr)"
-          @mousemove="updateDragCreate($event, sr)"
-          @mouseup="handleMouseUp($event, sr)"
-          @dragstart="cancelDragCreate"
-        >
-          <GridOverlay
-            :days="days"
-            :px-per-day="pxPerDay"
-            :offsets="dayOffsets"
-            :week-starts="weekStarts"
-          />
-          <!-- Timeoff background overlays for this specific user (project view only) -->
-          <template
-            v-if="groupType === 'project'"
-            v-for="(day, i) in days"
-            :key="'timeoff-sub'+i"
-          >
-            <div 
-              v-if="hasUserTimeoffOnDay(sr.person_id, day)"
-              class="absolute inset-y-0 timeoff-hashed"
-              :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }"
-            />
-          </template>
-          <AssignmentBar
-            v-for="a in subAssignmentsLaned(sr)"
-            :key="a.id"
-            :assignment="a"
-            :start-i-s-o="startISO"
-            :px-per-day="pxPerDay"
-            :projects-map="projectsMap"
-            :people-map="peopleMap"
-            :top="laneTop(a._lane)"
-            @update="onUpdate"
-            @edit="onEdit"
-            @resize="(e: any) => onResizeEvent=e"
-          />
-          
-          <!-- Drag-to-create preview bar -->
+          <!-- Right: timeline track -->
           <div
-            v-if="dragState.active && dragState.rowKey === sr.key" 
-            class="absolute bg-blue-500/30 border border-blue-500 rounded-sm pointer-events-none"
-            :style="{
-              left: dragState.previewLeft + 'px',
-              top: '10px',
-              width: dragState.previewWidth + 'px',
-              height: '28px'
-            }"
-          />
+            class="relative border-b border-r-2 pane-border timeline-bg"
+            :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }" 
+            :data-row-key="sr.key"
+            @contextmenu="handleContextMenu($event, sr)"
+            @mousedown="handleMouseDown($event, sr)"
+            @mousemove="updateDragCreate($event, sr)"
+            @mouseup="handleMouseUp($event, sr)"
+            @dragstart="cancelDragCreate"
+          >
+            <GridOverlay
+              :days="days"
+              :px-per-day="pxPerDay"
+              :offsets="dayOffsets"
+              :week-starts="weekStarts"
+            />
+            <!-- Timeoff background overlays for this specific user (project view only) -->
+            <template
+              v-if="groupType === 'project'"
+              v-for="(day, i) in days"
+              :key="'timeoff-sub'+i"
+            >
+              <div 
+                v-if="hasUserTimeoffOnDay(sr.person_id, day)"
+                class="absolute inset-y-0 timeoff-hashed"
+                :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }"
+              />
+            </template>
+            <AssignmentBar
+              v-for="a in subAssignmentsLaned(sr)"
+              :key="a.id"
+              :assignment="a"
+              :start-i-s-o="startISO"
+              :px-per-day="pxPerDay"
+              :projects-map="projectsMap"
+              :people-map="peopleMap"
+              :top="laneTop(a._lane)"
+              @update="onUpdate"
+              @edit="onEdit"
+              @resize="(e: any) => onResizeEvent=e"
+            />
+            
+            <!-- Drag-to-create preview bar -->
+            <div
+              v-if="dragState.active && dragState.rowKey === sr.key" 
+              class="absolute bg-blue-500/30 border border-blue-500 rounded-sm pointer-events-none"
+              :style="{
+                left: dragState.previewLeft + 'px',
+                top: '10px',
+                width: dragState.previewWidth + 'px',
+                height: '28px'
+              }"
+            />
+          </div>
         </div>
-      </div>
-    </template>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -746,6 +747,10 @@ defineExpose({ rowHeights })
     transparent 4px,
     transparent 8px
   );
+}
+.header-row,
+.drag-row {
+  background-color: var(--background-color-default);
 }
 
 </style>
