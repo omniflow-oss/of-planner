@@ -1,39 +1,39 @@
-Parfait 👌 Voici le **PRD complet v2.9** — consolidé et prêt pour développement — incluant **toutes les fonctionnalités précédentes** (double vue, snap journalier, allocations, superpositions) **et la nouvelle fonctionnalité d’ajout par clic sur zone vide avec choix du nombre de jours**.
-Il est structuré pour être directement exploitable dans une implémentation **Nuxt + Nuxt UI + Pinia**.
+Perfect 👌 Here's the **complete PRD v2.9** — consolidated and ready for development — including **all previous features** (dual view, daily snap, allocations, overlaps) **and the new feature for adding by clicking on empty zones with day count selection**.
+It is structured to be directly usable in a **Nuxt + Nuxt UI + Pinia** implementation.
 
 ---
 
 # Capacity Planner — PRD v2.9
 
-*(Vue People / Vue Projects, allocation fractionnaire, snap journalier, superpositions, création par clic)*
+*(People View / Project View, fractional allocation, daily snap, overlaps, click creation)*
 
 ---
 
-## 1. 🎯 Objectif
+## 1. 🎯 Objective
 
-Créer un **planificateur visuel** pour organiser les **assignations entre personnes et projets**, jour par jour.
-Le système doit permettre :
+Create a **visual planner** to organize **assignments between people and projects**, day by day.
+The system must allow:
 
-* De visualiser les disponibilités et allocations (pleines ou partielles),
-* De créer des assignations directement depuis la timeline (clic ou bouton),
-* De déplacer/redimensionner les barres par **pas de jour complet**,
-* D’afficher les deux perspectives : **People View** et **Project View**.
+* Visualizing availability and allocations (full or partial),
+* Creating assignments directly from the timeline (click or button),
+* Moving/resizing bars by **complete day steps**,
+* Displaying both perspectives: **People View** and **Project View**.
 
 ---
 
-## 2. 🧭 Modes de visualisation
+## 2. 🧭 Visualization Modes
 
-| Vue              | Ligne principale | Sous-lignes         | Ligne spéciale           |
+| View             | Main Row         | Sub-rows            | Special Row              |
 | ---------------- | ---------------- | ------------------- | ------------------------ |
-| **People View**  | Personne         | Projets assignés    | ➕ “Ajouter un projet”    |
-| **Project View** | Projet           | Personnes assignées | ➕ “Ajouter une personne” |
+| **People View**  | Person           | Assigned projects   | ➕ "Add project"          |
+| **Project View** | Project          | Assigned people     | ➕ "Add person"           |
 
-* Le clic sur l’onglet **People** ↔ **Projects** change la hiérarchie, tout en gardant **zoom, Today, scroll**.
-* Les deux vues utilisent le **même store** (`assignments[]`) : aucune duplication.
+* Clicking the **People** ↔ **Projects** tab changes the hierarchy while keeping **zoom, Today, scroll**.
+* Both views use the **same store** (`assignments[]`): no duplication.
 
 ---
 
-## 3. ⚙️ Modèle de données
+## 3. ⚙️ Data Model
 
 ```ts
 export type Allocation = 1 | 0.75 | 0.5 | 0.25;
@@ -46,8 +46,8 @@ export type Assignment = {
   person_id: string;
   project_id: string;
   start: string; // ISO UTC 00:00
-  end: string;   // ISO UTC 00:00, inclusif
-  allocation: Allocation; // par jour
+  end: string;   // ISO UTC 00:00, inclusive
+  allocation: Allocation; // per day
   subtitle?: string | null;
 };
 
@@ -72,43 +72,43 @@ export type PlannerState = {
 
 ---
 
-## 4. ✏️ Création d’une assignation
+## 4. ✏️ Creating an Assignment
 
-### 4.1 Depuis la ligne “➕ Ajouter …”
+### 4.1 From the "➕ Add …" row
 
-* Clic sur la **dernière sous-ligne** :
+* Click on the **last sub-row**:
 
-  * **People View** → “➕ Ajouter un projet”
-  * **Project View** → “➕ Ajouter une personne”
-* Ouvre une **modal complète** :
+  * **People View** → "➕ Add project"
+  * **Project View** → "➕ Add person"
+* Opens a **complete modal**:
 
   ```
-  [Sélection projet/personne existant(e)] ou [Créer nouveau/elle]
-  [Date début]  [Date fin]
+  [Select existing project/person] or [Create new]
+  [Start date]  [End date]
   [Allocation ▼ 1 | 0.75 | 0.5 | 0.25]
-  [Sous-titre optionnel]
-  [Valider]
+  [Optional subtitle]
+  [Validate]
   ```
 
-### 4.2 Clic sur une **zone vide** de la timeline
+### 4.2 Click on **empty zone** of the timeline
 
-* **Détecte le jour cliqué** (snap au jour) :
+* **Detects clicked day** (snap to day):
 
   ```ts
   dayIndex = Math.round((x - trackLeft) / px_per_day);
   start = addDays(view.start, dayIndex);
   ```
-* **Quick-Create Popover** :
+* **Quick-Create Popover**:
 
-  * `Durée (jours)` → champ numérique (min 1, défaut 5)
+  * `Duration (days)` → numeric field (min 1, default 5)
   * `Allocation` → radio (1 / 0.75 / 0.5 / 0.25)
-  * Si hors sous-ligne → demande **entité complémentaire** :
+  * If outside sub-row → request **complementary entity**:
 
-    * People View → sélectionner ou créer projet
-    * Project View → sélectionner ou créer personne
-  * Boutons : **Créer**, **Annuler**
+    * People View → select or create project
+    * Project View → select or create person
+  * Buttons: **Create**, **Cancel**
 
-**Calcul automatique :**
+**Automatic calculation:**
 
 ```ts
 end = addDays(start, duration_days - 1);
@@ -117,117 +117,117 @@ createAssignment({ person_id, project_id, start, end, allocation });
 
 ### 4.3 Validation
 
-* Dates valides, `end ≥ start`
-* Entités connues ou créées
-* Durée ≥ 1
+* Valid dates, `end ≥ start`
+* Known or created entities
+* Duration ≥ 1
 * Allocation ∈ {1, 0.75, 0.5, 0.25}
 
 ---
 
-## 5. 🎛️ Interaction sur les barres
+## 5. 🎛️ Bar Interactions
 
-### Déplacement
+### Movement
 
-* **Granularité** : 1 jour → snap horizontal au jour le plus proche.
-* **Durée** et **allocation** inchangées.
+* **Granularity**: 1 day → horizontal snap to nearest day.
+* **Duration** and **allocation** unchanged.
 
-### Redimensionnement
+### Resizing
 
-* **Granularité** : 1 jour.
-* **Clamp** : `start ≤ end`.
+* **Granularity**: 1 day.
+* **Clamp**: `start ≤ end`.
 
 ### Allocation
 
-* Menu contextuel ou dialog :
+* Context menu or dialog:
 
   ```
-  Changer allocation :
-  • 1 jour plein
-  • 0,75 j
-  • 0,5 j
-  • 0,25 j
+  Change allocation:
+  • 1 full day
+  • 0.75 d
+  • 0.5 d
+  • 0.25 d
   ```
-* Mise à jour immédiate + autosave.
+* Immediate update + autosave.
 
-### Superposition
+### Overlap
 
-* **Autorisée** (plusieurs barres peuvent se recouvrir le même jour / sous-ligne).
-* Gestion visuelle par **empilement vertical** (“lanes”).
-* Option future : alerte si somme allocations > 1.
+* **Allowed** (multiple bars can overlap on the same day / sub-row).
+* Visual management through **vertical stacking** ("lanes").
+* Future option: alert if allocation sum > 1.
 
 ---
 
-## 6. 🧩 Rendu visuel (timeline)
+## 6. 🧩 Visual rendering (timeline)
 
-| Élément                     | Détails                                                                         |
+| Element                     | Details                                                                         |
 | --------------------------- | ------------------------------------------------------------------------------- |
-| **En‑tête timeline**        | Deux lignes: `Mois Année` (haut), `D MMM` (bas). Collant et synchronisé au scroll. |
-| **Grille jour**             | Colonne = 1 jour; lignes subtiles `slate-100`, semaine `slate-200`.             |
-| **Today marker**            | Ligne verticale accentuée `amber-500/90`.                                       |
-| **Barres (Assignments)**    | Couleur = projet; nom + badge d’allocation; hauteur 28px; bords arrondis.       |
-| **Subrows**                 | Encadrées, fond léger, hauteur minimale 44px; empilement lanes 30px.            |
-| **Dernière sous-ligne**     | “➕ Ajouter …” visible, fond gris clair, icône ➕ à gauche.                       |
-| **Popover création rapide** | Flèche ancrée à la cellule, form compact, focus sur durée.                      |
-| **Stacking**                | Lanes superposées avec léger décalage vertical.                                 |
-| **Colonne gauche collante** | Colonne des libellés/actions (240px) est `sticky left-0` pendant le scroll.     |
-| **Header collant**          | Barre d’entête de l’app `sticky top-0` avec flou discret.                       |
+| **Timeline header**         | Two lines: `Month Year` (top), `D MMM` (bottom). Sticky and synchronized with scroll. |
+| **Day grid**                | Column = 1 day; subtle lines `slate-100`, week `slate-200`.                     |
+| **Today marker**            | Accented vertical line `amber-500/90`.                                          |
+| **Bars (Assignments)**     | Color = project; name + allocation badge; height 28px; rounded corners.         |
+| **Subrows**                 | Framed, light background, minimum height 44px; lane stacking 30px.              |
+| **Last sub-row**            | "➕ Add …" visible, light gray background, ➕ icon on left.                       |
+| **Quick creation popover**  | Arrow anchored to cell, compact form, focus on duration.                        |
+| **Stacking**                | Overlapped lanes with slight vertical offset.                                   |
+| **Left sticky column**      | Label/action column (240px) is `sticky left-0` during scroll.                   |
+| **Sticky header**           | App header bar `sticky top-0` with subtle blur.                                 |
 
-Design condensé (slick & pro)
-- Typo compacte par défaut: base ~13.5px; éléments UI en `text-xs`/`[11px]`.
-- Contrôles compacts: `px-2 py-1` pour inputs/boutons; puces de jour réduites.
-- Zoom par défaut: `56 px/jour`.
-- Ombres légères sur les barres (`.bar-shadow`) et conteneurs importants.
+Condensed design (slick & pro)
+- Compact typography by default: base ~13.5px; UI elements in `text-xs`/`[11px]`.
+- Compact controls: `px-2 py-1` for inputs/buttons; reduced day chips.
+- Default zoom: `56 px/day`.
+- Light shadows on bars (`.bar-shadow`) and important containers.
 
 ---
 
-## 7. 🧠 UX globale
+## 7. 🧠 Global UX
 
-### Comportement global
+### Global behavior
 
-| Action                | Effet                         |
+| Action                | Effect                        |
 | --------------------- | ----------------------------- |
-| Clic vide dans subrow | Popover création rapide       |
-| Clic sur “Ajouter …”  | Modal complète                |
-| Déplacement / Resize  | Snap au jour                  |
-| Clic sur barre        | Ouvre modal d’édition         |
-| Double-clic           | Mode édition rapide           |
-| Flèches clavier       | Déplace d’un jour             |
-| Shift + flèches       | Déplace de 5 jours            |
-| Suppr                 | Supprime                      |
-| Tab People / Projects | Change vue, garde zoom/scroll |
-| Ouverture par défaut  | Affiche semaine‑2, semaine‑1, semaine courante, 4 prochaines semaines |
+| Empty click in subrow | Quick creation popover        |
+| Click on "Add …"      | Complete modal                |
+| Move / Resize         | Snap to day                   |
+| Click on bar          | Opens edit modal              |
+| Double-click          | Quick edit mode               |
+| Keyboard arrows       | Move one day                  |
+| Shift + arrows        | Move 5 days                   |
+| Delete                | Delete                        |
+| Tab People / Projects | Change view, keep zoom/scroll |
+| Default opening       | Show week-2, week-1, current week, next 4 weeks |
 
 ---
 
-## 8. 🔒 Règles métier
+## 8. 🔒 Business Rules
 
-| Règle                                         | Détail |
+| Rule                                          | Detail |
 | --------------------------------------------- | ------ |
-| Une personne ↔ plusieurs projets (OK)         |        |
-| Un projet ↔ plusieurs personnes (OK)          |        |
-| Overlaps OK, empilés en lanes                 |        |
-| Allocation fractionnaire (1, 0.75, 0.5, 0.25) |        |
-| Snap = 1 jour                                 |        |
-| Durée minimale = 1 jour                       |        |
-| Données persistées dans localStorage          |        |
-| Import/export JSON complet (avec allocation)  |        |
+| One person ↔ multiple projects (OK)           |        |
+| One project ↔ multiple people (OK)            |        |
+| Overlaps OK, stacked in lanes                 |        |
+| Fractional allocation (1, 0.75, 0.5, 0.25)   |        |
+| Snap = 1 day                                  |        |
+| Minimum duration = 1 day                      |        |
+| Data persisted in localStorage                |        |
+| Complete JSON import/export (with allocation) |        |
 
 ---
 
-## 9. 💾 Persistance
+## 9. 💾 Persistence
 
 * Autosave (`localStorage["planner_state_v2_9"]`, throttle 300 ms)
-* Import/export JSON via boutons header
-* Zod schema validation et migration automatique (ajout `allocation` et `duration`)
+* JSON import/export via header buttons
+* Zod schema validation and automatic migration (adding `allocation` and `duration`)
 
 ---
 
 ## 10. 📊 Insights Drawer
 
-* Vue **People** : total jours assignés, moyenne d’allocation, nb. projets actifs.
-* Vue **Projects** : total jours actifs, moyenne d’allocation, nb. personnes actives.
-* Export CSV.
-* Calcul temps réel sur viewport visible.
+* **People** view: total assigned days, average allocation, number of active projects.
+* **Projects** view: total active days, average allocation, number of active people.
+* CSV export.
+* Real-time calculation on visible viewport.
 
 ---
 
@@ -237,7 +237,7 @@ Design condensé (slick & pro)
 
 * **Nuxt 3 SPA**
 * **Nuxt UI** (popover, dialog, tabs, inputs)
-* **Pinia** (store principal)
+* **Pinia** (main store)
 * **dayjs** (dates)
 * **@vueuse/core** (autosave, event listeners)
 * **zod** (validation)
@@ -268,45 +268,45 @@ Design condensé (slick & pro)
 
 ### Performance
 
-* Virtualisation des rows (vueuse/useVirtualList)
-* Scroll synchronisé par transform (GPU)
+* Row virtualization (vueuse/useVirtualList)
+* Transform-synchronized scroll (GPU)
 * contain: layout paint
-* rAF pour déplacements
+* rAF for movements
 
 ---
 
-## 12. ✅ Critères d’acceptation
+## 12. ✅ Acceptance Criteria
 
-| # | Critère                                                                   |
-| - | ------------------------------------------------------------------------- |
-| 1 | Clic sur zone vide → popover création rapide (jour cliqué, durée saisie). |
-| 2 | Clic sur “Ajouter …” → modal complète.                                    |
-| 3 | Déplacement / resize par pas de 1 jour.                                   |
-| 4 | Allocation fractionnaire 1/0.75/0.5/0.25.                                 |
-| 5 | Superpositions autorisées.                                                |
-| 6 | Bascule People / Projects garde le contexte.                              |
-| 7 | Export / Import conserve tout.                                            |
-| 8 | Aucune erreur console.                                                    |
-| 9 | Colonne gauche collante visible pendant le scroll horizontal.             |
-| 10 | En‑têtes collants (app + timeline) synchronisés avec le scroll horizontal. |
-| 11 | Style condensé appliqué (largeur colonne 240px, barres 28px, lanes 30px, zoom 56 px/jour). |
-| 12 | Au chargement: semaine‑2 → semaine courante → 4 semaines suivantes visibles. |
+| # | Criteria                                                                      |
+| - | ----------------------------------------------------------------------------- |
+| 1 | Empty zone click → quick creation popover (clicked day, duration input).      |
+| 2 | "Add …" click → complete modal.                                               |
+| 3 | Move / resize by 1-day steps.                                                 |
+| 4 | Fractional allocation 1/0.75/0.5/0.25.                                       |
+| 5 | Overlaps allowed.                                                             |
+| 6 | People / Projects toggle keeps context.                                       |
+| 7 | Export / Import preserves everything.                                         |
+| 8 | No console errors.                                                            |
+| 9 | Left sticky column visible during horizontal scroll.                          |
+| 10 | Sticky headers (app + timeline) synchronized with horizontal scroll.          |
+| 11 | Condensed style applied (column width 240px, bars 28px, lanes 30px, zoom 56 px/day). |
+| 12 | On load: week-2 → current week → next 4 weeks visible.                       |
 
 ---
 
-## 13. 🔬 Scénarios de test
+## 13. 🔬 Test Scenarios
 
-| Test                     | Action                                       | Résultat attendu        |
+| Test                     | Action                                       | Expected Result         |
 | ------------------------ | -------------------------------------------- | ----------------------- |
-| Création rapide          | Clic jour N (People View, Projet B), durée=4 | Barre [N..N+3], alloc 1 |
-| Création hors sous-ligne | Clic main row → choix projet, durée=2        | Assignation créée       |
-| Fractionnaire            | Allocation=0.5                               | Badge “½” visible       |
-| Déplacement              | Drag barre → +2 jours                        | Start +2, End +2        |
-| Resize                   | Étire droite → +1 jour                       | End +1                  |
-| Superposition            | Deux barres même jour                        | Empilées verticalement  |
-| Switch view              | Project View affiche même résultat           |                         |
-| Export/Import            | Données identiques rechargées                |                         |
-| Performance              | 50 personnes × 365 jours fluide              |                         |
+| Quick creation           | Click day N (People View, Project B), duration=4 | Bar [N..N+3], alloc 1   |
+| Out-of-subrow creation   | Main row click → choose project, duration=2  | Assignment created      |
+| Fractional               | Allocation=0.5                               | "½" badge visible       |
+| Movement                 | Drag bar → +2 days                           | Start +2, End +2        |
+| Resize                   | Stretch right → +1 day                       | End +1                  |
+| Overlap                  | Two bars same day                            | Stacked vertically      |
+| Switch view              | Project View shows same result               |                         |
+| Export/Import            | Identical data reloaded                      |                         |
+| Performance              | 50 people × 365 days fluid                  |                         |
 
 ---
 
@@ -314,9 +314,9 @@ Design condensé (slick & pro)
 
 | Version | Feature                 | Description                            |
 | ------- | ----------------------- | -------------------------------------- |
-| 3.0     | Multi-select            | Déplacer plusieurs barres              |
-| 3.1     | Undo/Redo               | Historique local                       |
-| 3.2     | Surcharges visuelles    | Couleur d’avertissement si > 1 j total |
-| 3.3     | Calendrier ouvré        | Weekends non assignables               |
-| 3.4     | Hauteur proportionnelle | Représente allocation visuellement     |
-| 3.5     | Liaisons dépendantes    | Liens visuels entre barres liées       |
+| 3.0     | Multi-select            | Move multiple bars                     |
+| 3.1     | Undo/Redo               | Local history                          |
+| 3.2     | Visual overloads        | Warning color if > 1 d total          |
+| 3.3     | Business calendar       | Non-assignable weekends                |
+| 3.4     | Proportional height     | Visually represents allocation         |
+| 3.5     | Dependent links         | Visual links between related bars      |

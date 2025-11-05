@@ -25,44 +25,60 @@
         @toggle-expand-all="toggleExpandAll"
       />
       <template v-if="view.mode==='person'">
-        <RowGroup
-          v-for="p in people"
-          :key="p.id"
-          :label="p.name"
-          :group-type="'person'"
-          :group-id="p.id"
-          :subrows="personSubrows(p.id)"
-          :days="days"
-          :px-per-day="view.px_per_day"
-          :start-i-s-o="view.start"
-          :projects-map="projectsMap"
-          :people-map="peopleMap"
-          @create="onCreate"
-          @update="onUpdate"
-          @create-from-sidebar="onAddFromSidebar"
-          @edit="onEdit"
-          @create-popover="onCreatePopover"
-        />
+        <VueDraggableNext
+          :list="sortablePeople"
+          item-key="id"
+          handle=".group-drag-handle"
+          @end="onPersonSortEnd"
+          tag="div"
+        >
+          <RowGroup
+            v-for="p in sortablePeople"
+            :key="p.id"
+            :label="p.name"
+            :group-type="'person'"
+            :group-id="p.id"
+            :subrows="personSubrows(p.id)"
+            :days="days"
+            :px-per-day="view.px_per_day"
+            :start-i-s-o="view.start"
+            :projects-map="projectsMap"
+            :people-map="peopleMap"
+            @create="onCreate"
+            @update="onUpdate"
+            @create-from-sidebar="onAddFromSidebar"
+            @edit="onEdit"
+            @create-popover="onCreatePopover"
+          />
+        </VueDraggableNext>
       </template>
       <template v-else>
-        <RowGroup
-          v-for="proj in projects"
-          :key="proj.id"
-          :label="proj.name"
-          :group-type="'project'"
-          :group-id="proj.id"
-          :subrows="projectSubrows(proj.id)"
-          :days="days"
-          :px-per-day="view.px_per_day"
-          :start-i-s-o="view.start"
-          :projects-map="projectsMap"
-          :people-map="peopleMap"
-          @create="onCreate"
-          @update="onUpdate"
-          @create-from-sidebar="onAddFromSidebar"
-          @edit="onEdit"
-          @create-popover="onCreatePopover"
-        />
+        <VueDraggableNext
+          :list="sortableProjects"
+          item-key="id"
+          handle=".group-drag-handle"
+          @end="onProjectSortEnd"
+          tag="div"
+        >
+          <RowGroup
+            v-for="proj in sortableProjects"
+            :key="proj.id"
+            :label="proj.name"
+            :group-type="'project'"
+            :group-id="proj.id"
+            :subrows="projectSubrows(proj.id)"
+            :days="days"
+            :px-per-day="view.px_per_day"
+            :start-i-s-o="view.start"
+            :projects-map="projectsMap"
+            :people-map="peopleMap"
+            @create="onCreate"
+            @update="onUpdate"
+            @create-from-sidebar="onAddFromSidebar"
+            @edit="onEdit"
+            @create-popover="onCreatePopover"
+          />
+        </VueDraggableNext>
       </template>
       </div>
 
@@ -104,7 +120,7 @@
         <!-- Right: empty timeline track with grid overlay -->
         <div
           class="relative border-b border-r pane-border w-full h-full"
-          style="min-height: 60px;"
+          style="min-height: 58px;"
           :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
         >
           <GridOverlay
@@ -390,10 +406,50 @@ import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
 import RowGroup from '@/components/internal/RowGroup.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
+import { VueDraggableNext } from 'vue-draggable-next'
 
 const store = usePlannerStore()
-const { people, projects, view, assignments } = storeToRefs(store)
+const { people, projects, view, assignments, peopleSortOrder, projectsSortOrder } = storeToRefs(store)
 const hasData = computed(() => store.hasData)
+
+// Sortable arrays for drag-and-drop reordering
+const sortablePeople = ref<typeof people.value>([])
+const sortableProjects = ref<typeof projects.value>([])
+
+// Update sortable arrays when store data changes, respecting sort order
+watch([people, peopleSortOrder], ([newPeople, sortOrder]) => {
+  if (sortOrder.length === 0) {
+    sortablePeople.value = [...newPeople]
+  } else {
+    // Optimize with O(1) lookups using Map/Set
+    const peopleMap = new Map(newPeople.map(p => [p.id, p]))
+    const sortOrderSet = new Set(sortOrder)
+    
+    // Sort according to stored order, placing unordered items at the end
+    const ordered = sortOrder
+      .map(id => peopleMap.get(id))
+      .filter((p): p is typeof newPeople[number] => p !== undefined)
+    const unordered = newPeople.filter(p => !sortOrderSet.has(p.id))
+    sortablePeople.value = [...ordered, ...unordered]
+  }
+}, { immediate: true })
+
+watch([projects, projectsSortOrder], ([newProjects, sortOrder]) => {
+  if (sortOrder.length === 0) {
+    sortableProjects.value = [...newProjects]
+  } else {
+    // Optimize with O(1) lookups using Map/Set
+    const projectsMap = new Map(newProjects.map(p => [p.id, p]))
+    const sortOrderSet = new Set(sortOrder)
+    
+    // Sort according to stored order, placing unordered items at the end
+    const ordered = sortOrder
+      .map(id => projectsMap.get(id))
+      .filter((p): p is typeof newProjects[number] => p !== undefined)
+    const unordered = newProjects.filter(p => !sortOrderSet.has(p.id))
+    sortableProjects.value = [...ordered, ...unordered]
+  }
+}, { immediate: true })
 
 const {
   todayISO,
@@ -440,7 +496,7 @@ function personSubrows(personId: string) {
 function projectSubrows(projectId: string) {
   const peopleIds = projectPeople(projectId)
   const rows = peopleIds.map(pers => ({ key: `${projectId}:${pers}`, label: personName(pers), person_id: pers, project_id: projectId }))
-  return [...rows, { key: `${projectId}:__add__`, label: 'Ajouter une personne', person_id: null, project_id: projectId }]
+  return [...rows, { key: `${projectId}:__add__`, label: 'Add person', person_id: null, project_id: projectId }]
 }
 function projectName(id: string) { return projects.value.find(p => p.id === id)?.name ?? id }
 function personName(id: string) { return people.value.find(p => p.id === id)?.name ?? id }
@@ -838,5 +894,16 @@ function toggleExpandAll() {
   } else {
     expandAll()
   }
+}
+
+// Drag-and-drop sort handlers
+function onPersonSortEnd() {
+  const newOrder = sortablePeople.value.map(p => p.id)
+  store.updatePeopleSortOrder(newOrder)
+}
+
+function onProjectSortEnd() {
+  const newOrder = sortableProjects.value.map(p => p.id)
+  store.updateProjectsSortOrder(newOrder)
 }
 </script>
