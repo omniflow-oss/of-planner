@@ -484,9 +484,8 @@ onUnmounted(() => {
 
 /* Dragging and resizing states */
 .dragging {
-  opacity: 0.7;
-  transform: rotate(2deg);
-  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+  opacity: 0.8;
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.15);
   z-index: 1000;
 }
 
