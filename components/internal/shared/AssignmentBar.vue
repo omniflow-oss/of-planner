@@ -5,7 +5,10 @@
       isTimeOff 
         ? 'border-gray-500 bg-gray-300 dark:bg-gray-600 dark:text-gray-100' 
         : 'border-default bg-default dark:bg-gray-300 dark:text-gray-800',
-      { 'dragging': isDragging }
+      { 
+        'dragging': isDragging,
+        'resizing': isResizing
+      }
     ]"
     :style="barStyle"
     draggable="true"
@@ -21,7 +24,10 @@
       :style="{ background: color }"
     />
     <UTooltip :text="tooltipText">
-      <div class="flex items-center gap-2 px-3 text-[12px] w-full">
+      <div 
+        class="flex items-center gap-2 px-3 text-[12px] w-full draggable-content"
+        @mousedown.self="onMouseDown"
+      >
         <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">{{ person?.name ?? assignment.person_id }}</span>
         <span :class="[
           'px-1.5 rounded-full border text-[11px]',
@@ -95,8 +101,9 @@ const tooltipText = computed(() => {
   return `${proj} • ${p} • ${allocBadge.value} • ${props.assignment.start} → ${props.assignment.end}`
 })
 
-// Dragging state
+// Dragging and resizing state
 const isDragging = ref(false)
+const isResizing = ref(false)
 let dragging: { 
   startX: number; 
   startIndex: number; 
@@ -106,14 +113,67 @@ let dragging: {
   scrollContainer: HTMLElement | null;
   initialScrollLeft: number;
 } | null = null
-let resizing: { side: 'left'|'right'; startX: number; startStart: string; startEnd: string } | null = null
+let resizing: { 
+  side: 'left'|'right'; 
+  startX: number; 
+  startStart: string; 
+  startEnd: string;
+  scrollContainer: HTMLElement | null;
+  initialScrollLeft: number;
+} | null = null
+
+// Auto-scroll state for resize operations
+const autoScrollState = ref({
+  isScrolling: false,
+  direction: 0, // -1 for left, 1 for right, 0 for no scroll
+  animationId: null as number | null
+})
 
 // Centralized cleanup function for drag event listeners
 function cleanupDragListeners() {
   document.removeEventListener('mousemove', onGlobalMouseMove)
 }
 
+// Auto-scroll helper functions for resize operations
+function startAutoScroll(direction: number, timelineContainer: HTMLElement) {
+  if (autoScrollState.value.isScrolling && autoScrollState.value.direction === direction) {
+    return // Already scrolling in this direction
+  }
+  
+  stopAutoScroll()
+  autoScrollState.value.isScrolling = true
+  autoScrollState.value.direction = direction
+  
+  const scroll = () => {
+    if (!autoScrollState.value.isScrolling || !resizing) {
+      return
+    }
+    
+    const scrollSpeed = 8
+    timelineContainer.scrollLeft += direction * scrollSpeed
+    
+    autoScrollState.value.animationId = requestAnimationFrame(scroll)
+  }
+  
+  autoScrollState.value.animationId = requestAnimationFrame(scroll)
+}
+
+function stopAutoScroll() {
+  if (autoScrollState.value.animationId) {
+    cancelAnimationFrame(autoScrollState.value.animationId)
+    autoScrollState.value.animationId = null
+  }
+  autoScrollState.value.isScrolling = false
+  autoScrollState.value.direction = 0
+}
+
 function onDragStart(e: DragEvent) {
+  // Prevent drag when resizing is active or when dragging from a resize handle
+  if (resizing || (e.target as HTMLElement).classList.contains('handle')) {
+    e.preventDefault()
+    return
+  }
+  
   // Prevent duplicate drag initialization
   if (isDragging.value || dragging) {
     cleanupDragListeners()
@@ -229,7 +289,9 @@ function onDragEnd(_e: DragEvent) {
 
 // Mouse-based drag (for environments/tests not using HTML5 drag)
 function onMouseDown(e: MouseEvent) {
-  // Ignore when clicking on resize handles; they have their own mousedown handlers
+  // Ignore when resizing is active or when clicking on resize handles
+  if (resizing || (e.target as HTMLElement).classList.contains('handle')) return
+  
   isDragging.value = true
   
   // Find the scrollable timeline container
@@ -257,21 +319,101 @@ function onMouseUp() {
 }
 
 function onResizeStart(side: 'left'|'right', e: MouseEvent) {
-  resizing = { side, startX: e.clientX, startStart: props.assignment.start, startEnd: props.assignment.end }
+  // Prevent drag from interfering with resize
+  isDragging.value = false
+  isResizing.value = true
+  if (dragging) dragging = null
+  
+  // Prevent event bubbling to avoid triggering drag on the parent
+  e.stopPropagation()
+  
+  // Find the scrollable timeline container
+  const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
+  
+  resizing = { 
+    side, 
+    startX: e.clientX, 
+    startStart: props.assignment.start, 
+    startEnd: props.assignment.end,
+    scrollContainer,
+    initialScrollLeft: scrollContainer?.scrollLeft || 0
+  }
   window.addEventListener('mousemove', onResize)
   window.addEventListener('mouseup', onResizeEnd)
 }
+
 function onResize(e: MouseEvent) {
   emit('resize', true);
   if (!resizing) return
-  const deltaPx = e.clientX - resizing.startX
+  
+  // Auto-scroll when resizing near the edges of the timeline
+  const timelineContainer = (e.target as HTMLElement)?.closest('.overflow-auto') as HTMLElement
+  if (timelineContainer) {
+    const containerRect = timelineContainer.getBoundingClientRect()
+    const scrollThreshold = 100 // pixels from edge to trigger scroll
+    
+    // Check if mouse is near right edge and should trigger auto-scroll
+    if (e.clientX > containerRect.right - scrollThreshold) {
+      startAutoScroll(1, timelineContainer)
+    }
+    // Auto-scroll left when near left edge
+    else if (e.clientX < containerRect.left + scrollThreshold && timelineContainer.scrollLeft > 0) {
+      startAutoScroll(-1, timelineContainer)
+    }
+    // Stop auto-scroll when mouse is in the middle area
+    else if (autoScrollState.value.isScrolling) {
+      stopAutoScroll()
+    }
+  }
+  
+  // Account for scroll changes since resize started
+  const currentScrollLeft = resizing.scrollContainer?.scrollLeft || 0
+  const scrollDelta = currentScrollLeft - resizing.initialScrollLeft
+  
+  // Adjust for scroll change in pixel calculation
+  const deltaPx = (e.clientX - resizing.startX) + scrollDelta
   const deltaDays = Math.round(deltaPx / props.pxPerDay)
+  
   if (resizing.side === 'left') {
-    const newStart = addDaysISO(resizing.startStart, deltaDays)
-    emit('update', { id: props.assignment.id, start: newStart })
+    // Left resize: change start date while keeping end date fixed
+    let newStart = resizing.startStart
+    let businessDaysToAdd = deltaDays
+    
+    // Move forward/backward to reach the target business day
+    while (businessDaysToAdd !== 0) {
+      if (businessDaysToAdd > 0) {
+        newStart = addDaysISO(newStart, 1)
+        if (!isWeekendISO(newStart)) businessDaysToAdd--
+      } else {
+        newStart = addDaysISO(newStart, -1)
+        if (!isWeekendISO(newStart)) businessDaysToAdd++
+      }
+    }
+    
+    // Ensure new start is not after the end date
+    if (newStart <= resizing.startEnd) {
+      emit('update', { id: props.assignment.id, start: newStart })
+    }
   } else {
-    const newEnd = addDaysISO(resizing.startEnd, deltaDays)
-    emit('update', { id: props.assignment.id, end: newEnd })
+    // Right resize: change end date while keeping start date fixed
+    let newEnd = resizing.startEnd
+    let businessDaysToAdd = deltaDays
+    
+    // Move forward/backward to reach the target business day
+    while (businessDaysToAdd !== 0) {
+      if (businessDaysToAdd > 0) {
+        newEnd = addDaysISO(newEnd, 1)
+        if (!isWeekendISO(newEnd)) businessDaysToAdd--
+      } else {
+        newEnd = addDaysISO(newEnd, -1)
+        if (!isWeekendISO(newEnd)) businessDaysToAdd++
+      }
+    }
+    
+    // Ensure new end is not before the start date
+    if (newEnd >= resizing.startStart) {
+      emit('update', { id: props.assignment.id, end: newEnd })
+    }
   }
 }
 function onResizeEndEvent() {  
@@ -281,7 +423,12 @@ function onResizeEndEvent() {
 }
 
 function onResizeEnd() {  
+  isResizing.value = false
   resizing = null
+  
+  // Stop any active auto-scrolling
+  stopAutoScroll()
+  
   window.removeEventListener('mousemove', onResize)
   window.removeEventListener('mouseup', onResizeEnd)
   onResizeEndEvent();
@@ -299,9 +446,16 @@ function onRightClick(e: MouseEvent) {
 onUnmounted(() => {
   cleanupDragListeners()
   
+  // Stop any active auto-scrolling
+  stopAutoScroll()
+  
   // Cleanup mouse-based drag listeners if they exist
   window.removeEventListener('mousemove', onMouseMove)
   window.removeEventListener('mouseup', onMouseUp)
+  
+  // Cleanup resize listeners if they exist
+  window.removeEventListener('mousemove', onResize)
+  window.removeEventListener('mouseup', onResizeEnd)
 })
 </script>
 
@@ -309,22 +463,40 @@ onUnmounted(() => {
 .handle { 
   position: absolute; 
   top: 0; 
-  width: 8px; 
-  min-width: 8px;
+  width: 6px; 
+  min-width: 6px;
   height: 100%; 
   background: transparent; 
   cursor: ew-resize; 
   z-index: 10;
+  border-radius: 3px;
+  transition: background-color 0.2s ease, border 0.2s ease;
+  pointer-events: auto;
 }
-.left { left: -2px; }
-.right { right: -2px; }
 
-/* Dragging states */
+.handle:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.left { left: -3px; }
+.right { right: -3px; }
+
+/* Dragging and resizing states */
 .dragging {
-  opacity: 0.7;
-  transform: rotate(2deg);
-  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+  opacity: 0.8;
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.15);
   z-index: 1000;
+}
+
+.resizing {
+  box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.resizing .handle {
+  background: rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.6);
 }
 
 /* Make the entire bar draggable by default */
@@ -336,9 +508,39 @@ div[draggable="true"]:hover {
   box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
 }
 
-/* Prevent drag on resize handles */
+/* Ensure draggable area remains accessible even when resizing */
+.resizing div[draggable="true"] {
+  cursor: move;
+  pointer-events: auto;
+}
+
+/* Resize handles should be smaller and only active on hover */
 .handle[draggable="false"] {
   cursor: ew-resize;
+  pointer-events: auto;
+}
+
+/* Ensure the content area remains draggable */
+.resizing .handle {
+  pointer-events: auto;
+}
+
+.resizing div[draggable="true"]:not(.handle) {
+  pointer-events: auto;
+  cursor: move;
+}
+
+/* Ensure the draggable content area is always accessible */
+.draggable-content {
+  cursor: move;
+  pointer-events: auto;
+  position: relative;
+  z-index: 5;
+}
+
+.resizing .draggable-content {
+  cursor: move;
+  pointer-events: auto;
 }
 </style>
  
