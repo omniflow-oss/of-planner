@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
 import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import { generateUserColor } from '@/utils/colors'
 import type { Assignment } from '@/types/planner'
@@ -101,8 +101,68 @@ const tooltipText = computed(() => {
 // Dragging and resizing state
 const isDragging = ref(false)
 const isResizing = ref(false)
-let dragging: { startX: number; startIndex: number; initialStart: string; initialEnd: string } | null = null
-let resizing: { side: 'left'|'right'; startX: number; startStart: string; startEnd: string } | null = null
+let dragging: { 
+  startX: number; 
+  startIndex: number; 
+  initialStart: string; 
+  initialEnd: string;
+  lastValidClientX: number;
+  scrollContainer: HTMLElement | null;
+  initialScrollLeft: number;
+} | null = null
+let resizing: { 
+  side: 'left'|'right'; 
+  startX: number; 
+  startStart: string; 
+  startEnd: string;
+  scrollContainer: HTMLElement | null;
+  initialScrollLeft: number;
+} | null = null
+
+// Auto-scroll state for resize operations
+const autoScrollState = ref({
+  isScrolling: false,
+  direction: 0, // -1 for left, 1 for right, 0 for no scroll
+  animationId: null as number | null
+})
+
+// Centralized cleanup function for drag event listeners
+function cleanupDragListeners() {
+  document.removeEventListener('mousemove', onGlobalMouseMove)
+}
+
+// Auto-scroll helper functions for resize operations
+function startAutoScroll(direction: number, timelineContainer: HTMLElement) {
+  if (autoScrollState.value.isScrolling && autoScrollState.value.direction === direction) {
+    return // Already scrolling in this direction
+  }
+  
+  stopAutoScroll()
+  autoScrollState.value.isScrolling = true
+  autoScrollState.value.direction = direction
+  
+  const scroll = () => {
+    if (!autoScrollState.value.isScrolling || !resizing) {
+      return
+    }
+    
+    const scrollSpeed = 8
+    timelineContainer.scrollLeft += direction * scrollSpeed
+    
+    autoScrollState.value.animationId = requestAnimationFrame(scroll)
+  }
+  
+  autoScrollState.value.animationId = requestAnimationFrame(scroll)
+}
+
+function stopAutoScroll() {
+  if (autoScrollState.value.animationId) {
+    cancelAnimationFrame(autoScrollState.value.animationId)
+    autoScrollState.value.animationId = null
+  }
+  autoScrollState.value.isScrolling = false
+  autoScrollState.value.direction = 0
+}
 
 function onDragStart(e: DragEvent) {
   // Prevent drag when resizing is active
@@ -111,12 +171,24 @@ function onDragStart(e: DragEvent) {
     return
   }
   
+  // Prevent duplicate drag initialization
+  if (isDragging.value || dragging) {
+    cleanupDragListeners()
+  }
+  
   isDragging.value = true
+  
+  // Find the scrollable timeline container
+  const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
+  
   dragging = { 
     startX: e.clientX, 
     startIndex: startIndex.value,
     initialStart: props.assignment.start,
-    initialEnd: props.assignment.end
+    initialEnd: props.assignment.end,
+    lastValidClientX: e.clientX,
+    scrollContainer,
+    initialScrollLeft: scrollContainer?.scrollLeft || 0
   }
   
   // Set drag effect and create a transparent drag image
@@ -131,11 +203,36 @@ function onDragStart(e: DragEvent) {
     e.dataTransfer.setDragImage(dragImage, 0, 0)
     setTimeout(() => document.body.removeChild(dragImage), 0)
   }
+  
+  // Remove any existing listener before adding new one to prevent duplicates
+  document.removeEventListener('mousemove', onGlobalMouseMove)
+  // Add global mouse tracking for more reliable position updates
+  document.addEventListener('mousemove', onGlobalMouseMove, { passive: true })
+}
+
+function onGlobalMouseMove(e: MouseEvent) {
+  if (!dragging) return
+  
+  // Update last valid position
+  dragging.lastValidClientX = e.clientX
+  
+  // Apply drag with current mouse position, accounting for scroll changes
+  applyDragByClientX(e.clientX)
 }
 
 function applyDragByClientX(clientX: number) {
-  if (!dragging || clientX === 0) return
-  const deltaPx = clientX - dragging.startX
+  if (!dragging) return
+  
+  // Use clientX if valid, otherwise use last known position
+  const effectiveClientX = clientX > 0 ? clientX : dragging.lastValidClientX
+  if (effectiveClientX === 0) return
+  
+  // Account for scroll changes since drag started
+  const currentScrollLeft = dragging.scrollContainer?.scrollLeft || 0
+  const scrollDelta = currentScrollLeft - dragging.initialScrollLeft
+  
+  // Adjust for scroll change in pixel calculation
+  const deltaPx = (effectiveClientX - dragging.startX) + scrollDelta
   const deltaDays = Math.round(deltaPx / props.pxPerDay)
   
   // Calculate new start position by adding business days from the timeline start
@@ -169,11 +266,21 @@ function applyDragByClientX(clientX: number) {
 }
 
 function onDrag(e: DragEvent) {
-  applyDragByClientX((e as any).clientX)
+  // Update last valid position if clientX is available
+  if (e.clientX > 0 && dragging) {
+    dragging.lastValidClientX = e.clientX
+  }
+  
+  // Apply drag with current or last known position
+  applyDragByClientX(e.clientX)
 }
 
 function onDragEnd(_e: DragEvent) {
   isDragging.value = false
+  
+  // Remove global mouse tracking using centralized cleanup
+  cleanupDragListeners()
+  
   dragging = null
 }
 
@@ -183,11 +290,18 @@ function onMouseDown(e: MouseEvent) {
   if (resizing) return
   
   isDragging.value = true
+  
+  // Find the scrollable timeline container
+  const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
+  
   dragging = {
     startX: e.clientX,
     startIndex: startIndex.value,
     initialStart: props.assignment.start,
     initialEnd: props.assignment.end,
+    lastValidClientX: e.clientX,
+    scrollContainer,
+    initialScrollLeft: scrollContainer?.scrollLeft || 0
   }
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
@@ -207,7 +321,17 @@ function onResizeStart(side: 'left'|'right', e: MouseEvent) {
   isResizing.value = true
   if (dragging) dragging = null
   
-  resizing = { side, startX: e.clientX, startStart: props.assignment.start, startEnd: props.assignment.end }
+  // Find the scrollable timeline container
+  const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
+  
+  resizing = { 
+    side, 
+    startX: e.clientX, 
+    startStart: props.assignment.start, 
+    startEnd: props.assignment.end,
+    scrollContainer,
+    initialScrollLeft: scrollContainer?.scrollLeft || 0
+  }
   window.addEventListener('mousemove', onResize)
   window.addEventListener('mouseup', onResizeEnd)
 }
@@ -216,7 +340,32 @@ function onResize(e: MouseEvent) {
   emit('resize', true);
   if (!resizing) return
   
-  const deltaPx = e.clientX - resizing.startX
+  // Auto-scroll when resizing near the edges of the timeline
+  const timelineContainer = (e.target as HTMLElement)?.closest('.overflow-auto') as HTMLElement
+  if (timelineContainer) {
+    const containerRect = timelineContainer.getBoundingClientRect()
+    const scrollThreshold = 100 // pixels from edge to trigger scroll
+    
+    // Check if mouse is near right edge and should trigger auto-scroll
+    if (e.clientX > containerRect.right - scrollThreshold) {
+      startAutoScroll(1, timelineContainer)
+    }
+    // Auto-scroll left when near left edge
+    else if (e.clientX < containerRect.left + scrollThreshold && timelineContainer.scrollLeft > 0) {
+      startAutoScroll(-1, timelineContainer)
+    }
+    // Stop auto-scroll when mouse is in the middle area
+    else if (autoScrollState.value.isScrolling) {
+      stopAutoScroll()
+    }
+  }
+  
+  // Account for scroll changes since resize started
+  const currentScrollLeft = resizing.scrollContainer?.scrollLeft || 0
+  const scrollDelta = currentScrollLeft - resizing.initialScrollLeft
+  
+  // Adjust for scroll change in pixel calculation
+  const deltaPx = (e.clientX - resizing.startX) + scrollDelta
   const deltaDays = Math.round(deltaPx / props.pxPerDay)
   
   if (resizing.side === 'left') {
@@ -270,6 +419,10 @@ function onResizeEndEvent() {
 function onResizeEnd() {  
   isResizing.value = false
   resizing = null
+  
+  // Stop any active auto-scrolling
+  stopAutoScroll()
+  
   window.removeEventListener('mousemove', onResize)
   window.removeEventListener('mouseup', onResizeEnd)
   onResizeEndEvent();
@@ -282,6 +435,22 @@ function onRightClick(e: MouseEvent) {
     y: e.clientY 
   })
 }
+
+// Component cleanup to prevent memory leaks
+onUnmounted(() => {
+  cleanupDragListeners()
+  
+  // Stop any active auto-scrolling
+  stopAutoScroll()
+  
+  // Cleanup mouse-based drag listeners if they exist
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
+  
+  // Cleanup resize listeners if they exist
+  window.removeEventListener('mousemove', onResize)
+  window.removeEventListener('mouseup', onResizeEnd)
+})
 </script>
 
 <style scoped>
