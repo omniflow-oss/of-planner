@@ -24,7 +24,10 @@
       :style="{ background: color }"
     />
     <UTooltip :text="tooltipText">
-      <div class="flex items-center gap-2 px-3 text-[12px] w-full">
+      <div 
+        class="flex items-center gap-2 px-3 text-[12px] w-full draggable-content"
+        @mousedown.self="onMouseDown"
+      >
         <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">{{ person?.name ?? assignment.person_id }}</span>
         <span :class="[
           'px-1.5 rounded-full border text-[11px]',
@@ -165,8 +168,8 @@ function stopAutoScroll() {
 }
 
 function onDragStart(e: DragEvent) {
-  // Prevent drag when resizing is active
-  if (resizing) {
+  // Prevent drag when resizing is active or when dragging from a resize handle
+  if (resizing || (e.target as HTMLElement).classList.contains('handle')) {
     e.preventDefault()
     return
   }
@@ -287,7 +290,7 @@ function onDragEnd(_e: DragEvent) {
 // Mouse-based drag (for environments/tests not using HTML5 drag)
 function onMouseDown(e: MouseEvent) {
   // Ignore when resizing is active or when clicking on resize handles
-  if (resizing) return
+  if (resizing || (e.target as HTMLElement).classList.contains('handle')) return
   
   isDragging.value = true
   
@@ -320,6 +323,9 @@ function onResizeStart(side: 'left'|'right', e: MouseEvent) {
   isDragging.value = false
   isResizing.value = true
   if (dragging) dragging = null
+  
+  // Prevent event bubbling to avoid triggering drag on the parent
+  e.stopPropagation()
   
   // Find the scrollable timeline container
   const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
@@ -457,14 +463,15 @@ onUnmounted(() => {
 .handle { 
   position: absolute; 
   top: 0; 
-  width: 8px; 
-  min-width: 8px;
+  width: 6px; 
+  min-width: 6px;
   height: 100%; 
   background: transparent; 
   cursor: ew-resize; 
   z-index: 10;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: background-color 0.2s ease, border 0.2s ease;
+  pointer-events: auto;
 }
 
 .handle:hover {
@@ -472,8 +479,8 @@ onUnmounted(() => {
   border: 1px solid rgba(59, 130, 246, 0.4);
 }
 
-.left { left: -2px; }
-.right { right: -2px; }
+.left { left: -3px; }
+.right { right: -3px; }
 
 /* Dragging and resizing states */
 .dragging {
@@ -502,9 +509,39 @@ div[draggable="true"]:hover {
   box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
 }
 
-/* Prevent drag on resize handles */
+/* Ensure draggable area remains accessible even when resizing */
+.resizing div[draggable="true"] {
+  cursor: move;
+  pointer-events: auto;
+}
+
+/* Resize handles should be smaller and only active on hover */
 .handle[draggable="false"] {
   cursor: ew-resize;
+  pointer-events: auto;
+}
+
+/* Ensure the content area remains draggable */
+.resizing .handle {
+  pointer-events: auto;
+}
+
+.resizing div[draggable="true"]:not(.handle) {
+  pointer-events: auto;
+  cursor: move;
+}
+
+/* Ensure the draggable content area is always accessible */
+.draggable-content {
+  cursor: move;
+  pointer-events: auto;
+  position: relative;
+  z-index: 5;
+}
+
+.resizing .draggable-content {
+  cursor: move;
+  pointer-events: auto;
 }
 </style>
  
