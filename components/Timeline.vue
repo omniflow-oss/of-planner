@@ -421,11 +421,15 @@ watch([people, peopleSortOrder], ([newPeople, sortOrder]) => {
   if (sortOrder.length === 0) {
     sortablePeople.value = [...newPeople]
   } else {
+    // Optimize with O(1) lookups using Map/Set
+    const peopleMap = new Map(newPeople.map(p => [p.id, p]))
+    const sortOrderSet = new Set(sortOrder)
+    
     // Sort according to stored order, placing unordered items at the end
     const ordered = sortOrder
-      .map(id => newPeople.find(p => p.id === id))
+      .map(id => peopleMap.get(id))
       .filter(Boolean) as typeof newPeople
-    const unordered = newPeople.filter(p => !sortOrder.includes(p.id))
+    const unordered = newPeople.filter(p => !sortOrderSet.has(p.id))
     sortablePeople.value = [...ordered, ...unordered]
   }
 }, { immediate: true })
@@ -434,11 +438,15 @@ watch([projects, projectsSortOrder], ([newProjects, sortOrder]) => {
   if (sortOrder.length === 0) {
     sortableProjects.value = [...newProjects]
   } else {
+    // Optimize with O(1) lookups using Map/Set
+    const projectsMap = new Map(newProjects.map(p => [p.id, p]))
+    const sortOrderSet = new Set(sortOrder)
+    
     // Sort according to stored order, placing unordered items at the end
     const ordered = sortOrder
-      .map(id => newProjects.find(p => p.id === id))
+      .map(id => projectsMap.get(id))
       .filter(Boolean) as typeof newProjects
-    const unordered = newProjects.filter(p => !sortOrder.includes(p.id))
+    const unordered = newProjects.filter(p => !sortOrderSet.has(p.id))
     sortableProjects.value = [...ordered, ...unordered]
   }
 }, { immediate: true })

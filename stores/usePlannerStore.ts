@@ -244,6 +244,8 @@ export const usePlannerStore = defineStore('planner', {
     },
 
     // Initialize sort orders when data is loaded
+    // Note: This does NOT set isDataModified=true because it's part of initial data loading,
+    // not user-initiated changes. The loading methods reset isDataModified=false afterward.
     initializeSortOrders() {
       if (this.peopleSortOrder.length === 0) {
         this.peopleSortOrder = this.people.map(p => p.id)

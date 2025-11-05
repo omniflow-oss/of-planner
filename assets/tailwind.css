@@ -21,6 +21,12 @@
   z-index: -1;
 }
 .grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background-color: var(--divide-color-muted); }
+/* 
+  The following rule adjusts the bottom position of the today line grid.
+  This replaces the previous `.header-grid .grid-v { bottom: 0; }` rule to ensure
+  correct visual alignment of the today line. Please do not remove or modify
+  without verifying timeline grid rendering.
+*/
 .grid-v.today-line { bottom: -2px;}
 
 .grid-v.week { background-color: var(--divide-color-accented); width: 2px; }

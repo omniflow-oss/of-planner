@@ -106,7 +106,10 @@
               <!-- Drag handle -->
               <UIcon
                 name="i-lucide-grip-vertical"
-                :class="getDragHandleClasses(sr.isTimeOff)"
+                class="drag-handle mr-2 size-3"
+                :class="sr.isTimeOff 
+                  ? 'text-slate-300 cursor-not-allowed opacity-50'
+                  : 'text-slate-400 cursor-grab hover:text-slate-600'"
               />
               <UIcon
                 :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
@@ -266,17 +269,6 @@ const filteredSubrows = computed(() => {
   return props.subrows.filter(sr => !isAddRow(sr))
 })
 
-// Computed class string for drag handles based on timeoff status
-const getDragHandleClasses = (isTimeOff: boolean) => {
-  const baseClasses = 'drag-handle mr-2 size-3'
-  
-  if (isTimeOff) {
-    return `${baseClasses} text-slate-300 cursor-not-allowed opacity-50`
-  } else {
-    return `${baseClasses} text-slate-400 cursor-grab hover:text-slate-600`
-  }
-}
-
 // Sortable subrows for drag and drop
 const sortableSubrows = ref<typeof props.subrows>([])
 
@@ -285,16 +277,19 @@ watch(filteredSubrows, (newSubrows) => {
   const storedOrder = store.getSubrowSortOrder(props.groupId)
   
   if (storedOrder.length === 0) {
-    // No stored order, initialize with current order
-    const initialOrder = newSubrows.map(sr => sr.key)
-    store.updateSubrowSortOrder(props.groupId, initialOrder)
+    // No stored order exists, just use current order for display
+    // Note: Store will be initialized later when user actually reorders items
     sortableSubrows.value = [...newSubrows]
   } else {
     // Apply stored order, placing unordered items at the end
+    // Optimize with O(1) lookups using Map/Set
+    const subrowsMap = new Map(newSubrows.map(sr => [sr.key, sr]))
+    const storedOrderSet = new Set(storedOrder)
+    
     const ordered = storedOrder
-      .map(key => newSubrows.find(sr => sr.key === key))
+      .map(key => subrowsMap.get(key))
       .filter(Boolean) as typeof newSubrows
-    const unordered = newSubrows.filter(sr => !storedOrder.includes(sr.key))
+    const unordered = newSubrows.filter(sr => !storedOrderSet.has(sr.key))
     
     // Ensure disable-drag items (timeoff rows) always stay at the top
     const disabledOrdered = ordered.filter(sr => sr.isTimeOff)
@@ -304,11 +299,8 @@ watch(filteredSubrows, (newSubrows) => {
     
     sortableSubrows.value = [...disabledOrdered, ...disabledUnordered, ...enabledOrdered, ...enabledUnordered]
     
-    // Update stored order if there are new unordered items
-    if (unordered.length > 0) {
-      const newOrder = sortableSubrows.value.map(sr => sr.key)
-      store.updateSubrowSortOrder(props.groupId, newOrder)
-    }
+    // Note: Do not update the store here for new items. Store will only be updated 
+    // when user explicitly reorders items via drag & drop (onSortEnd).
   }
 }, { immediate: true })
 
