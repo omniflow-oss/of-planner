@@ -20,7 +20,7 @@
   box-shadow: 0 0 4px rgba(0,0,0,.1); 
   z-index: -1;
 }
-.grid-v { position: absolute; top: 0; bottom: -1px; width: 1px; background-color: var(--divide-color-muted); }
+.grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background-color: var(--divide-color-muted); }
 .header-grid .grid-v { bottom: 0;}
 
 .grid-v.week { background-color: var(--divide-color-accented); width: 2px; }

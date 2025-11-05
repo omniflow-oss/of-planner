@@ -1,119 +1,54 @@
 <template>
   <div
     class="grid rows-group relative z-2"
-    style="grid-template-columns: 240px 1fr;-webkit-user-select: none; user-select: none;"  
+    style="-webkit-user-select: none; user-select: none;"  
     draggable="false"
   >
-    <!-- Group header row -->
-    <div 
-      class="px-3 py-2 border-b border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
-      draggable="false"
-      style="-webkit-user-select: none; user-select: none;"
+    <div class="grid border-b pane-border"
+      style="grid-template-columns: 240px 1fr;"
     >
-      <UButton
-        size="xs"
-        variant="outline"
-        :icon="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
-        aria-label="Toggle"
-        @click="expanded = !expanded"
-      />
-      <UIcon
-        :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'"
-        class="text-slate-500 size-4"
-      />
-      <span>{{ label }}  </span>
-      <!-- <UBadge
-        class="ml-auto"
-        size="xs"
-        color="primary"
-        variant="subtle"
+       <!-- Group header row -->
+      <div 
+        class="px-3 py-2 border-b border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
+        draggable="false"
+        style="-webkit-user-select: none; user-select: none;"
       >
-        {{ itemCount }}
-      </UBadge> -->
-      <UBadge
-        class="ml-auto"
-        size="xs"
-        color="neutral"
-        variant="soft"
-        :title="'Total man-days (visible window)'"
-      >
-        {{ totalMDBadge }}
-      </UBadge>
-      <UButton
-        size="xs"
-        color="primary"
-        variant="soft"
-        class="ml-2"
-        :title="groupType === 'person' ? 'Assigner un projet' : 'Ajouter une personne'"
-        :icon="'i-lucide-plus'"
-        aria-label="Add"
-        @click="handleAddClick"
-      />
-    </div>
-    <div
-      class="relative border-b border-r-2 pane-border timeline-bg disabled-rows"
-      :style="{ height: headerHeight+'px' }"
-    >
-      <GridOverlay
-        :days="days"
-        :px-per-day="pxPerDay"
-        :offsets="dayOffsets"
-        :week-starts="weekStarts"
-      />
-      <!-- Per-day coverage overlays on header track -->
-      <template
-        v-for="(day, i) in days"
-        :key="'cap'+i"
-      >
-        <div 
-          v-if="capacityDaily[i] > 0"
-          class="absolute inset-y-0"
-          :class="coverageClass(i)"
-          :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }"
+        <UButton
+          size="xs"
+          variant="outline"
+          :icon="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
+          aria-label="Toggle"
+          @click="expanded = !expanded"
+        />
+        <UIcon
+          :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'"
+          class="text-slate-500 size-4"
+        />
+        <span>{{ label }}  </span>
+
+        <UBadge
+          class="ml-auto"
+          size="xs"
+          color="neutral"
+          variant="soft"
+          :title="'Total man-days (visible window)'"
         >
-          <div
-            v-if="pxPerDay >= 44"
-            class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700 dark:text-slate-400"
-          >
-            {{ groupType === 'project' ? capacityDaily[i]  + 'd' : Math.round(capacityDaily[i]*100) + '%' }}
-          </div>
-        </div>
-      </template>
-      <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
-    </div>
-
-    <!-- Subrows -->
-    <template
-      v-for="sr in filteredSubrows"
-      v-if="expanded"
-      :key="sr.key"
-    >
-      <!-- Left: label -->
-      <div
-        class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default"
-        :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }"
-      >
-        <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
-          <UIcon
-            :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
-            :class="sr.isTimeOff ? 'mr-2 text-red-400 size-3' : 'mr-2 text-slate-400 size-3'"
-          />
-          <div :class="sr.isTimeOff ? 'truncate font-medium text-red-500 dark:text-red-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
-            {{ sr.label }}
-          </div>
-        </div>
+          {{ totalMDBadge }}
+        </UBadge>
+        <UButton
+          size="xs"
+          color="primary"
+          variant="soft"
+          class="ml-2"
+          :title="groupType === 'person' ? 'Assigner un projet' : 'Ajouter une personne'"
+          :icon="'i-lucide-plus'"
+          aria-label="Add"
+          @click="handleAddClick"
+        />
       </div>
-
-      <!-- Right: timeline track -->
       <div
-        class="relative border-b border-r-2 pane-border timeline-bg"
-        :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }" 
-        :data-row-key="sr.key"
-        @contextmenu="handleContextMenu($event, sr)"
-        @mousedown="handleMouseDown($event, sr)"
-        @mousemove="updateDragCreate($event, sr)"
-        @mouseup="handleMouseUp($event, sr)"
-        @dragstart="cancelDragCreate"
+        class="relative border-r-2 pane-border timeline-bg disabled-rows"
+        :style="{ height: headerHeight+'px' }"
       >
         <GridOverlay
           :days="days"
@@ -121,43 +56,108 @@
           :offsets="dayOffsets"
           :week-starts="weekStarts"
         />
-        <!-- Timeoff background overlays for this specific user (project view only) -->
+        <!-- Per-day coverage overlays on header track -->
         <template
-          v-if="groupType === 'project'"
           v-for="(day, i) in days"
-          :key="'timeoff-sub'+i"
+          :key="'cap'+i"
         >
           <div 
-            v-if="hasUserTimeoffOnDay(sr.person_id, day)"
-            class="absolute inset-y-0 timeoff-hashed"
+            v-if="capacityDaily[i] > 0"
+            class="absolute inset-y-0"
+            :class="coverageClass(i)"
             :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }"
-          />
+          >
+            <div
+              v-if="pxPerDay >= 44"
+              class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700 dark:text-slate-400"
+            >
+              {{ groupType === 'project' ? capacityDaily[i]  + 'd' : Math.round(capacityDaily[i]*100) + '%' }}
+            </div>
+          </div>
         </template>
-        <AssignmentBar
-          v-for="a in subAssignmentsLaned(sr)"
-          :key="a.id"
-          :assignment="a"
-          :start-i-s-o="startISO"
-          :px-per-day="pxPerDay"
-          :projects-map="projectsMap"
-          :people-map="peopleMap"
-          :top="laneTop(a._lane)"
-          @update="onUpdate"
-          @edit="onEdit"
-          @resize="(e: any) => onResizeEvent=e"
-        />
-        
-        <!-- Drag-to-create preview bar -->
+        <!-- <AssignmentBar v-for="a in headerAssignments" :key="'h_'+a.id" :assignment="a" :startISO="startISO" :pxPerDay="pxPerDay" :projectsMap="projectsMap" :top="laneTop(a._lane)" @update="onUpdate" @edit="onEdit" /> -->
+      </div>
+    </div>   
+
+    <!-- Subrows -->
+    <template
+      v-for="sr in filteredSubrows"
+      v-if="expanded"
+      :key="sr.key"
+    >
+     <div class="grid border-b pane-border"
+        style="grid-template-columns: 240px 1fr;"
+      >
+        <!-- Left: label -->
         <div
-          v-if="dragState.active && dragState.rowKey === sr.key" 
-          class="absolute bg-blue-500/30 border border-blue-500 rounded-sm pointer-events-none"
-          :style="{
-            left: dragState.previewLeft + 'px',
-            top: '10px',
-            width: dragState.previewWidth + 'px',
-            height: '28px'
-          }"
-        />
+          class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default"
+        >
+          <div class="flex items-center h-full px-3 pl-12 py-2 text-sm text-default">
+            <UIcon
+              :name="sr.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
+              :class="sr.isTimeOff ? 'mr-2 text-red-400 size-3' : 'mr-2 text-slate-400 size-3'"
+            />
+            <div :class="sr.isTimeOff ? 'truncate font-medium text-red-500 dark:text-red-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
+              {{ sr.label }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: timeline track -->
+        <div
+          class="relative border-b border-r-2 pane-border timeline-bg"
+          :style="{ height: (rowHeights[sr.key] || baseRowMin)+'px' }" 
+          :data-row-key="sr.key"
+          @contextmenu="handleContextMenu($event, sr)"
+          @mousedown="handleMouseDown($event, sr)"
+          @mousemove="updateDragCreate($event, sr)"
+          @mouseup="handleMouseUp($event, sr)"
+          @dragstart="cancelDragCreate"
+        >
+          <GridOverlay
+            :days="days"
+            :px-per-day="pxPerDay"
+            :offsets="dayOffsets"
+            :week-starts="weekStarts"
+          />
+          <!-- Timeoff background overlays for this specific user (project view only) -->
+          <template
+            v-if="groupType === 'project'"
+            v-for="(day, i) in days"
+            :key="'timeoff-sub'+i"
+          >
+            <div 
+              v-if="hasUserTimeoffOnDay(sr.person_id, day)"
+              class="absolute inset-y-0 timeoff-hashed"
+              :style="{ left: lineLeft(i)+'px', width: dayWidth(i)+'px' }"
+            />
+          </template>
+          <AssignmentBar
+            v-for="a in subAssignmentsLaned(sr)"
+            :key="a.id"
+            :assignment="a"
+            :start-i-s-o="startISO"
+            :px-per-day="pxPerDay"
+            :projects-map="projectsMap"
+            :people-map="peopleMap"
+            :top="laneTop(a._lane)"
+            @update="onUpdate"
+            @edit="onEdit"
+            @resize="(e: any) => onResizeEvent=e"
+          />
+          
+          <!-- Drag-to-create preview bar -->
+          <div
+            v-if="dragState.active && dragState.rowKey === sr.key" 
+            class="absolute bg-blue-500/30 border border-blue-500 rounded-sm pointer-events-none"
+            :style="{
+              left: dragState.previewLeft + 'px',
+              top: '10px',
+              width: dragState.previewWidth + 'px',
+              height: '28px'
+            }"
+          />
+        </div>
       </div>
     </template>
   </div>
