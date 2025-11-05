@@ -428,7 +428,7 @@ watch([people, peopleSortOrder], ([newPeople, sortOrder]) => {
     // Sort according to stored order, placing unordered items at the end
     const ordered = sortOrder
       .map(id => peopleMap.get(id))
-      .filter(Boolean) as typeof newPeople
+      .filter((p): p is typeof newPeople[number] => p !== undefined)
     const unordered = newPeople.filter(p => !sortOrderSet.has(p.id))
     sortablePeople.value = [...ordered, ...unordered]
   }
@@ -445,7 +445,7 @@ watch([projects, projectsSortOrder], ([newProjects, sortOrder]) => {
     // Sort according to stored order, placing unordered items at the end
     const ordered = sortOrder
       .map(id => projectsMap.get(id))
-      .filter(Boolean) as typeof newProjects
+      .filter((p): p is typeof newProjects[number] => p !== undefined)
     const unordered = newProjects.filter(p => !sortOrderSet.has(p.id))
     sortableProjects.value = [...ordered, ...unordered]
   }
@@ -496,7 +496,7 @@ function personSubrows(personId: string) {
 function projectSubrows(projectId: string) {
   const peopleIds = projectPeople(projectId)
   const rows = peopleIds.map(pers => ({ key: `${projectId}:${pers}`, label: personName(pers), person_id: pers, project_id: projectId }))
-  return [...rows, { key: `${projectId}:__add__`, label: 'Ajouter une personne', person_id: null, project_id: projectId }]
+  return [...rows, { key: `${projectId}:__add__`, label: 'Add person', person_id: null, project_id: projectId }]
 }
 function projectName(id: string) { return projects.value.find(p => p.id === id)?.name ?? id }
 function personName(id: string) { return people.value.find(p => p.id === id)?.name ?? id }

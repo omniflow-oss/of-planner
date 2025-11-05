@@ -235,7 +235,7 @@ export const usePlannerStore = defineStore('planner', {
 
     // Subrow sort order management
     updateSubrowSortOrder(groupId: string, newOrder: string[]) {
-      this.subrowSortOrders[groupId] = [...newOrder]
+      this.subrowSortOrders = { ...this.subrowSortOrders, [groupId]: [...newOrder] }
       this.isDataModified = true
     },
 
