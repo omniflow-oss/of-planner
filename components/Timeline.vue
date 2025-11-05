@@ -120,7 +120,7 @@
         <!-- Right: empty timeline track with grid overlay -->
         <div
           class="relative border-b border-r pane-border w-full h-full"
-          style="min-height: 60px;"
+          style="min-height: 58px;"
           :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
         >
           <GridOverlay
