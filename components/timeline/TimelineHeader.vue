@@ -5,7 +5,7 @@
     style=" grid-template-columns: 240px 1fr;"
   >
     <!-- Left spacer with timeline controls -->
-    <div class="border-b border-r-2 pane-border sticky left-0 z-30 bg-default">
+    <div class="border-b-2 border-r-2 pane-border sticky left-0 z-30 bg-default">
       <div class="py-3 px-3 text-center h-full flex flex-col justify-center">
         <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">
           

@@ -3,7 +3,7 @@
     <!-- Scrollable content with aligned rows -->
     <div
       ref="scrollArea"
-      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm scrollbar-hidden"
+      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm "
       @scroll.passive="handleScroll"
     >
       <div
@@ -50,6 +50,9 @@
               @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, view.start)"
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
+              @edit-project="handleEditProject"
+              @edit-person="handleEditPerson"
+              @project-click="handleProjectClick"
             />
           </VueDraggableNext>
         </template>
@@ -78,6 +81,9 @@
               @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, view.start)"
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
+              @edit-project="handleEditProject"
+              @edit-person="handleEditPerson"
+              @person-click="handlePersonClick"
             />
           </VueDraggableNext>
         </template>
@@ -85,8 +91,10 @@
 
       <!-- Empty rows filler -->
       <div
-        style="width: 240px;"
-        class="border-t pane-border absolute left-0 bottom-0 border-r-2 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
+        ref="addButtons"
+        style="width: 240px; height:59px;"
+        :style="{ bottom: addButtonsBottomStyle }"
+        class="border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
       >
         <UButton 
           v-if="view.mode === 'project'"
@@ -132,8 +140,8 @@
         </div>
       </div> 
       <div
-        class="empty-sidebar absolute z-1 top-0 bottom-0 bg-default border-r-2 pane-border"
-        style="width: 240px;"
+        class="empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border"
+        style="width: 240px;bottom:10px;"
       />     
     </div>
 
@@ -143,7 +151,7 @@
       :edit-state="modals.editState.value"
       @close="modals.closeEditModal"
       @save="handleSaveEdit"
-      @delete="modals.openDeleteModal"
+      @delete="handleDirectDelete"
     />
     
     <CreateModal
@@ -167,10 +175,23 @@
       @create="handleCreatePerson"
     />
     
-    <DeleteConfirmModal
-      :open="modals.deleteOpen.value"
-      @close="modals.closeDeleteModal"
-      @confirm="handleConfirmDelete"
+    <EditProjectModal
+      :open="editProjectOpen"
+      :project="editingProject"
+      :has-assignments="projectHasAssignments"
+      @close="() => { editProjectOpen = false; editingProject = null }"
+      @save="handleSaveProjectEdit"
+      @delete="handleDeleteProject"
+    />
+    
+    <EditPersonModal
+      :open="editPersonOpen"
+      :person="editingPerson"
+      :has-assignments="personHasAssignments"
+      :existing-names="existingPersonNames"
+      @close="() => { editPersonOpen = false; editingPerson = null }"
+      @save="handleSavePersonEdit"
+      @delete="handleDeletePerson"
     />
   </div>
 </template>
@@ -178,12 +199,15 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
-import { addDaysISO } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import { useTimelineActions } from '@/composables/useTimelineActions'
 import { useTimelineModals } from '@/composables/useTimelineModals'
 import { useTimelineSorting } from '@/composables/useTimelineSorting'
+import { useTimelineInit } from '@/composables/useTimelineInit'
+import { useViewNavigation } from '@/composables/useViewNavigation'
+import { useSubrows } from '@/composables/useSubrows'
+import { useTimelineHandlers } from '@/composables/useTimelineHandlers'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
 import RowGroup from '@/components/internal/RowGroup.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
@@ -191,7 +215,8 @@ import EditModal from '@/components/timeline/EditModal.vue'
 import CreateModal from '@/components/timeline/CreateModal.vue'
 import NewProjectModal from '@/components/timeline/NewProjectModal.vue'
 import NewPersonModal from '@/components/timeline/NewPersonModal.vue'
-import DeleteConfirmModal from '@/components/timeline/DeleteConfirmModal.vue'
+import EditProjectModal from '@/components/timeline/EditProjectModal.vue'
+import EditPersonModal from '@/components/timeline/EditPersonModal.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
 
 const store = usePlannerStore()
@@ -218,111 +243,34 @@ const {
   weekStarts
 } = useTimeline(view)
 
+// Initialize timeline and subrow composables after todayISO is available
+const timelineInit = useTimelineInit(assignments, view, todayISO)
+const subrows = useSubrows(assignments, people, projects)
+
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
 const timelineWidth = computed(() => days.value.length * view.value.px_per_day)
 
-// Subrow logic
-function personProjects(personId: string) {
-  const set = new Set(assignments.value.filter(a => a.person_id === personId).map(a => a.project_id))
-  return Array.from(set)
-}
-function projectPeople(projectId: string) {
-  const set = new Set(assignments.value.filter(a => a.project_id === projectId).map(a => a.person_id))
-  return Array.from(set)
-}
+const addButtons = ref<HTMLElement | null>(null)
 
-function personSubrows(personId: string) {
-  const projIds = personProjects(personId)
-  const regularProjIds = projIds.filter(pid => pid !== 'TIMEOFF')
-  const rows = regularProjIds.map(pid => ({ key: `${personId}:${pid}`, label: projectName(pid), person_id: personId, project_id: pid }))
-  const timeOffRow = { key: `${personId}:TIMEOFF`, label: 'Time Off', person_id: personId, project_id: 'TIMEOFF', isTimeOff: true }
-  return [timeOffRow, ...rows, { key: `${personId}:__add__`, label: 'Assign a project', person_id: personId, project_id: null }]
-}
-function projectSubrows(projectId: string) {
-  const peopleIds = projectPeople(projectId)
-  const rows = peopleIds.map(pers => ({ key: `${projectId}:${pers}`, label: personName(pers), person_id: pers, project_id: projectId }))
-  return [...rows, { key: `${projectId}:__add__`, label: 'Add person', person_id: null, project_id: projectId }]
-}
-function projectName(id: string) { return projects.value.find(p => p.id === id)?.name ?? id }
-function personName(id: string) { return people.value.find(p => p.id === id)?.name ?? id }
+// Calculate scrollbar height and position addButtons accordingly
+const addButtonsBottomStyle = ref('0px')
 
-// Modal handlers
-function handleEdit(payload: { assignment: any; x: number; y: number }) {
-  modals.openEditModal(payload.assignment)
-}
-
-function handleCreatePopover(payload: { key: string; x: number; y: number; dayISO: string; person_id: string|null; project_id: string|null }) {
-  modals.openCreateModal({ dayISO: payload.dayISO, person_id: payload.person_id, project_id: payload.project_id })
-}
-
-function handleSaveEdit(editData: { start: string; end: string; allocation: 1|0.75|0.5|0.25 }) {
-  if (!modals.editState.value) return
-  const { id } = modals.editState.value
-  const { start, end, allocation } = editData
-  actions.updateAssignment(id, { start, end, allocation })
-  modals.closeEditModal()
-}
-
-function handleConfirmDelete() {
-  if (!modals.editState.value) return
-  actions.deleteAssignment(modals.editState.value.id)
-  modals.closeDeleteModal()
-  modals.closeEditModal()
-}
-
-function handleCloseCreate() {
-  modals.closeCreateModal()
-}
-
-function handleConfirmCreate(payload: { person_id: string|null; project_id: string|null; start: string; duration: number; allocation: 1|0.75|0.5|0.25 }) {
-  actions.onCreate(payload)
-  modals.closeCreateModal()
-}
-
-function handleCreateProject(name: string) {
-  try {
-    actions.createProject(name)
-    modals.closeNewProjectModal()
-    
-    // Scroll to bottom to show the new project
-    nextTick(() => {
-      if (scrollArea.value) {
-        scrollArea.value.scrollTo({
-          top: scrollArea.value.scrollHeight,
-          behavior: 'smooth'
-        })
-      }
-    })
-  } catch (error) {
-    // Display error message to user in the modal
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create project'
-    modals.setNewProjectError(errorMessage)
+function updateAddButtonsPosition() {
+  if (scrollArea.value) {
+    // Calculate scrollbar height (difference between offsetHeight and clientHeight)
+    const scrollbarHeight = scrollArea.value.offsetHeight - scrollArea.value.clientHeight
+    addButtonsBottomStyle.value = `${scrollbarHeight}px`
   }
 }
 
-function handleCreatePerson(name: string) {
-  try {
-    actions.createPerson(name)
-    modals.closeNewPersonModal()
-    
-    // Scroll to bottom to show the new person
-    nextTick(() => {
-      if (scrollArea.value) {
-        scrollArea.value.scrollTo({
-          top: scrollArea.value.scrollHeight,
-          behavior: 'smooth'
-        })
-      }
-    })
-  } catch (error) {
-    // Display error message to user in the modal
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create person'
-    modals.setNewPersonError(errorMessage)
-  }
-}
+// Subrow logic from composable
+const { personSubrows, projectSubrows } = subrows
 
-// Removed: All modal state and handlers are now managed by useTimelineModals composable
+// Timeline handlers composable (needs scrollArea ref, so initialize after it's declared)
+// Will be initialized after scrollArea declaration
+
+// Modal handlers moved to useTimelineHandlers composable
 
 // Provide assignments ref to children (RowGroup) for lane computation
 const assignmentsKey = Symbol.for('assignmentsRef')
@@ -330,7 +278,37 @@ provide(assignmentsKey, assignments)
 
 const scrollArea = ref<HTMLElement | null>(null)
 
-const { onScroll, init: _init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
+// View navigation composable (needs scrollArea ref)
+const viewNavigation = useViewNavigation(scrollArea, sortablePeople, sortableProjects, store.switchMode)
+const { handleProjectClick, handlePersonClick } = viewNavigation
+
+// Timeline handlers composable (needs scrollArea ref)
+const timelineHandlers = useTimelineHandlers(scrollArea, assignments, people, store, actions, modals)
+const {
+  editProjectOpen,
+  editingProject,
+  editPersonOpen,
+  editingPerson,
+  projectHasAssignments,
+  personHasAssignments,
+  existingPersonNames,
+  handleEdit,
+  handleCreatePopover,
+  handleSaveEdit,
+  handleDirectDelete,
+  handleCloseCreate,
+  handleConfirmCreate,
+  handleCreateProject,
+  handleCreatePerson,
+  handleEditProject,
+  handleSaveProjectEdit,
+  handleDeleteProject,
+  handleEditPerson,
+  handleSavePersonEdit,
+  handleDeletePerson
+} = timelineHandlers
+
+const { onScroll, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
   // Hide modals when scrolling to keep UX coherent on large moves
@@ -409,78 +387,13 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
     }
   }
 })
-  
-  // No external click handlers needed with UModal
 
-// Function to calculate the date range needed to show all assignments
-function calculateAssignmentDateRange() {
-  if (assignments.value.length === 0) {
-    return null
-  }
-  
-  let earliestDate = assignments.value[0]!.start
-  let latestDate = assignments.value[0]!.end
-  
-  for (const assignment of assignments.value) {
-    if (assignment.start < earliestDate) earliestDate = assignment.start
-    if (assignment.end > latestDate) latestDate = assignment.end
-  }
-  
-  return { start: earliestDate, end: latestDate }
-}
-
-// Function to initialize timeline with assignment coverage
-async function initTimelineWithAssignments() {
-  const assignmentRange = calculateAssignmentDateRange()
-  
-  // Always start 20 days before today to ensure buffer space for drag operations
-  const today = new Date(todayISO)
-  const timelineStart = new Date(today)
-  timelineStart.setUTCDate(timelineStart.getUTCDate() - 20)
-  
-  if (!assignmentRange) {
-    // No assignments, create timeline from -20 days to +60 days from today
-    const timelineEnd = new Date(today)
-    timelineEnd.setUTCDate(timelineEnd.getUTCDate() + 60)
-    
-    view.value.start = timelineStart.toISOString().slice(0, 10)
-    view.value.days = Math.floor((timelineEnd.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
-    return
-  }
-  
-  // Calculate end date to include all assignments with some padding
-  const assignmentStart = new Date(assignmentRange.start)
-  const assignmentEnd = new Date(assignmentRange.end)
-  
-  // Timeline starts 20 days before today, but extend if assignments go earlier
-  const finalStart = new Date(Math.min(timelineStart.getTime(), assignmentStart.getTime() - 14 * 24 * 60 * 60 * 1000)) // 14 days padding before earliest assignment
-  
-  // Timeline ends at least 14 days after latest assignment or 60 days after today, whichever is later
-  const minEndFromToday = new Date(today)
-  minEndFromToday.setUTCDate(minEndFromToday.getUTCDate() + 60)
-  const minEndFromAssignments = new Date(assignmentEnd)
-  minEndFromAssignments.setUTCDate(minEndFromAssignments.getUTCDate() + 14)
-  const finalEnd = new Date(Math.max(minEndFromToday.getTime(), minEndFromAssignments.getTime()))
-  
-  // Calculate total days
-  const totalDays = Math.floor((finalEnd.getTime() - finalStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
-  
-  view.value.start = finalStart.toISOString().slice(0, 10)
-  view.value.days = Math.min(365, Math.max(35, totalDays))
-}
+// Timeline initialization functions from composable
+const { initTimelineWithAssignments, needsTimelineExpansion } = timelineInit
 
 // Watch for assignment changes and re-initialize timeline if needed
 watch(assignments, async (_newAssignments) => {
-  const assignmentRange = calculateAssignmentDateRange()
-  if (!assignmentRange) return
-  
-  // Check if any assignments are outside current timeline view
-  const currentStart = view.value.start
-  const currentEnd = addDaysISO(currentStart, view.value.days - 1)
-  
-  const needsExpansion = assignmentRange.start < currentStart || assignmentRange.end > currentEnd
-  
-  if (needsExpansion) {
+  if (needsTimelineExpansion.value) {
     await initTimelineWithAssignments()
     
     // Auto-scroll to today after expansion
@@ -496,16 +409,15 @@ watch(assignments, async (_newAssignments) => {
   }
 }, { deep: true })
 
-
-// Initialize timeline and auto-scroll to today
-
-
 onMounted(async () => { 
   // Initialize timeline considering existing assignments (includes extra buffer for drag operations)
   await initTimelineWithAssignments()
   
-  // Auto-scroll to today on app initialization
+  // Update addButtons position based on scrollbar height
   await nextTick()
+  updateAddButtonsPosition()
+  
+  // Auto-scroll to today on app initialization
   if (timelineEvents?.goToTodayEvent) {
     timelineEvents.goToTodayEvent.value = todayISO
     nextTick(() => {
@@ -525,23 +437,15 @@ const expandState = ref({
 // Computed property to get current view's expand state
 const allExpanded = computed(() => expandState.value[view.value.mode])
 
-function expandAll() { 
-  rowGroupControls.expandAllToken.value = Date.now()
-  expandState.value[view.value.mode] = true
-}
-
-function collapseAll() { 
-  rowGroupControls.collapseAllToken.value = Date.now()
-  expandState.value[view.value.mode] = false
-}
-
 function toggleExpandAll() {
   if (allExpanded.value) {
-    collapseAll()
+    // Collapse all
+    rowGroupControls.collapseAllToken.value = Date.now()
+    expandState.value[view.value.mode] = false
   } else {
-    expandAll()
+    // Expand all
+    rowGroupControls.expandAllToken.value = Date.now()
+    expandState.value[view.value.mode] = true
   }
 }
-
-// Drag-and-drop sort handlers are now provided by useTimelineSorting composable
 </script>

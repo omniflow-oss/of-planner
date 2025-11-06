@@ -4,7 +4,7 @@
     style="grid-template-columns: 240px 1fr;"
   >
     <!-- Left: label -->
-    <div class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default">
+    <div class=" border-r-2 pane-border sticky left-0 z-10 bg-default left-label">
       <div class="flex items-center h-full px-3 pl-7 py-2 text-sm text-default">
         <!-- Drag handle -->
         <UIcon
@@ -16,18 +16,48 @@
         />
         <UIcon
           :name="subrow.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
-          :class="subrow.isTimeOff ? 'mr-2 text-orange-400 size-3' : 'mr-2 text-slate-400 size-3'"
+          :class="subrow.isTimeOff ? 'mr-2 text-blue-600 size-3' : 'mr-2 text-slate-400 size-3'"
         />
-        <div :class="subrow.isTimeOff ? 'truncate font-medium text-orange-400 dark:text-orange-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
-          {{ subrow.label }}
+        <div class="flex items-center gap-2">
+          <div 
+            :class="[
+              subrow.isTimeOff 
+                ? 'truncate font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md' 
+                : 'truncate font-medium text-slate-500 dark:text-gray-500',
+              // Make project names clickable in person view (when we have a project_id and are showing project names)
+              groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
+                ? 'cursor-pointer hover:text-blue-600 hover:underline transition-colors' 
+                : '',
+              // Make person names clickable in project view (when we have a person_id and are showing person names)
+              groupType === 'project' && subrow.person_id && !subrow.isTimeOff 
+                ? 'cursor-pointer hover:text-green-600 hover:underline transition-colors' 
+                : ''
+            ]"
+            @click="handleLabelClick"
+          >
+            {{ subrow.label }}
+          </div>
+          
+          <!-- Notification circle for project time tracking (only in people view) -->
+          <div
+            v-if="notificationStatus"
+            class="flex-shrink-0 w-2 h-2 rounded-full"
+            :class="{
+              'bg-red-500': notificationStatus.color === 'red',
+              'bg-orange-500': notificationStatus.color === 'orange'
+            }"
+            :title="notificationStatus.color === 'red' 
+              ? `Project is overdue by ${Math.abs(notificationStatus.remaining)} days` 
+              : `Project has ${notificationStatus.remaining} days remaining`"
+          />
         </div>
       </div>
     </div>
 
     <!-- Right: timeline track -->
     <div
-      class="relative border-b border-r-2 pane-border"
-      :class="{'bg-violet-100/60 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg':!subrow.isTimeOff}"
+      class="relative "
+      :class="{'bg-violet-100/60 dark:bg-violet-50/10 min-h-full': subrow.isTimeOff,'timeline-bg':!subrow.isTimeOff}"
       :style="{ height: (rowHeights[subrow.key] || baseRowMin) + 'px' }"
       :data-row-key="subrow.key"
       @contextmenu="$emit('context-menu', $event, subrow)"
@@ -88,6 +118,7 @@ import { computed } from 'vue'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import { computeLanes } from '@/utils/lanes'
+import { useProjectEstimation } from '@/composables/useProjectEstimation'
 
 interface SubrowItem {
   key: string
@@ -112,7 +143,7 @@ const props = defineProps<{
   dayOffsets: number[]
   weekStarts: number[]
   startISO: string
-  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null }>
+  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }>
   peopleMap?: Record<string, { id: string; name: string }>
   assignments: any[]
   rowHeights: Record<string, number>
@@ -133,6 +164,8 @@ const emit = defineEmits<{
   'edit': [payload: any]
   'resize': [event: any]
   'height-updated': [key: string, height: number]
+  'project-click': [projectId: string]
+  'person-click': [personId: string]
 }>()
 
 const subAssignments = computed(() => {
@@ -155,10 +188,36 @@ const subAssignments = computed(() => {
   return items
 })
 
+// Project estimation composable
+const assignmentsRef = computed(() => props.assignments)
+const projectsMapRef = computed(() => props.projectsMap)
+const projectEstimation = useProjectEstimation(assignmentsRef, projectsMapRef)
+
+// Calculate notification status for project time tracking
+const notificationStatus = computed(() => {
+  if (props.groupType !== 'person' || !props.subrow.project_id || props.subrow.isTimeOff) {
+    return null
+  }
+  
+  return projectEstimation.getProjectNotificationStatus(props.subrow.project_id)
+})
+
 function laneTop(lane: number) { 
   const padding = 10
   const laneHeight = 30
   return padding + lane * laneHeight 
+}
+
+// Handle click on label - emit project-click or person-click based on view mode
+function handleLabelClick() {
+  // Emit project-click if we're in person view, have a project_id, and it's not time off
+  if (props.groupType === 'person' && props.subrow.project_id && !props.subrow.isTimeOff) {
+    emit('project-click', props.subrow.project_id)
+  }
+  // Emit person-click if we're in project view, have a person_id, and it's not time off
+  else if (props.groupType === 'project' && props.subrow.person_id && !props.subrow.isTimeOff) {
+    emit('person-click', props.subrow.person_id)
+  }
 }
 </script>
 

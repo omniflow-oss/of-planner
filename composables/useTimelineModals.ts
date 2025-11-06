@@ -6,7 +6,6 @@ export function useTimelineModals() {
   const createOpen = ref(false)
   const newProjectOpen = ref(false)
   const newPersonOpen = ref(false)
-  const deleteOpen = ref(false)
 
   // Modal data
   const editState = ref<{ id: string; start: string; end: string; allocation: 1|0.75|0.5|0.25 } | null>(null)
@@ -53,16 +52,11 @@ export function useTimelineModals() {
     newPersonError.value = error
   }
 
-  function openDeleteModal() {
-    deleteOpen.value = true
-  }
-
   function closeAllModals() {
     editOpen.value = false
     createOpen.value = false
     newProjectOpen.value = false
     newPersonOpen.value = false
-    deleteOpen.value = false
   }
 
   function closeEditModal() {
@@ -83,17 +77,12 @@ export function useTimelineModals() {
     newPersonError.value = ''
   }
 
-  function closeDeleteModal() {
-    deleteOpen.value = false
-  }
-
   return {
     // States
     editOpen,
     createOpen,
     newProjectOpen,
     newPersonOpen,
-    deleteOpen,
     
     // Data
     editState,
@@ -106,13 +95,11 @@ export function useTimelineModals() {
     openCreateModal,
     openNewProjectModal,
     openNewPersonModal,
-    openDeleteModal,
     closeAllModals,
     closeEditModal,
     closeCreateModal,
     closeNewProjectModal,
     closeNewPersonModal,
-    closeDeleteModal,
     setNewProjectError,
     setNewPersonError
   }

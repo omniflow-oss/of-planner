@@ -3,6 +3,7 @@
     class="grid rows-group relative z-2 drag-group-row"
     style="-webkit-user-select: none; user-select: none;"  
     draggable="false"
+    :data-group-id="groupId"
   >
     <!-- Group Header Component -->
     <RowGroupHeader
@@ -16,11 +17,14 @@
       :header-height="headerHeight"
       :capacity-daily="capacityDaily"
       :total-m-d-badge="totalMDBadge"
+      :badge-color="badgeColor"
       :line-left="lineLeft"
       :day-width="dayWidth"
       :coverage-class="coverageClass"
       @toggle-expanded="expanded = !expanded"
       @add-click="handleAddClick"
+      @edit-project="handleEditProject"
+      @edit-person="handleEditPerson"
     />   
     <!-- Subrows Container -->
     <div class="draggable-container">
@@ -60,6 +64,8 @@
           @edit="onEdit"
           @resize="(e: any) => onResizeEvent = e"
           @height-updated="updateRowHeight"
+          @project-click="(projectId: string) => emit('project-click', projectId)"
+          @person-click="(personId: string) => emit('person-click', personId)"
         />
       </VueDraggableNext>
     </div>
@@ -74,6 +80,7 @@ import { indexFromX } from '@/utils/grid'
 import { useCapacity } from '@/composables/useCapacity'
 import { useRowSorting } from '@/composables/useRowSorting'
 import { useDragToCreate } from '@/composables/useDragToCreate'
+import { useProjectEstimation, roundToDecimalPlaces } from '@/composables/useProjectEstimation'
 import RowGroupHeader from '@/components/internal/RowGroupHeader.vue'
 import SubrowTrack from '@/components/internal/SubrowTrack.vue'
 
@@ -85,11 +92,11 @@ const props = defineProps<{
   startISO: string
   days: string[]
   pxPerDay: number
-  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null }>
+  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }>
   peopleMap?: Record<string, { id: string; name: string }>
 }>()
 
-const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover'])
+const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person', 'project-click', 'person-click'])
 
 // Reactive references
 const pxPerDay = computed(() => props.pxPerDay)
@@ -141,6 +148,20 @@ function handleAddClick() {
   }
   
   emit('createFromSidebar', addRowData)
+}
+
+// Handle the edit project button click
+function handleEditProject() {
+  if (props.groupType === 'project') {
+    emit('edit-project', props.groupId)
+  }
+}
+
+// Handle the edit person button click
+function handleEditPerson() {
+  if (props.groupType === 'person') {
+    emit('edit-person', props.groupId)
+  }
 }
 
 // Mouse event handlers - delegate to composable
@@ -202,12 +223,32 @@ const headerHeight = computed(() => baseRowMin)
 
 // Capacity per group in visible window (header overlays and total MD badge)
 const capacityApi = useCapacity(assignmentsRef, days, { type: props.groupType, id: props.groupId })
+
+// Project estimation composable
+const projectsMapRef = computed(() => props.projectsMap)
+const projectEstimation = useProjectEstimation(assignmentsRef, projectsMapRef)
 const capacityDaily = computed(() => capacityApi.daily.value)
 const totalMD = computed(() => capacityApi.totalMD.value)
 const totalMDBadge = computed(() => {
+  // For project view, use the project estimation composable
+  if (props.groupType === 'project') {
+    return projectEstimation.formatProjectBadgeText(props.groupId)
+  }
+  
+  // For person view, use the existing capacity calculation
   const val = totalMD.value
-  const suffix = 'd'
-  return Number.isInteger(val) ? `${val}${suffix}` : `${Math.round(val * 10) / 10}${suffix}`
+  const currentTotal = Number.isInteger(val) ? `${val}` : `${roundToDecimalPlaces(val)}`
+  return `${currentTotal}d`
+})
+
+const badgeColor = computed(() => {
+  // Only apply color logic for project view
+  if (props.groupType !== 'project') {
+    return 'neutral'
+  }
+  
+  return projectEstimation.getProjectBadgeColor(props.groupId)
+
 })
 
 function coverageClass(i: number) {

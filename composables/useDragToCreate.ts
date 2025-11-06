@@ -2,6 +2,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { businessDaysBetweenInclusive } from '@/composables/useDate'
 import { indexFromX, businessSegment } from '@/utils/grid'
 
+// Constants for drag-to-create behavior
+const AUTO_SCROLL_SPEED = 8 // px per frame
+const LONG_PRESS_DELAY = 200 // ms - delay before showing drag preview
+const RIGHT_CLICK_DELAY = 200 // ms - threshold for distinguishing right-click from long press
+const CONTEXT_MENU_RESET_DELAY = 10 // ms - delay to reset right-click state
+
 export function useDragToCreate(
   days: Ref<string[]>,
   pxPerDay: Ref<number>,
@@ -73,8 +79,7 @@ export function useDragToCreate(
         return
       }
       
-      const scrollSpeed = 8
-      timelineContainer.scrollLeft += direction * scrollSpeed
+      timelineContainer.scrollLeft += direction * AUTO_SCROLL_SPEED
       
       // Update drag state after scroll
       if (dragState.value.rowKey) {
@@ -159,7 +164,7 @@ export function useDragToCreate(
       dragState.value.active = true
       dragState.value.isLongClick = true
       updatePreviewBar()
-    }, 200) // 200ms for preview display
+    }, LONG_PRESS_DELAY)
   }
 
   function updateDragCreate(e: MouseEvent, sr: any) {
@@ -254,7 +259,7 @@ export function useDragToCreate(
         if (rightMouseState.value.isDown) {
           rightMouseState.value.blocked = true
         }
-      }, 200) // 200ms threshold for long press
+      }, RIGHT_CLICK_DELAY)
       
       return { handled: true }
     }
@@ -278,7 +283,7 @@ export function useDragToCreate(
       // Reset block state after a short delay to allow contextmenu event to fire
       setTimeout(() => {
         rightMouseState.value.blocked = false
-      }, 10)
+      }, CONTEXT_MENU_RESET_DELAY)
       
       return { handled: true }
     }

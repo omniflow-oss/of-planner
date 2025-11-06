@@ -87,12 +87,12 @@ export function useTimelineActions() {
     onCreate({ person_id: sr.person_id, project_id: sr.project_id, start: viewStart, duration: 5, allocation: 1 })
   }
 
-  function createProject(name: string) {
-    const exists = projects.value.some(p => p.name.toLowerCase() === name.toLowerCase())
+  function createProject(input: { name: string; estimatedDays?: number | null }) {
+    const exists = projects.value.some(p => p.name.toLowerCase() === input.name.toLowerCase())
     if (exists) {
       throw new Error('Project already exists')
     }
-    store.createProject({ name })
+    store.createProject({ name: input.name, estimatedDays: input.estimatedDays })
   }
 
   function createPerson(name: string) {
@@ -111,6 +111,22 @@ export function useTimelineActions() {
     store.deleteAssignment(id)
   }
 
+  function updateProject(id: string, updates: { estimatedDays?: number | null }) {
+    store.updateProject(id, updates)
+  }
+
+  function deleteProject(id: string) {
+    store.deleteProject(id)
+  }
+
+  function updatePerson(id: string, updates: { name?: string }) {
+    store.updatePerson(id, updates)
+  }
+
+  function deletePerson(id: string) {
+    store.deletePerson(id)
+  }
+
   return {
     onCreate,
     onUpdate,
@@ -118,6 +134,10 @@ export function useTimelineActions() {
     createProject,
     createPerson,
     updateAssignment,
-    deleteAssignment
+    deleteAssignment,
+    updateProject,
+    deleteProject,
+    updatePerson,
+    deletePerson
   }
 }

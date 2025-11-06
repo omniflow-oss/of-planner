@@ -5,7 +5,7 @@
   >
     <!-- Group header row -->
     <div
-      class="px-3 py-2 border-b border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
+      class="px-3 py-2 border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default left-label"
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
@@ -30,12 +30,34 @@
         :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'"
         class="text-slate-500 size-4"
       />
-      <span>{{ label }}</span>
+      <div class="flex items-center gap-1 group">
+        <span>{{ label }}</span>
+        <UButton
+          v-if="groupType === 'project'"
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          class="opacity-0 group-hover:opacity-100 transition-opacity"
+          :icon="'i-lucide-edit-2'"
+          aria-label="Edit project"
+          @click="$emit('edit-project')"
+        />
+        <UButton
+          v-else-if="groupType === 'person'"
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          class="opacity-0 group-hover:opacity-100 transition-opacity"
+          :icon="'i-lucide-edit-2'"
+          aria-label="Edit person"
+          @click="$emit('edit-person')"
+        />
+      </div>
 
       <UBadge
         class="ml-auto"
         size="xs"
-        color="neutral"
+        :color="badgeColor"
         variant="soft"
         :title="'Total man-days (visible window)'"
       >
@@ -53,7 +75,7 @@
       />
     </div>
     <div
-      class="relative border-r-2 pane-border timeline-bg disabled-rows"
+      class="relative border-r-2 pane-border timeline-bg disabled-rows min-h-full"
       :style="{ height: headerHeight + 'px' }"
     >
       <GridOverlay
@@ -99,6 +121,7 @@ defineProps<{
   headerHeight: number
   capacityDaily: number[]
   totalMDBadge: string
+  badgeColor: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
   lineLeft: (i: number) => number
   dayWidth: (i: number) => number
   coverageClass: (i: number) => string
@@ -107,6 +130,8 @@ defineProps<{
 defineEmits<{
   'toggle-expanded': []
   'add-click': []
+  'edit-project': []
+  'edit-person': []
 }>()
 
 // Handle keyboard interactions for drag handle accessibility

@@ -99,17 +99,51 @@ export const usePlannerStore = defineStore('planner', {
       return p
     },
 
-    createProject(input: { name: string; color?: string; emoji?: string }) {
+    updatePerson(id: string, patch: { name?: string }) {
+      const idx = this.people.findIndex(p => p.id === id)
+      if (idx === -1) return
+      const person = this.people[idx]!
+      if (patch.name !== undefined) person.name = patch.name
+      this.isDataModified = true
+    },
+
+    deletePerson(id: string) {
+      this.people = this.people.filter(p => p.id !== id)
+      // Also remove all assignments for this person
+      this.assignments = this.assignments.filter(a => a.person_id !== id)
+      this.isDataModified = true
+    },
+
+    createProject(input: { name: string; color?: string; emoji?: string; estimatedDays?: number | null }) {
       const id = generateSequentialId('j', this.projects)
       const p: Project = { 
         id, 
         name: input.name, 
         color: input.color || '#3b82f6', 
-        emoji: input.emoji || '📋' 
+        emoji: input.emoji || '📋',
+        estimatedDays: input.estimatedDays || null
       }
       this.projects.push(p)
       this.isDataModified = true
       return p
+    },
+
+    updateProject(id: string, patch: { name?: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }) {
+      const idx = this.projects.findIndex(p => p.id === id)
+      if (idx === -1) return
+      const project = this.projects[idx]!
+      if (patch.name !== undefined) project.name = patch.name
+      if (patch.color !== undefined) project.color = patch.color
+      if (patch.emoji !== undefined) project.emoji = patch.emoji
+      if (patch.estimatedDays !== undefined) project.estimatedDays = patch.estimatedDays
+      this.isDataModified = true
+    },
+
+    deleteProject(id: string) {
+      this.projects = this.projects.filter(p => p.id !== id)
+      // Also remove all assignments for this project
+      this.assignments = this.assignments.filter(a => a.project_id !== id)
+      this.isDataModified = true
     },
 
     // Clear all data to empty state
