@@ -4,7 +4,7 @@
     style="grid-template-columns: 240px 1fr;"
   >
     <!-- Left: label -->
-    <div class=" border-r-2 pane-border sticky left-0 z-10 bg-default">
+    <div class=" border-r-2 pane-border sticky left-0 z-10 bg-default left-label">
       <div class="flex items-center h-full px-3 pl-7 py-2 text-sm text-default">
         <!-- Drag handle -->
         <UIcon
@@ -185,5 +185,9 @@ function laneTop(lane: number) {
 
 .drag-row {
   background-color: var(--background-color-default);
+}
+.left-label {
+  margin-bottom:-1px;
+  border-bottom-width:1px;
 }
 </style>

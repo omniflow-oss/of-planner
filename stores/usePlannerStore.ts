@@ -99,6 +99,21 @@ export const usePlannerStore = defineStore('planner', {
       return p
     },
 
+    updatePerson(id: string, patch: { name?: string }) {
+      const idx = this.people.findIndex(p => p.id === id)
+      if (idx === -1) return
+      const person = this.people[idx]!
+      if (patch.name !== undefined) person.name = patch.name
+      this.isDataModified = true
+    },
+
+    deletePerson(id: string) {
+      this.people = this.people.filter(p => p.id !== id)
+      // Also remove all assignments for this person
+      this.assignments = this.assignments.filter(a => a.person_id !== id)
+      this.isDataModified = true
+    },
+
     createProject(input: { name: string; color?: string; emoji?: string; estimatedDays?: number | null }) {
       const id = generateSequentialId('j', this.projects)
       const p: Project = { 

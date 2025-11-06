@@ -4,7 +4,7 @@
   --today-color: #baa7cb14;
 }
 /* App-specific utilities (token-based for dark/light) */
-.today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: var(--ring-color-inverted); opacity: .9; }
+.today-line { position: absolute; top: 0; bottom: -1px; width: 2px; background-color: var(--ring-color-inverted); opacity: .9; }
 .header-grid .today-line { background-color: var(--divide-color-accented); }
 .dark .header-grid .today-line { background-color: var(--ring-color-inverted);}
 .header-grid .today-line:after { 

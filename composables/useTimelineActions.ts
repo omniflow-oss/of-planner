@@ -119,6 +119,14 @@ export function useTimelineActions() {
     store.deleteProject(id)
   }
 
+  function updatePerson(id: string, updates: { name?: string }) {
+    store.updatePerson(id, updates)
+  }
+
+  function deletePerson(id: string) {
+    store.deletePerson(id)
+  }
+
   return {
     onCreate,
     onUpdate,
@@ -128,6 +136,8 @@ export function useTimelineActions() {
     updateAssignment,
     deleteAssignment,
     updateProject,
-    deleteProject
+    deleteProject,
+    updatePerson,
+    deletePerson
   }
 }

@@ -51,6 +51,7 @@
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
               @edit-project="handleEditProject"
+              @edit-person="handleEditPerson"
             />
           </VueDraggableNext>
         </template>
@@ -80,6 +81,7 @@
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
               @edit-project="handleEditProject"
+              @edit-person="handleEditPerson"
             />
           </VueDraggableNext>
         </template>
@@ -88,7 +90,7 @@
       <!-- Empty rows filler -->
       <div
         style="width: 240px;"
-        class="border-t pane-border absolute left-0 bottom-0 border-r-2 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
+        class="border-t-2 pane-border absolute left-0 bottom-0  border-r-2 border-b z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
       >
         <UButton 
           v-if="view.mode === 'project'"
@@ -177,6 +179,16 @@
       @save="handleSaveProjectEdit"
       @delete="handleDeleteProject"
     />
+    
+    <EditPersonModal
+      :open="editPersonOpen"
+      :person="editingPerson"
+      :has-assignments="personHasAssignments"
+      :existing-names="existingPersonNames"
+      @close="() => { editPersonOpen = false; editingPerson = null }"
+      @save="handleSavePersonEdit"
+      @delete="handleDeletePerson"
+    />
   </div>
 </template>
 
@@ -197,6 +209,7 @@ import CreateModal from '@/components/timeline/CreateModal.vue'
 import NewProjectModal from '@/components/timeline/NewProjectModal.vue'
 import NewPersonModal from '@/components/timeline/NewPersonModal.vue'
 import EditProjectModal from '@/components/timeline/EditProjectModal.vue'
+import EditPersonModal from '@/components/timeline/EditPersonModal.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
 
 const store = usePlannerStore()
@@ -315,6 +328,21 @@ const projectHasAssignments = computed(() => {
   return assignments.value.some(a => a.project_id === editingProject.value!.id)
 })
 
+// Edit person modal state
+const editPersonOpen = ref(false)
+const editingPerson = ref<{ id: string; name: string } | null>(null)
+
+// Check if person has assignments
+const personHasAssignments = computed(() => {
+  if (!editingPerson.value) return false
+  return assignments.value.some(a => a.person_id === editingPerson.value!.id)
+})
+
+// Get existing person names for validation
+const existingPersonNames = computed(() => {
+  return people.value.map(p => p.name)
+})
+
 function handleEditProject(projectId: string) {
   const project = store.projects.find(p => p.id === projectId)
   if (project) {
@@ -344,6 +372,37 @@ function handleDeleteProject(projectId: string) {
     editingProject.value = null
   } catch (error) {
     console.error('Failed to delete project:', error)
+  }
+}
+
+function handleEditPerson(personId: string) {
+  const person = store.people.find(p => p.id === personId)
+  if (person) {
+    editingPerson.value = {
+      id: person.id,
+      name: person.name
+    }
+    editPersonOpen.value = true
+  }
+}
+
+function handleSavePersonEdit(data: { id: string; name: string }) {
+  try {
+    actions.updatePerson(data.id, { name: data.name })
+    editPersonOpen.value = false
+    editingPerson.value = null
+  } catch (error) {
+    console.error('Failed to update person:', error)
+  }
+}
+
+function handleDeletePerson(personId: string) {
+  try {
+    actions.deletePerson(personId)
+    editPersonOpen.value = false  
+    editingPerson.value = null
+  } catch (error) {
+    console.error('Failed to delete person:', error)
   }
 }
 

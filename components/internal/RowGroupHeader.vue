@@ -5,7 +5,7 @@
   >
     <!-- Group header row -->
     <div
-      class="px-3 py-2 border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
+      class="px-3 py-2 border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default left-label"
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
@@ -29,12 +29,10 @@
         :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'"
         class="text-slate-500 size-4"
       />
-      <div
-        v-if="groupType === 'project'"
-        class="flex items-center gap-1 group"
-      >
+      <div class="flex items-center gap-1 group">
         <span>{{ label }}</span>
         <UButton
+          v-if="groupType === 'project'"
           size="xs"
           variant="ghost"
           color="neutral"
@@ -43,8 +41,17 @@
           aria-label="Edit project"
           @click="$emit('edit-project')"
         />
+        <UButton
+          v-else-if="groupType === 'person'"
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          class="opacity-0 group-hover:opacity-100 transition-opacity"
+          :icon="'i-lucide-edit-2'"
+          aria-label="Edit person"
+          @click="$emit('edit-person')"
+        />
       </div>
-      <span v-else>{{ label }}</span>
 
       <UBadge
         class="ml-auto"
@@ -123,6 +130,7 @@ defineEmits<{
   'toggle-expanded': []
   'add-click': []
   'edit-project': []
+  'edit-person': []
 }>()
 
 // Handle keyboard interactions for drag handle accessibility
@@ -161,5 +169,9 @@ function handleDragHandleKeydown(e: KeyboardEvent) {
 
 .header-row {
   background-color: var(--background-color-default);
+}
+.left-label{
+  margin-bottom: -1px;
+  border-bottom-width: 1px;
 }
 </style>

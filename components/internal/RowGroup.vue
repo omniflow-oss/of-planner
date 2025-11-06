@@ -23,6 +23,7 @@
       @toggle-expanded="expanded = !expanded"
       @add-click="handleAddClick"
       @edit-project="handleEditProject"
+      @edit-person="handleEditPerson"
     />   
     <!-- Subrows Container -->
     <div class="draggable-container">
@@ -91,7 +92,7 @@ const props = defineProps<{
   peopleMap?: Record<string, { id: string; name: string }>
 }>()
 
-const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project'])
+const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person'])
 
 // Constants for project estimation thresholds
 const WARNING_DAYS_THRESHOLD = 5
@@ -153,6 +154,13 @@ function handleAddClick() {
 function handleEditProject() {
   if (props.groupType === 'project') {
     emit('edit-project', props.groupId)
+  }
+}
+
+// Handle the edit person button click
+function handleEditPerson() {
+  if (props.groupType === 'person') {
+    emit('edit-person', props.groupId)
   }
 }
 

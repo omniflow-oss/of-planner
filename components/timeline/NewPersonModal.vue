@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-[1000] grid place-items-center bg-black/30"
+    class="fixed inset-0 z-[1000] grid place-items-center bg-black/30 popin"
   >
     <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
       <div class="text-sm font-medium mb-2">
@@ -68,10 +68,13 @@ function handleCreate() {
   emit('create', name)
 }
 
+const { focusFirstInput } = useModalFocus()
+
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
     personName.value = ''
     error.value = ''
+    focusFirstInput()
   }
 })
 
