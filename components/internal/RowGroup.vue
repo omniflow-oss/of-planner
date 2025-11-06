@@ -3,6 +3,7 @@
     class="grid rows-group relative z-2 drag-group-row"
     style="-webkit-user-select: none; user-select: none;"  
     draggable="false"
+    :data-group-id="groupId"
   >
     <!-- Group Header Component -->
     <RowGroupHeader
@@ -63,6 +64,8 @@
           @edit="onEdit"
           @resize="(e: any) => onResizeEvent = e"
           @height-updated="updateRowHeight"
+          @project-click="(projectId: string) => emit('project-click', projectId)"
+          @person-click="(personId: string) => emit('person-click', personId)"
         />
       </VueDraggableNext>
     </div>
@@ -92,7 +95,7 @@ const props = defineProps<{
   peopleMap?: Record<string, { id: string; name: string }>
 }>()
 
-const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person'])
+const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person', 'project-click', 'person-click'])
 
 // Constants for project estimation thresholds
 const WARNING_DAYS_THRESHOLD = 5

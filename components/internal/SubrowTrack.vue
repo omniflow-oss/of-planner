@@ -16,9 +16,24 @@
         />
         <UIcon
           :name="subrow.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
-          :class="subrow.isTimeOff ? 'mr-2 text-orange-400 size-3' : 'mr-2 text-slate-400 size-3'"
+          :class="subrow.isTimeOff ? 'mr-2 text-blue-600 size-3' : 'mr-2 text-slate-400 size-3'"
         />
-        <div :class="subrow.isTimeOff ? 'truncate font-medium text-orange-400 dark:text-orange-400' : 'truncate font-medium text-slate-500 dark:text-gray-500'">
+        <div 
+          :class="[
+            subrow.isTimeOff 
+              ? 'truncate font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md' 
+              : 'truncate font-medium text-slate-500 dark:text-gray-500',
+            // Make project names clickable in person view (when we have a project_id and are showing project names)
+            groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
+              ? 'cursor-pointer hover:text-blue-600 hover:underline transition-colors' 
+              : '',
+            // Make person names clickable in project view (when we have a person_id and are showing person names)
+            groupType === 'project' && subrow.person_id && !subrow.isTimeOff 
+              ? 'cursor-pointer hover:text-green-600 hover:underline transition-colors' 
+              : ''
+          ]"
+          @click="handleLabelClick"
+        >
           {{ subrow.label }}
         </div>
       </div>
@@ -133,6 +148,8 @@ const emit = defineEmits<{
   'edit': [payload: any]
   'resize': [event: any]
   'height-updated': [key: string, height: number]
+  'project-click': [projectId: string]
+  'person-click': [personId: string]
 }>()
 
 const subAssignments = computed(() => {
@@ -159,6 +176,18 @@ function laneTop(lane: number) {
   const padding = 10
   const laneHeight = 30
   return padding + lane * laneHeight 
+}
+
+// Handle click on label - emit project-click or person-click based on view mode
+function handleLabelClick() {
+  // Emit project-click if we're in person view, have a project_id, and it's not time off
+  if (props.groupType === 'person' && props.subrow.project_id && !props.subrow.isTimeOff) {
+    emit('project-click', props.subrow.project_id)
+  }
+  // Emit person-click if we're in project view, have a person_id, and it's not time off
+  else if (props.groupType === 'project' && props.subrow.person_id && !props.subrow.isTimeOff) {
+    emit('person-click', props.subrow.person_id)
+  }
 }
 </script>
 

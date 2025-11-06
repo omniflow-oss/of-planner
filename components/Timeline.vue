@@ -3,7 +3,7 @@
     <!-- Scrollable content with aligned rows -->
     <div
       ref="scrollArea"
-      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm scrollbar-hidden"
+      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm "
       @scroll.passive="handleScroll"
     >
       <div
@@ -52,6 +52,7 @@
               @create-popover="handleCreatePopover"
               @edit-project="handleEditProject"
               @edit-person="handleEditPerson"
+              @project-click="handleProjectClick"
             />
           </VueDraggableNext>
         </template>
@@ -82,6 +83,7 @@
               @create-popover="handleCreatePopover"
               @edit-project="handleEditProject"
               @edit-person="handleEditPerson"
+              @person-click="handlePersonClick"
             />
           </VueDraggableNext>
         </template>
@@ -89,8 +91,10 @@
 
       <!-- Empty rows filler -->
       <div
-        style="width: 240px;"
-        class="border-t-2 pane-border absolute left-0 bottom-0  border-r-2 border-b z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
+        ref="addButtons"
+        style="width: 240px; height:59px;"
+        :style="{ bottom: addButtonsBottomStyle }"
+        class="border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
       >
         <UButton 
           v-if="view.mode === 'project'"
@@ -136,7 +140,7 @@
         </div>
       </div> 
       <div
-        class="empty-sidebar absolute z-1 top-0 bottom-0 bg-default border-r-2 pane-border"
+        class="empty-sidebar absolute z-1 top-0 bottom-10 bg-default border-r-2 pane-border"
         style="width: 240px;"
       />     
     </div>
@@ -239,6 +243,19 @@ const {
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
 const timelineWidth = computed(() => days.value.length * view.value.px_per_day)
+
+const addButtons = ref<HTMLElement | null>(null)
+
+// Calculate scrollbar height and position addButtons accordingly
+const addButtonsBottomStyle = ref('0px')
+
+function updateAddButtonsPosition() {
+  if (scrollArea.value) {
+    // Calculate scrollbar height (difference between offsetHeight and clientHeight)
+    const scrollbarHeight = scrollArea.value.offsetHeight - scrollArea.value.clientHeight
+    addButtonsBottomStyle.value = `${scrollbarHeight}px`
+  }
+}
 
 // Subrow logic
 function personProjects(personId: string) {
@@ -404,6 +421,71 @@ function handleDeletePerson(personId: string) {
   } catch (error) {
     console.error('Failed to delete person:', error)
   }
+}
+
+// Generic function to handle view switching and scrolling to a specific item
+function handleViewSwitchAndScroll(targetId: string, targetMode: 'person' | 'project') {
+  // Switch to the target view mode
+  store.switchMode(targetMode)
+  
+  // Wait for the view to update then scroll to the target item
+  nextTick(() => {
+    // Wait a bit more for the DOM to fully render with the new view
+    setTimeout(() => {
+      if (!scrollArea.value) return
+      
+      // Try to find the actual DOM element for the target group
+      const targetSelector = `.drag-group-row[data-group-id="${targetId}"]`
+      const groupElement = scrollArea.value.querySelector(targetSelector) as HTMLElement
+      
+      if (groupElement) {
+        // Use the actual DOM element position for precise scrolling
+        const containerRect = scrollArea.value.getBoundingClientRect()
+        const targetRect = groupElement.getBoundingClientRect()
+        const currentScrollTop = scrollArea.value.scrollTop
+        
+        // Calculate the position relative to the scroll container
+        const targetScrollPosition = currentScrollTop + (targetRect.top - containerRect.top)
+        
+        // Account for sticky header height - find the TimelineHeader element
+        const headerElement = scrollArea.value.querySelector('.header-grid') as HTMLElement
+        const headerHeight = headerElement ? headerElement.offsetHeight : 0
+        
+        // Add some offset to show the target below the sticky header with padding
+        const scrollOffset = headerHeight + 10 // header height + 10px padding
+        
+        scrollArea.value.scrollTo({
+          top: Math.max(0, targetScrollPosition - scrollOffset),
+          behavior: 'smooth'
+        })
+      } else {
+        // Fallback to approximate calculation if DOM element not found
+        const sortedList = targetMode === 'person' ? sortablePeople.value : sortableProjects.value
+        const targetIndex = sortedList.findIndex(item => item.id === targetId)
+        
+        if (targetIndex >= 0) {
+          // Use a more conservative estimate
+          const approximateRowHeight = 150
+          const scrollPosition = targetIndex * approximateRowHeight
+          
+          scrollArea.value.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+          })
+        }
+      }
+    }, 100) // Small delay to ensure DOM is fully rendered
+  })
+}
+
+// Handle click on project name to switch view and scroll to project
+function handleProjectClick(projectId: string) {
+  handleViewSwitchAndScroll(projectId, 'project')
+}
+
+// Handle click on person name to switch view and scroll to person
+function handlePersonClick(personId: string) {
+  handleViewSwitchAndScroll(personId, 'person')
 }
 
 function handleCreatePerson(name: string) {
@@ -609,8 +691,11 @@ onMounted(async () => {
   // Initialize timeline considering existing assignments (includes extra buffer for drag operations)
   await initTimelineWithAssignments()
   
-  // Auto-scroll to today on app initialization
+  // Update addButtons position based on scrollbar height
   await nextTick()
+  updateAddButtonsPosition()
+  
+  // Auto-scroll to today on app initialization
   if (timelineEvents?.goToTodayEvent) {
     timelineEvents.goToTodayEvent.value = todayISO
     nextTick(() => {
