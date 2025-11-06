@@ -21,7 +21,6 @@
   z-index: -1;
 }
 .grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background-color: var(--divide-color-muted); }
-.header-grid .grid-v{ bottom:0;}
 .grid-v.week { background-color: var(--divide-color-accented); width: 2px; }
 .timeline-bg { background-color: var(--background-color-muted); }
 .pane-border { border-color: var(--border-color-muted); }
