@@ -186,8 +186,4 @@ function laneTop(lane: number) {
 .drag-row {
   background-color: var(--background-color-default);
 }
-.left-label {
-  margin-bottom:-1px;
-  border-bottom-width:1px;
-}
 </style>
