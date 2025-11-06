@@ -105,6 +105,11 @@ const form = ref<EditProjectForm>({
   estimatedDays: null
 })
 
+const nameError = ref<string | null>(null)
+
+// Check if the current name is unique (excluding the current project)
+const isNameUnique = computed(() => {
+  if (!props.projects || !form.value.name.trim()) return true
   
   const trimmedName = form.value.name.trim().toLowerCase()
   return !props.projects.some(p => 
