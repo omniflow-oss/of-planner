@@ -10,7 +10,7 @@ function generateSequentialId(prefix: string, existingItems: { id: string }[]): 
   
   for (const item of existingItems) {
     const match = item.id.match(regex)
-    if (match) {
+    if (match && match[1]) {
       const number = parseInt(match[1], 10)
       if (number > maxNumber) {
         maxNumber = number
@@ -75,8 +75,8 @@ export const usePlannerStore = defineStore('planner', {
     updateAssignment(id: string, patch: Partial<Assignment>) {
       const idx = this.assignments.findIndex(a => a.id === id)
       if (idx === -1) return
-      const curr = this.assignments[idx]
-      const next = { ...curr, ...patch }
+      const curr = this.assignments[idx]!
+      const next = { ...curr, ...patch } as Assignment
       if (patch.start || patch.end) {
         const clamped = clampDateRange(next.start, next.end)
         next.start = clamped.start
@@ -115,6 +115,14 @@ export const usePlannerStore = defineStore('planner', {
     },
 
     createProject(input: { name: string; color?: string; emoji?: string; estimatedDays?: number | null }) {
+      // Validate name uniqueness
+      const exists = this.projects.some(
+        p => p.name.toLowerCase() === input.name.toLowerCase()
+      )
+      if (exists) {
+        throw new Error('Project already exists')
+      }
+      
       const id = generateSequentialId('j', this.projects)
       const p: Project = { 
         id, 
@@ -129,6 +137,16 @@ export const usePlannerStore = defineStore('planner', {
     },
 
     updateProject(id: string, patch: { name?: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }) {
+      // Validate name uniqueness if name is being updated
+      if (patch.name) {
+        const exists = this.projects.some(
+          p => p.id !== id && p.name.toLowerCase() === patch.name!.toLowerCase()
+        )
+        if (exists) {
+          throw new Error('Project already exists')
+        }
+      }
+      
       const idx = this.projects.findIndex(p => p.id === id)
       if (idx === -1) return
       const project = this.projects[idx]!
