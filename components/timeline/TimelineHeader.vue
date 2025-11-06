@@ -160,7 +160,9 @@ function isToday(day: string) {
   top:0;
   width: 2px;
   background-color: rgb(203 213 225); /* slate-300 */
-
+}
+.dark .month-year-header::after {
+  background-color: rgba(71, 85, 105, 0.5); /* slate-600 */
 }
 
 </style>
