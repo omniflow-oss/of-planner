@@ -7,23 +7,28 @@
     <div class=" border-r-2 pane-border sticky left-0 z-10 bg-default left-label">
       <div class="flex items-center h-full px-3 pl-7 py-2 text-sm text-default">
         <!-- Drag handle -->
-        <UIcon
-          name="i-lucide-grip-vertical"
-          class="drag-handle mr-2 size-3"
-          :class="subrow.isTimeOff 
-            ? 'invisible cursor-not-allowed opacity-50'
-            : 'text-slate-400 cursor-grab hover:text-slate-600'"
-        />
-        <UIcon
-          :name="subrow.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
-          :class="subrow.isTimeOff ? 'mr-2 text-blue-600 size-3' : 'mr-2 text-slate-400 size-3'"
-        />
-        <div class="flex items-center gap-2">
-          <div 
+        <div class="my-auto">
+          <UIcon
+            name="i-lucide-grip-vertical"
+            class="drag-handle mr-2 size-3"
+            :class="subrow.isTimeOff 
+              ? 'invisible cursor-not-allowed opacity-50'
+              : 'text-slate-400 cursor-grab hover:text-slate-600'"
+          />
+        </div>
+        <div class="my-auto">
+          <UIcon
+            :name="subrow.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
+            :class="subrow.isTimeOff ? 'mr-2 text-blue-600 size-3' : 'mr-2 text-slate-400 size-3'"
+          />
+        </div>
+        <div class="flex items-center gap-2 w-full">
+          <div
+            class="line-clamp-2"
             :class="[
               subrow.isTimeOff 
-                ? 'truncate font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md' 
-                : 'truncate font-medium text-slate-500 dark:text-gray-500',
+                ? 'font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md' 
+                : 'font-medium text-slate-500 dark:text-gray-500',
               // Make project names clickable in person view (when we have a project_id and are showing project names)
               groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
                 ? 'cursor-pointer hover:text-blue-600 hover:underline transition-colors' 
@@ -56,8 +61,8 @@
 
     <!-- Right: timeline track -->
     <div
-      class="relative "
-      :class="{'bg-violet-100/60 dark:bg-violet-50/10 min-h-full': subrow.isTimeOff,'timeline-bg':!subrow.isTimeOff}"
+      class="relative min-h-full"
+      :class="{'bg-violet-100/60 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg':!subrow.isTimeOff}"
       :style="{ height: (rowHeights[subrow.key] || baseRowMin) + 'px' }"
       :data-row-key="subrow.key"
       @contextmenu="$emit('context-menu', $event, subrow)"

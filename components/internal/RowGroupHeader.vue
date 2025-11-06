@@ -9,35 +9,39 @@
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
-      <UIcon
-        name="i-lucide-grip-vertical"
-        class="group-drag-handle text-slate-400 size-3 cursor-grab hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
-        title="Drag to reorder groups"
-        tabindex="0"
-        role="button"
-        aria-hidden="false"
-        :aria-label="`Drag to reorder ${label} group. Use arrow keys to move up or down, or press Enter to activate drag mode.`"
-        @keydown="handleDragHandleKeydown"
-      />
-      <UButton
-        size="xs"
-        variant="outline"
-        :icon="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
-        aria-label="Toggle"
-        @click="$emit('toggle-expanded')"
-      />
-      <UIcon
-        :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'"
-        class="text-slate-500 size-4"
-      />
-      <div class="flex items-center gap-1 group">
-        <span>{{ label }}</span>
+      <div class="my-auto">
+        <UIcon
+          name="i-lucide-grip-vertical"
+          class="group-drag-handle text-slate-400 size-3 cursor-grab hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
+          title="Drag to reorder groups"
+          tabindex="0"
+          role="button"
+          :aria-label="`Drag to reorder ${label} group. Use arrow keys to move up or down, or press Enter to activate drag mode.`"
+          @keydown="handleDragHandleKeydown"
+        />
+      </div>
+      <div class="my-auto">
+        <UButton
+          size="xs"
+          variant="outline"
+          :icon="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
+          aria-label="Toggle"
+          @click="$emit('toggle-expanded')"
+        />
+      </div>
+      <div class="my-auto">
+        <UIcon
+          :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'"
+          class="text-slate-500 size-4 align-sub"
+        />
+      </div>
+      <div class="line-clamp-2 relative w-full group">        
         <UButton
           v-if="groupType === 'project'"
           size="xs"
           variant="ghost"
           color="neutral"
-          class="opacity-0 group-hover:opacity-100 transition-opacity"
+          class="bg-default opacity-0 group-hover:opacity-100 transition-opacity absolute right-0"
           :icon="'i-lucide-edit-2'"
           aria-label="Edit project"
           @click="$emit('edit-project')"
@@ -47,27 +51,27 @@
           size="xs"
           variant="ghost"
           color="neutral"
-          class="opacity-0 group-hover:opacity-100 transition-opacity"
+          class="bg-default opacity-0 group-hover:opacity-100 transition-opacity absolute right-0"
           :icon="'i-lucide-edit-2'"
           aria-label="Edit person"
           @click="$emit('edit-person')"
         />
-      </div>
-
-      <UBadge
-        class="ml-auto"
-        size="xs"
-        :color="badgeColor"
-        variant="soft"
-        :title="'Total man-days (visible window)'"
-      >
-        {{ totalMDBadge }}
-      </UBadge>
+        <UBadge
+          class="float-right"
+          size="xs"
+          :color="badgeColor"
+          variant="soft"
+          :title="'Total man-days (visible window)'"
+        >
+          {{ totalMDBadge }}
+        </UBadge>
+        <span>{{ label }}</span>
+      </div>      
       <UButton
         size="xs"
         color="primary"
         variant="soft"
-        class="ml-2"
+        class="ml-auto"
         :title="groupType === 'person' ? 'Assign project' : 'Assign person'"
         :icon="'i-lucide-plus'"
         aria-label="Add"
