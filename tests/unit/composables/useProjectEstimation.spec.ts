@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ref } from 'vue'
-import { useProjectEstimation, WARNING_DAYS_THRESHOLD, OVERDUE_THRESHOLD } from '@/composables/useProjectEstimation'
+import { useProjectEstimation, WARNING_DAYS_THRESHOLD, OVERDUE_THRESHOLD, roundToDecimalPlaces } from '@/composables/useProjectEstimation'
 import type { Assignment, Project } from '@/types/planner'
 
 describe('useProjectEstimation', () => {
@@ -79,7 +79,7 @@ describe('useProjectEstimation', () => {
     // Project 2: 3 estimated - 3.8 current = -0.8 remaining (< OVERDUE_THRESHOLD)
     const project2Status = getProjectNotificationStatus('project2')
     expect(project2Status?.color).toBe('red')
-    expect(Math.round((project2Status?.remaining || 0) * 10) / 10).toBe(-0.8)
+    expect(roundToDecimalPlaces(project2Status?.remaining || 0)).toBe(-0.8)
 
     // Project 3: no estimated days, should return null
     expect(getProjectNotificationStatus('project3')).toBeNull()
@@ -125,5 +125,13 @@ describe('useProjectEstimation', () => {
   it('should export correct threshold constants', () => {
     expect(WARNING_DAYS_THRESHOLD).toBe(5)
     expect(OVERDUE_THRESHOLD).toBe(0)
+  })
+
+  it('should round numbers to correct decimal places', () => {
+    expect(roundToDecimalPlaces(3.14159)).toBe(3.1)
+    expect(roundToDecimalPlaces(2.95)).toBe(3.0)
+    expect(roundToDecimalPlaces(1.234567, 2)).toBe(1.23)
+    expect(roundToDecimalPlaces(1.236, 2)).toBe(1.24)
+    expect(roundToDecimalPlaces(5)).toBe(5)
   })
 })

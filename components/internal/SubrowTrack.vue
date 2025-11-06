@@ -57,7 +57,7 @@
     <!-- Right: timeline track -->
     <div
       class="relative "
-      :class="{'bg-violet-100/60 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg':!subrow.isTimeOff}"
+      :class="{'bg-violet-100/60 dark:bg-violet-50/10 min-h-full': subrow.isTimeOff,'timeline-bg':!subrow.isTimeOff}"
       :style="{ height: (rowHeights[subrow.key] || baseRowMin) + 'px' }"
       :data-row-key="subrow.key"
       @contextmenu="$emit('context-menu', $event, subrow)"

@@ -1,10 +1,22 @@
-import { computed, type Ref } from 'vue'
+import { type Ref } from 'vue'
 import type { Assignment, Project } from '@/types/planner'
 import { businessDaysBetweenInclusive } from '@/composables/useDate'
 
 // Constants for project estimation thresholds
 export const WARNING_DAYS_THRESHOLD = 5 // Orange notification when remaining days < 5
 export const OVERDUE_THRESHOLD = 0 // Red notification when remaining days < 0
+
+// Constants for decimal precision in calculations
+export const DECIMAL_PLACES = 1 // Number of decimal places for rounding
+export const ROUNDING_FACTOR = Math.pow(10, DECIMAL_PLACES) // 10^1 = 10
+
+/**
+ * Utility function to round numbers to specified decimal places
+ */
+export function roundToDecimalPlaces(value: number, places: number = DECIMAL_PLACES): number {
+  const factor = Math.pow(10, places)
+  return Math.round(value * factor) / factor
+}
 
 export type NotificationStatus = {
   color: 'red' | 'orange'
@@ -32,7 +44,7 @@ export const useProjectEstimation = (
       total += dayCount * assignment.allocation
     })
     
-    return Math.round(total * 10) / 10 // Round to 1 decimal place
+    return roundToDecimalPlaces(total)
   }
 
   /**
@@ -66,25 +78,25 @@ export const useProjectEstimation = (
    */
   function getProjectBadgeColor(projectId: string): BadgeColor {
     const project = projectsMap.value[projectId]
+    let colorset: BadgeColor = 'neutral'
     if (!project?.estimatedDays) {
-      return 'neutral'
+      return colorset
     }
     
     const estimated = project.estimatedDays
     const current = calculateProjectTotalDays(projectId)
     const remaining = estimated - current
     
-    // If over estimated time (remaining < 0), show red
-    if (remaining < OVERDUE_THRESHOLD) {
-      return 'error'
-    }
-    
     // If less than warning threshold remaining, show orange
     if (remaining < WARNING_DAYS_THRESHOLD) {
-      return 'warning'
+      colorset = 'warning'
     }
     
-    return 'neutral'
+    // If over estimated time (remaining < 0), show red (higher priority)
+    if (remaining < OVERDUE_THRESHOLD) {
+      colorset = 'error'
+    }
+    return colorset
   }
 
   /**

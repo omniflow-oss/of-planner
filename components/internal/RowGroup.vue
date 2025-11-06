@@ -80,7 +80,7 @@ import { indexFromX } from '@/utils/grid'
 import { useCapacity } from '@/composables/useCapacity'
 import { useRowSorting } from '@/composables/useRowSorting'
 import { useDragToCreate } from '@/composables/useDragToCreate'
-import { useProjectEstimation } from '@/composables/useProjectEstimation'
+import { useProjectEstimation, roundToDecimalPlaces } from '@/composables/useProjectEstimation'
 import RowGroupHeader from '@/components/internal/RowGroupHeader.vue'
 import SubrowTrack from '@/components/internal/SubrowTrack.vue'
 
@@ -237,7 +237,7 @@ const totalMDBadge = computed(() => {
   
   // For person view, use the existing capacity calculation
   const val = totalMD.value
-  const currentTotal = Number.isInteger(val) ? `${val}` : `${Math.round(val * 10) / 10}`
+  const currentTotal = Number.isInteger(val) ? `${val}` : `${roundToDecimalPlaces(val)}`
   return `${currentTotal}d`
 })
 
@@ -248,9 +248,7 @@ const badgeColor = computed(() => {
   }
   
   return projectEstimation.getProjectBadgeColor(props.groupId)
-  
-  // Otherwise neutral/default
-  return 'neutral'
+
 })
 
 function coverageClass(i: number) {

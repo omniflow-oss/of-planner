@@ -74,7 +74,7 @@
       />
     </div>
     <div
-      class="relative border-r-2 pane-border timeline-bg disabled-rows"
+      class="relative border-r-2 pane-border timeline-bg disabled-rows min-h-full"
       :style="{ height: headerHeight + 'px' }"
     >
       <GridOverlay

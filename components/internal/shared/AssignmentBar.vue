@@ -61,6 +61,7 @@
 import { computed, ref, onUnmounted } from 'vue'
 import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import { generateUserColor } from '@/utils/colors'
+import { roundToDecimalPlaces } from '@/composables/useProjectEstimation'
 import type { Assignment } from '@/types/planner'
 
 const props = defineProps<{ assignment: Assignment; startISO: string; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
@@ -92,7 +93,7 @@ const barStyle = computed(() => ({
 const md = computed(() => lengthDays.value * props.assignment.allocation)
 const mdBadge = computed(() => {
   const val = md.value
-  return Number.isInteger(val) ? `${val}d` : `${Math.round(val * 10) / 10}d`
+  return Number.isInteger(val) ? `${val}d` : `${roundToDecimalPlaces(val)}d`
 })
 const mdTitle = computed(() => `Total man-days for this assignment`)
 const tooltipText = computed(() => {
