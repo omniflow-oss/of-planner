@@ -61,7 +61,7 @@
           <UButton
             size="xs"
             @click="handleSave"
-            :disabled="form.estimatedDays === null || form.estimatedDays === undefined"
+            :disabled="form.estimatedDays == null"
           >
             Save Changes
           </UButton>
@@ -84,7 +84,7 @@ interface Props {
     id: string;
     name: string;
     estimatedDays?: number | null;
-  };
+  } | null;
   hasAssignments?: boolean;
 }
 

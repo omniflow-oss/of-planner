@@ -1,3 +1,7 @@
+// Selectors for modal focus functionality
+const MODAL_CONTAINER_SELECTOR = '.popin'
+const FOCUSABLE_INPUT_SELECTOR = 'input[type="text"], input:not([type]), input[type="number"], select, textarea'
+
 /**
  * Composable for handling modal focus functionality
  */
@@ -8,8 +12,8 @@ export const useModalFocus = () => {
    */
   const focusFirstInput = (delay = 100) => {
     setTimeout(() => {
-      const modal = document.querySelector('.popin')
-      const inputEl = modal?.querySelector('input[type="text"], input:not([type]), input[type="number"], select, textarea') as HTMLElement
+      const modal = document.querySelector(MODAL_CONTAINER_SELECTOR)
+      const inputEl = modal?.querySelector(FOCUSABLE_INPUT_SELECTOR) as HTMLElement
       inputEl?.focus()
     }, delay)
   }

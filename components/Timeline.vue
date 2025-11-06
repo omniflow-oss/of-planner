@@ -199,12 +199,15 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
-import { addDaysISO } from '@/composables/useDate'
 import { useTimeline } from '@/composables/useTimeline'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import { useTimelineActions } from '@/composables/useTimelineActions'
 import { useTimelineModals } from '@/composables/useTimelineModals'
 import { useTimelineSorting } from '@/composables/useTimelineSorting'
+import { useTimelineInit } from '@/composables/useTimelineInit'
+import { useViewNavigation } from '@/composables/useViewNavigation'
+import { useSubrows } from '@/composables/useSubrows'
+import { useTimelineHandlers } from '@/composables/useTimelineHandlers'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
 import RowGroup from '@/components/internal/RowGroup.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
@@ -240,6 +243,10 @@ const {
   weekStarts
 } = useTimeline(view)
 
+// Initialize timeline and subrow composables after todayISO is available
+const timelineInit = useTimelineInit(assignments, view, todayISO)
+const subrows = useSubrows(assignments, people, projects)
+
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
 const timelineWidth = computed(() => days.value.length * view.value.px_per_day)
@@ -257,259 +264,13 @@ function updateAddButtonsPosition() {
   }
 }
 
-// Subrow logic
-function personProjects(personId: string) {
-  const set = new Set(assignments.value.filter(a => a.person_id === personId).map(a => a.project_id))
-  return Array.from(set)
-}
-function projectPeople(projectId: string) {
-  const set = new Set(assignments.value.filter(a => a.project_id === projectId).map(a => a.person_id))
-  return Array.from(set)
-}
+// Subrow logic from composable
+const { personSubrows, projectSubrows } = subrows
 
-function personSubrows(personId: string) {
-  const projIds = personProjects(personId)
-  const regularProjIds = projIds.filter(pid => pid !== 'TIMEOFF')
-  const rows = regularProjIds.map(pid => ({ key: `${personId}:${pid}`, label: projectName(pid), person_id: personId, project_id: pid }))
-  const timeOffRow = { key: `${personId}:TIMEOFF`, label: 'Time Off', person_id: personId, project_id: 'TIMEOFF', isTimeOff: true }
-  return [timeOffRow, ...rows, { key: `${personId}:__add__`, label: 'Assign a project', person_id: personId, project_id: null }]
-}
-function projectSubrows(projectId: string) {
-  const peopleIds = projectPeople(projectId)
-  const rows = peopleIds.map(pers => ({ key: `${projectId}:${pers}`, label: personName(pers), person_id: pers, project_id: projectId }))
-  return [...rows, { key: `${projectId}:__add__`, label: 'Add person', person_id: null, project_id: projectId }]
-}
-function projectName(id: string) { return projects.value.find(p => p.id === id)?.name ?? id }
-function personName(id: string) { return people.value.find(p => p.id === id)?.name ?? id }
+// Timeline handlers composable (needs scrollArea ref, so initialize after it's declared)
+// Will be initialized after scrollArea declaration
 
-// Modal handlers
-function handleEdit(payload: { assignment: any; x: number; y: number }) {
-  modals.openEditModal(payload.assignment)
-}
-
-function handleCreatePopover(payload: { key: string; x: number; y: number; dayISO: string; person_id: string|null; project_id: string|null }) {
-  modals.openCreateModal({ dayISO: payload.dayISO, person_id: payload.person_id, project_id: payload.project_id })
-}
-
-function handleSaveEdit(editData: { start: string; end: string; allocation: 1|0.75|0.5|0.25 }) {
-  if (!modals.editState.value) return
-  const { id } = modals.editState.value
-  const { start, end, allocation } = editData
-  actions.updateAssignment(id, { start, end, allocation })
-  modals.closeEditModal()
-}
-
-function handleDirectDelete() {
-  if (!modals.editState.value) return
-  actions.deleteAssignment(modals.editState.value.id)
-  modals.closeEditModal()
-}
-
-function handleCloseCreate() {
-  modals.closeCreateModal()
-}
-
-function handleConfirmCreate(payload: { person_id: string|null; project_id: string|null; start: string; duration: number; allocation: 1|0.75|0.5|0.25 }) {
-  actions.onCreate(payload)
-  modals.closeCreateModal()
-}
-
-function handleCreateProject(input: { name: string; estimatedDays: number | null }) {
-  try {
-    actions.createProject(input)
-    modals.closeNewProjectModal()
-    
-    // Scroll to bottom to show the new project
-    nextTick(() => {
-      if (scrollArea.value) {
-        scrollArea.value.scrollTo({
-          top: scrollArea.value.scrollHeight,
-          behavior: 'smooth'
-        })
-      }
-    })
-  } catch (error) {
-    // Display error message to user in the modal
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create project'
-    modals.setNewProjectError(errorMessage)
-  }
-}
-
-// Edit project modal state
-const editProjectOpen = ref(false)
-const editingProject = ref<{ id: string; name: string; estimatedDays?: number | null } | null>(null)
-
-// Check if project has assignments
-const projectHasAssignments = computed(() => {
-  if (!editingProject.value) return false
-  return assignments.value.some(a => a.project_id === editingProject.value!.id)
-})
-
-// Edit person modal state
-const editPersonOpen = ref(false)
-const editingPerson = ref<{ id: string; name: string } | null>(null)
-
-// Check if person has assignments
-const personHasAssignments = computed(() => {
-  if (!editingPerson.value) return false
-  return assignments.value.some(a => a.person_id === editingPerson.value!.id)
-})
-
-// Get existing person names for validation
-const existingPersonNames = computed(() => {
-  return people.value.map(p => p.name)
-})
-
-function handleEditProject(projectId: string) {
-  const project = store.projects.find(p => p.id === projectId)
-  if (project) {
-    editingProject.value = {
-      id: project.id,
-      name: project.name,
-      estimatedDays: project.estimatedDays || null
-    }
-    editProjectOpen.value = true
-  }
-}
-
-function handleSaveProjectEdit(data: { id: string; estimatedDays: number | null }) {
-  try {
-    actions.updateProject(data.id, { estimatedDays: data.estimatedDays })
-    editProjectOpen.value = false
-    editingProject.value = null
-  } catch (error) {
-    console.error('Failed to update project:', error)
-  }
-}
-
-function handleDeleteProject(projectId: string) {
-  try {
-    actions.deleteProject(projectId)
-    editProjectOpen.value = false
-    editingProject.value = null
-  } catch (error) {
-    console.error('Failed to delete project:', error)
-  }
-}
-
-function handleEditPerson(personId: string) {
-  const person = store.people.find(p => p.id === personId)
-  if (person) {
-    editingPerson.value = {
-      id: person.id,
-      name: person.name
-    }
-    editPersonOpen.value = true
-  }
-}
-
-function handleSavePersonEdit(data: { id: string; name: string }) {
-  try {
-    actions.updatePerson(data.id, { name: data.name })
-    editPersonOpen.value = false
-    editingPerson.value = null
-  } catch (error) {
-    console.error('Failed to update person:', error)
-  }
-}
-
-function handleDeletePerson(personId: string) {
-  try {
-    actions.deletePerson(personId)
-    editPersonOpen.value = false  
-    editingPerson.value = null
-  } catch (error) {
-    console.error('Failed to delete person:', error)
-  }
-}
-
-// Generic function to handle view switching and scrolling to a specific item
-function handleViewSwitchAndScroll(targetId: string, targetMode: 'person' | 'project') {
-  // Switch to the target view mode
-  store.switchMode(targetMode)
-  
-  // Wait for the view to update then scroll to the target item
-  nextTick(() => {
-    // Wait a bit more for the DOM to fully render with the new view
-    setTimeout(() => {
-      if (!scrollArea.value) return
-      
-      // Try to find the actual DOM element for the target group
-      const targetSelector = `.drag-group-row[data-group-id="${targetId}"]`
-      const groupElement = scrollArea.value.querySelector(targetSelector) as HTMLElement
-      
-      if (groupElement) {
-        // Use the actual DOM element position for precise scrolling
-        const containerRect = scrollArea.value.getBoundingClientRect()
-        const targetRect = groupElement.getBoundingClientRect()
-        const currentScrollTop = scrollArea.value.scrollTop
-        
-        // Calculate the position relative to the scroll container
-        const targetScrollPosition = currentScrollTop + (targetRect.top - containerRect.top)
-        
-        // Account for sticky header height - find the TimelineHeader element
-        const headerElement = scrollArea.value.querySelector('.header-grid') as HTMLElement
-        const headerHeight = headerElement ? headerElement.offsetHeight : 0
-        
-        // Add some offset to show the target below the sticky header with padding
-        const scrollOffset = headerHeight + 10 // header height + 10px padding
-        
-        scrollArea.value.scrollTo({
-          top: Math.max(0, targetScrollPosition - scrollOffset),
-          behavior: 'smooth'
-        })
-      } else {
-        // Fallback to approximate calculation if DOM element not found
-        const sortedList = targetMode === 'person' ? sortablePeople.value : sortableProjects.value
-        const targetIndex = sortedList.findIndex(item => item.id === targetId)
-        
-        if (targetIndex >= 0) {
-          // Use a more conservative estimate
-          const approximateRowHeight = 150
-          const scrollPosition = targetIndex * approximateRowHeight
-          
-          scrollArea.value.scrollTo({
-            top: scrollPosition,
-            behavior: 'smooth'
-          })
-        }
-      }
-    }, 100) // Small delay to ensure DOM is fully rendered
-  })
-}
-
-// Handle click on project name to switch view and scroll to project
-function handleProjectClick(projectId: string) {
-  handleViewSwitchAndScroll(projectId, 'project')
-}
-
-// Handle click on person name to switch view and scroll to person
-function handlePersonClick(personId: string) {
-  handleViewSwitchAndScroll(personId, 'person')
-}
-
-function handleCreatePerson(name: string) {
-  try {
-    actions.createPerson(name)
-    modals.closeNewPersonModal()
-    
-    // Scroll to bottom to show the new person
-    nextTick(() => {
-      if (scrollArea.value) {
-        scrollArea.value.scrollTo({
-          top: scrollArea.value.scrollHeight,
-          behavior: 'smooth'
-        })
-      }
-    })
-  } catch (error) {
-    // Display error message to user in the modal
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create person'
-    modals.setNewPersonError(errorMessage)
-  }
-}
-
-// Removed: All modal state and handlers are now managed by useTimelineModals composable
+// Modal handlers moved to useTimelineHandlers composable
 
 // Provide assignments ref to children (RowGroup) for lane computation
 const assignmentsKey = Symbol.for('assignmentsRef')
@@ -517,7 +278,37 @@ provide(assignmentsKey, assignments)
 
 const scrollArea = ref<HTMLElement | null>(null)
 
-const { onScroll, init: _init, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
+// View navigation composable (needs scrollArea ref)
+const viewNavigation = useViewNavigation(scrollArea, sortablePeople, sortableProjects, store.switchMode)
+const { handleProjectClick, handlePersonClick } = viewNavigation
+
+// Timeline handlers composable (needs scrollArea ref)
+const timelineHandlers = useTimelineHandlers(scrollArea, assignments, people, store, actions, modals)
+const {
+  editProjectOpen,
+  editingProject,
+  editPersonOpen,
+  editingPerson,
+  projectHasAssignments,
+  personHasAssignments,
+  existingPersonNames,
+  handleEdit,
+  handleCreatePopover,
+  handleSaveEdit,
+  handleDirectDelete,
+  handleCloseCreate,
+  handleConfirmCreate,
+  handleCreateProject,
+  handleCreatePerson,
+  handleEditProject,
+  handleSaveProjectEdit,
+  handleDeleteProject,
+  handleEditPerson,
+  handleSavePersonEdit,
+  handleDeletePerson
+} = timelineHandlers
+
+const { onScroll, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
   // Hide modals when scrolling to keep UX coherent on large moves
@@ -596,78 +387,13 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
     }
   }
 })
-  
-  // No external click handlers needed with UModal
 
-// Function to calculate the date range needed to show all assignments
-function calculateAssignmentDateRange() {
-  if (assignments.value.length === 0) {
-    return null
-  }
-  
-  let earliestDate = assignments.value[0]!.start
-  let latestDate = assignments.value[0]!.end
-  
-  for (const assignment of assignments.value) {
-    if (assignment.start < earliestDate) earliestDate = assignment.start
-    if (assignment.end > latestDate) latestDate = assignment.end
-  }
-  
-  return { start: earliestDate, end: latestDate }
-}
-
-// Function to initialize timeline with assignment coverage
-async function initTimelineWithAssignments() {
-  const assignmentRange = calculateAssignmentDateRange()
-  
-  // Always start 20 days before today to ensure buffer space for drag operations
-  const today = new Date(todayISO)
-  const timelineStart = new Date(today)
-  timelineStart.setUTCDate(timelineStart.getUTCDate() - 20)
-  
-  if (!assignmentRange) {
-    // No assignments, create timeline from -20 days to +60 days from today
-    const timelineEnd = new Date(today)
-    timelineEnd.setUTCDate(timelineEnd.getUTCDate() + 60)
-    
-    view.value.start = timelineStart.toISOString().slice(0, 10)
-    view.value.days = Math.floor((timelineEnd.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
-    return
-  }
-  
-  // Calculate end date to include all assignments with some padding
-  const assignmentStart = new Date(assignmentRange.start)
-  const assignmentEnd = new Date(assignmentRange.end)
-  
-  // Timeline starts 20 days before today, but extend if assignments go earlier
-  const finalStart = new Date(Math.min(timelineStart.getTime(), assignmentStart.getTime() - 14 * 24 * 60 * 60 * 1000)) // 14 days padding before earliest assignment
-  
-  // Timeline ends at least 14 days after latest assignment or 60 days after today, whichever is later
-  const minEndFromToday = new Date(today)
-  minEndFromToday.setUTCDate(minEndFromToday.getUTCDate() + 60)
-  const minEndFromAssignments = new Date(assignmentEnd)
-  minEndFromAssignments.setUTCDate(minEndFromAssignments.getUTCDate() + 14)
-  const finalEnd = new Date(Math.max(minEndFromToday.getTime(), minEndFromAssignments.getTime()))
-  
-  // Calculate total days
-  const totalDays = Math.floor((finalEnd.getTime() - finalStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
-  
-  view.value.start = finalStart.toISOString().slice(0, 10)
-  view.value.days = Math.min(365, Math.max(35, totalDays))
-}
+// Timeline initialization functions from composable
+const { initTimelineWithAssignments, needsTimelineExpansion } = timelineInit
 
 // Watch for assignment changes and re-initialize timeline if needed
 watch(assignments, async (_newAssignments) => {
-  const assignmentRange = calculateAssignmentDateRange()
-  if (!assignmentRange) return
-  
-  // Check if any assignments are outside current timeline view
-  const currentStart = view.value.start
-  const currentEnd = addDaysISO(currentStart, view.value.days - 1)
-  
-  const needsExpansion = assignmentRange.start < currentStart || assignmentRange.end > currentEnd
-  
-  if (needsExpansion) {
+  if (needsTimelineExpansion.value) {
     await initTimelineWithAssignments()
     
     // Auto-scroll to today after expansion
@@ -682,10 +408,6 @@ watch(assignments, async (_newAssignments) => {
     }
   }
 }, { deep: true })
-
-
-// Initialize timeline and auto-scroll to today
-
 
 onMounted(async () => { 
   // Initialize timeline considering existing assignments (includes extra buffer for drag operations)
@@ -715,23 +437,15 @@ const expandState = ref({
 // Computed property to get current view's expand state
 const allExpanded = computed(() => expandState.value[view.value.mode])
 
-function expandAll() { 
-  rowGroupControls.expandAllToken.value = Date.now()
-  expandState.value[view.value.mode] = true
-}
-
-function collapseAll() { 
-  rowGroupControls.collapseAllToken.value = Date.now()
-  expandState.value[view.value.mode] = false
-}
-
 function toggleExpandAll() {
   if (allExpanded.value) {
-    collapseAll()
+    // Collapse all
+    rowGroupControls.collapseAllToken.value = Date.now()
+    expandState.value[view.value.mode] = false
   } else {
-    expandAll()
+    // Expand all
+    rowGroupControls.expandAllToken.value = Date.now()
+    expandState.value[view.value.mode] = true
   }
 }
-
-// Drag-and-drop sort handlers are now provided by useTimelineSorting composable
 </script>

@@ -68,7 +68,7 @@ interface Props {
   person?: {
     id: string;
     name: string;
-  };
+  } | null;
   hasAssignments?: boolean;
   existingNames?: string[];
 }

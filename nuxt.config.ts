@@ -24,6 +24,6 @@ export default defineNuxtConfig({
   nitro: {
     // Generate a static site tailored for GitHub Pages hosting
     preset: "github-pages",
-    compatibilityDate: '2025-10-31'
+    compatibilityDate: "2025-11-06"
   }
 })
