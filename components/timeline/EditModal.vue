@@ -53,7 +53,7 @@
         <UButton
           color="error"
           size="xs"
-          @click="$emit('delete')"
+          @click="handleDelete"
         >
           Delete
         </UButton>
@@ -115,5 +115,12 @@ function handleSave() {
     end: localEnd.value,
     allocation: localAllocation.value
   })
+}
+
+// Handle delete with native confirmation
+function handleDelete() {
+  if (window.confirm('Are you sure you want to delete this assignment? This action cannot be undone.')) {
+    emit('delete')
+  }
 }
 </script>

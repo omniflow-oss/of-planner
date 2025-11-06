@@ -111,6 +111,14 @@ export function useTimelineActions() {
     store.deleteAssignment(id)
   }
 
+  function updateProject(id: string, updates: { estimatedDays?: number | null }) {
+    store.updateProject(id, updates)
+  }
+
+  function deleteProject(id: string) {
+    store.deleteProject(id)
+  }
+
   return {
     onCreate,
     onUpdate,
@@ -118,6 +126,8 @@ export function useTimelineActions() {
     createProject,
     createPerson,
     updateAssignment,
-    deleteAssignment
+    deleteAssignment,
+    updateProject,
+    deleteProject
   }
 }

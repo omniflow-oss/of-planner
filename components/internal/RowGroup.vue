@@ -1,6 +1,6 @@
 <template>
   <div
-    class="grid rows-group relative z-2 drag-group-row"
+    class="grid  rows-group relative z-2 drag-group-row"
     style="-webkit-user-select: none; user-select: none;"  
     draggable="false"
   >
@@ -22,6 +22,7 @@
       :coverage-class="coverageClass"
       @toggle-expanded="expanded = !expanded"
       @add-click="handleAddClick"
+      @edit-project="handleEditProject"
     />   
     <!-- Subrows Container -->
     <div class="draggable-container">
@@ -90,7 +91,7 @@ const props = defineProps<{
   peopleMap?: Record<string, { id: string; name: string }>
 }>()
 
-const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover'])
+const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project'])
 
 // Reactive references
 const pxPerDay = computed(() => props.pxPerDay)
@@ -142,6 +143,13 @@ function handleAddClick() {
   }
   
   emit('createFromSidebar', addRowData)
+}
+
+// Handle the edit project button click
+function handleEditProject() {
+  if (props.groupType === 'project') {
+    emit('edit-project', props.groupId)
+  }
 }
 
 // Mouse event handlers - delegate to composable

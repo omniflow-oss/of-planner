@@ -113,6 +113,24 @@ export const usePlannerStore = defineStore('planner', {
       return p
     },
 
+    updateProject(id: string, patch: { name?: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }) {
+      const idx = this.projects.findIndex(p => p.id === id)
+      if (idx === -1) return
+      const project = this.projects[idx]!
+      if (patch.name !== undefined) project.name = patch.name
+      if (patch.color !== undefined) project.color = patch.color
+      if (patch.emoji !== undefined) project.emoji = patch.emoji
+      if (patch.estimatedDays !== undefined) project.estimatedDays = patch.estimatedDays
+      this.isDataModified = true
+    },
+
+    deleteProject(id: string) {
+      this.projects = this.projects.filter(p => p.id !== id)
+      // Also remove all assignments for this project
+      this.assignments = this.assignments.filter(a => a.project_id !== id)
+      this.isDataModified = true
+    },
+
     // Clear all data to empty state
     clearState() {
       this.people = []

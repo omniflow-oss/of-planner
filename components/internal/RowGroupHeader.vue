@@ -5,7 +5,7 @@
   >
     <!-- Group header row -->
     <div
-      class="px-3 py-2 border-b border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
+      class="px-3 py-2 border-r-2 pane-border font-medium flex items-center gap-2 sticky left-0 z-10 bg-default"
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
@@ -29,7 +29,22 @@
         :name="groupType === 'person' ? 'i-lucide-user' : 'i-lucide-briefcase'"
         class="text-slate-500 size-4"
       />
-      <span>{{ label }}</span>
+      <div
+        v-if="groupType === 'project'"
+        class="flex items-center gap-1 group"
+      >
+        <span>{{ label }}</span>
+        <UButton
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          class="opacity-0 group-hover:opacity-100 transition-opacity"
+          :icon="'i-lucide-edit-2'"
+          aria-label="Edit project"
+          @click="$emit('edit-project')"
+        />
+      </div>
+      <span v-else>{{ label }}</span>
 
       <UBadge
         class="ml-auto"
@@ -107,6 +122,7 @@ defineProps<{
 defineEmits<{
   'toggle-expanded': []
   'add-click': []
+  'edit-project': []
 }>()
 
 // Handle keyboard interactions for drag handle accessibility

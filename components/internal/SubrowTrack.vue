@@ -4,7 +4,7 @@
     style="grid-template-columns: 240px 1fr;"
   >
     <!-- Left: label -->
-    <div class="border-b border-r-2 pane-border sticky left-0 z-10 bg-default" >
+    <div class=" border-r-2 pane-border sticky left-0 z-10 bg-default" >
       <div class="flex items-center h-full px-3 pl-7 py-2 text-sm text-default">
         <!-- Drag handle -->
         <UIcon
@@ -26,7 +26,7 @@
 
     <!-- Right: timeline track -->
     <div
-      class="relative border-b border-r-2 pane-border"
+      class="relative "
       :class="{'bg-violet-100/60 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg':!subrow.isTimeOff}"
       :style="{ height: (rowHeights[subrow.key] || baseRowMin) + 'px' }"
       :data-row-key="subrow.key"

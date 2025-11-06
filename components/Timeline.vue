@@ -50,6 +50,7 @@
               @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, view.start)"
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
+              @edit-project="handleEditProject"
             />
           </VueDraggableNext>
         </template>
@@ -78,6 +79,7 @@
               @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, view.start)"
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
+              @edit-project="handleEditProject"
             />
           </VueDraggableNext>
         </template>
@@ -143,7 +145,7 @@
       :edit-state="modals.editState.value"
       @close="modals.closeEditModal"
       @save="handleSaveEdit"
-      @delete="modals.openDeleteModal"
+      @delete="handleDirectDelete"
     />
     
     <CreateModal
@@ -167,10 +169,13 @@
       @create="handleCreatePerson"
     />
     
-    <DeleteConfirmModal
-      :open="modals.deleteOpen.value"
-      @close="modals.closeDeleteModal"
-      @confirm="handleConfirmDelete"
+    <EditProjectModal
+      :open="editProjectOpen"
+      :project="editingProject"
+      :has-assignments="projectHasAssignments"
+      @close="() => { editProjectOpen = false; editingProject = null }"
+      @save="handleSaveProjectEdit"
+      @delete="handleDeleteProject"
     />
   </div>
 </template>
@@ -191,7 +196,7 @@ import EditModal from '@/components/timeline/EditModal.vue'
 import CreateModal from '@/components/timeline/CreateModal.vue'
 import NewProjectModal from '@/components/timeline/NewProjectModal.vue'
 import NewPersonModal from '@/components/timeline/NewPersonModal.vue'
-import DeleteConfirmModal from '@/components/timeline/DeleteConfirmModal.vue'
+import EditProjectModal from '@/components/timeline/EditProjectModal.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
 
 const store = usePlannerStore()
@@ -264,10 +269,9 @@ function handleSaveEdit(editData: { start: string; end: string; allocation: 1|0.
   modals.closeEditModal()
 }
 
-function handleConfirmDelete() {
+function handleDirectDelete() {
   if (!modals.editState.value) return
   actions.deleteAssignment(modals.editState.value.id)
-  modals.closeDeleteModal()
   modals.closeEditModal()
 }
 
@@ -298,6 +302,48 @@ function handleCreateProject(input: { name: string; estimatedDays: number | null
     // Display error message to user in the modal
     const errorMessage = error instanceof Error ? error.message : 'Failed to create project'
     modals.setNewProjectError(errorMessage)
+  }
+}
+
+// Edit project modal state
+const editProjectOpen = ref(false)
+const editingProject = ref<{ id: string; name: string; estimatedDays?: number | null } | null>(null)
+
+// Check if project has assignments
+const projectHasAssignments = computed(() => {
+  if (!editingProject.value) return false
+  return assignments.value.some(a => a.project_id === editingProject.value!.id)
+})
+
+function handleEditProject(projectId: string) {
+  const project = store.projects.find(p => p.id === projectId)
+  if (project) {
+    editingProject.value = {
+      id: project.id,
+      name: project.name,
+      estimatedDays: project.estimatedDays || null
+    }
+    editProjectOpen.value = true
+  }
+}
+
+function handleSaveProjectEdit(data: { id: string; estimatedDays: number | null }) {
+  try {
+    actions.updateProject(data.id, { estimatedDays: data.estimatedDays })
+    editProjectOpen.value = false
+    editingProject.value = null
+  } catch (error) {
+    console.error('Failed to update project:', error)
+  }
+}
+
+function handleDeleteProject(projectId: string) {
+  try {
+    actions.deleteProject(projectId)
+    editProjectOpen.value = false
+    editingProject.value = null
+  } catch (error) {
+    console.error('Failed to delete project:', error)
   }
 }
 
