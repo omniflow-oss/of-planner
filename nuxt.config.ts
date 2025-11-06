@@ -1,5 +1,6 @@
 // Nuxt 3 configuration for Capacity Planner
 export default defineNuxtConfig({
+  compatibilityDate: '2025-11-06',
   devtools: { enabled: true },
   ssr: false,
   typescript: {
@@ -24,6 +25,6 @@ export default defineNuxtConfig({
   nitro: {
     // Generate a static site tailored for GitHub Pages hosting
     preset: "github-pages",
-    compatibilityDate: "2025-11-06"
+    compatibilityDate: '2025-11-06'
   }
 })

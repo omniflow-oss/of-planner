@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-[1000] grid place-items-center bg-black/30 popin"
+    class="fixed inset-0 z-[1000] grid place-items-center bg-black/30 popin backdrop-blur-sm"
   >
     <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
       <div class="text-sm font-medium mb-2">
@@ -17,6 +17,7 @@
             v-model="form.name"
             size="xs"
             placeholder="Person name"
+            :color="nameExists ? 'error' : undefined"
           />
         </UFormField>
       </div>

@@ -141,7 +141,7 @@
       </div> 
       <div
         class="empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border"
-        style="width: 240px;bottom:10px;"
+        style="width: 240px;bottom:25px;"
       />     
     </div>
 
@@ -178,6 +178,7 @@
     <EditProjectModal
       :open="editProjectOpen"
       :project="editingProject"
+      :projects="projects"
       :has-assignments="projectHasAssignments"
       @close="() => { editProjectOpen = false; editingProject = null }"
       @save="handleSaveProjectEdit"

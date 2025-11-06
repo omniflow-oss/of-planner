@@ -1,24 +1,24 @@
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-[1000] grid place-items-center bg-black/30 popin"
+    class="fixed inset-0 z-[1000] grid place-items-center bg-black/30 popin backdrop-blur-sm"
   >
     <div class="bg-default text-default border border-default rounded-md shadow-lg w-[22rem] max-w-[95vw] p-3">
       <div class="text-sm font-medium mb-2">
         Edit Project
       </div>
       <div class="space-y-2">
-        <!-- Project Name (disabled) -->
+        <!-- Project Name -->
         <UFormField
           label="Project Name"
-          help="Project name cannot be changed"
+          help="Enter the name for this project"
         >
           <UInput
-            :model-value="form.name"
+            v-model="form.name"
             size="xs"
             placeholder="Project name"
-            disabled
-            class="opacity-50"
+            required
+            :color="nameError ? 'error' : undefined"
           />
         </UFormField>
 
@@ -36,7 +36,7 @@
             step="0.5"
           />
         </UFormField>
-      </div>
+      </div>      
       <div class="mt-3 flex justify-between items-center">
         <UButton
           size="xs"
@@ -61,11 +61,14 @@
           <UButton
             size="xs"
             @click="handleSave"
-            :disabled="form.estimatedDays == null"
+            :disabled="!isFormValid"
           >
             Save Changes
           </UButton>
         </div>
+      </div>
+      <div v-if="nameError" class="text-xs text-red-500 mt-1">
+        {{ nameError }}
       </div>
     </div>
   </div>
@@ -86,12 +89,13 @@ interface Props {
     estimatedDays?: number | null;
   } | null;
   hasAssignments?: boolean;
+  projects?: { id: string; name: string }[];
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
-  save: [project: { id: string; estimatedDays: number | null }]
+  save: [project: { id: string; name: string; estimatedDays: number | null }]
   delete: [projectId: string]
 }>()
 
@@ -100,6 +104,33 @@ const form = ref<EditProjectForm>({
   name: '',
   estimatedDays: null
 })
+
+const nameError = ref<string | null>(null)
+
+// Check if the current name is unique (excluding the current project)
+const isNameUnique = computed(() => {
+  if (!props.projects || !form.value.name.trim()) return true
+  
+  const trimmedName = form.value.name.trim().toLowerCase()
+  return !props.projects.some(p => 
+    p.id !== form.value.id && p.name.toLowerCase() === trimmedName
+  )
+})
+
+// Check if form is valid
+const isFormValid = computed(() => {
+  return form.value.name.trim() && 
+         isNameUnique.value
+})
+
+// Watch name changes to update error state
+watch(() => form.value.name, (newName) => {
+  if (newName.trim() && !isNameUnique.value) {
+    nameError.value = 'A project with this name already exists'
+  } else {
+    nameError.value = null
+  }
+}, { immediate: false })
 
 // Watch for project prop changes to populate form
 watch(() => props.project, (newProject) => {
@@ -123,18 +154,20 @@ watch(() => props.open, (isOpen) => {
 
 const closeModal = () => {
   emit('close')
-  // Reset form when closing
+  // Reset form and error when closing
   form.value = {
     id: '',
     name: '',
     estimatedDays: null
   }
+  nameError.value = null
 }
 
 const handleSave = () => {
-  if (form.value.estimatedDays !== null) {
+  if (isFormValid.value) {
     emit('save', {
       id: form.value.id,
+      name: form.value.name.trim(),
       estimatedDays: form.value.estimatedDays
     })
     closeModal()
