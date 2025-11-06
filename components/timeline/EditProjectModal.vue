@@ -8,17 +8,16 @@
         Edit Project
       </div>
       <div class="space-y-2">
-        <!-- Project Name (disabled) -->
+        <!-- Project Name -->
         <UFormField
           label="Project Name"
-          help="Project name cannot be changed"
+          help="Enter the name for this project"
         >
           <UInput
-            :model-value="form.name"
+            v-model="form.name"
             size="xs"
             placeholder="Project name"
-            disabled
-            class="opacity-50"
+            required
           />
         </UFormField>
 
@@ -61,7 +60,7 @@
           <UButton
             size="xs"
             @click="handleSave"
-            :disabled="form.estimatedDays == null"
+            :disabled="!form.name.trim() || form.estimatedDays == null"
           >
             Save Changes
           </UButton>
