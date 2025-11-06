@@ -21,13 +21,16 @@
         />
       </div>
       <div class="my-auto">
-        <UButton
-          size="xs"
-          variant="outline"
-          :icon="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
+        <button
+          class="flex items-center justify-center w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           aria-label="Toggle"
           @click="$emit('toggle-expanded')"
-        />
+        >
+          <UIcon
+            :name="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
+            class="size-4 text-slate-700 dark:text-slate-300"
+          />
+        </button>
       </div>
       <div class="my-auto">
         <UIcon
