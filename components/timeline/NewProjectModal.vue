@@ -26,7 +26,7 @@
             v-model.number="estimatedDays"
             size="xs"
             type="number"
-            min="1"
+            min="0"
             placeholder="e.g. 30"
           />
         </UFormField>

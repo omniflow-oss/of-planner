@@ -1,6 +1,6 @@
 <template>
   <div
-    class="grid  rows-group relative z-2 drag-group-row"
+    class="grid rows-group relative z-2 drag-group-row"
     style="-webkit-user-select: none; user-select: none;"  
     draggable="false"
   >
@@ -92,6 +92,10 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project'])
+
+// Constants for project estimation thresholds
+const WARNING_DAYS_THRESHOLD = 5
+const OVERDUE_THRESHOLD = 0
 
 // Reactive references
 const pxPerDay = computed(() => props.pxPerDay)
@@ -245,12 +249,12 @@ const badgeColor = computed((): 'primary' | 'secondary' | 'success' | 'info' | '
   const remaining = estimated - currentTotal
   
   // If over estimated time (remaining < 0), show red
-  if (remaining < 0) {
+  if (remaining < OVERDUE_THRESHOLD) {
     return 'error'
   }
   
-  // If less than 5 days remaining, show orange
-  if (remaining < 5) {
+  // If less than warning threshold remaining, show orange
+  if (remaining < WARNING_DAYS_THRESHOLD) {
     return 'warning'
   }
   
