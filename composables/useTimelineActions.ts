@@ -111,7 +111,7 @@ export function useTimelineActions() {
     store.deleteAssignment(id)
   }
 
-  function updateProject(id: string, updates: { estimatedDays?: number | null }) {
+  function updateProject(id: string, updates: { name?: string; estimatedDays?: number | null }) {
     store.updateProject(id, updates)
   }
 

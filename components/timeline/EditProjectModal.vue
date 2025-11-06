@@ -18,6 +18,7 @@
             size="xs"
             placeholder="Project name"
             required
+            :color="nameError ? 'error' : undefined"
           />
         </UFormField>
 
@@ -35,7 +36,7 @@
             step="0.5"
           />
         </UFormField>
-      </div>
+      </div>      
       <div class="mt-3 flex justify-between items-center">
         <UButton
           size="xs"
@@ -60,11 +61,14 @@
           <UButton
             size="xs"
             @click="handleSave"
-            :disabled="!form.name.trim() || form.estimatedDays == null"
+            :disabled="!isFormValid"
           >
             Save Changes
           </UButton>
         </div>
+      </div>
+      <div v-if="nameError" class="text-xs text-red-500 mt-1">
+        {{ nameError }}
       </div>
     </div>
   </div>
@@ -85,12 +89,13 @@ interface Props {
     estimatedDays?: number | null;
   } | null;
   hasAssignments?: boolean;
+  projects?: { id: string; name: string }[];
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
-  save: [project: { id: string; estimatedDays: number | null }]
+  save: [project: { id: string; name: string; estimatedDays: number | null }]
   delete: [projectId: string]
 }>()
 
@@ -99,6 +104,28 @@ const form = ref<EditProjectForm>({
   name: '',
   estimatedDays: null
 })
+
+  
+  const trimmedName = form.value.name.trim().toLowerCase()
+  return !props.projects.some(p => 
+    p.id !== form.value.id && p.name.toLowerCase() === trimmedName
+  )
+})
+
+// Check if form is valid
+const isFormValid = computed(() => {
+  return form.value.name.trim() && 
+         isNameUnique.value
+})
+
+// Watch name changes to update error state
+watch(() => form.value.name, (newName) => {
+  if (newName.trim() && !isNameUnique.value) {
+    nameError.value = 'A project with this name already exists'
+  } else {
+    nameError.value = null
+  }
+}, { immediate: false })
 
 // Watch for project prop changes to populate form
 watch(() => props.project, (newProject) => {
@@ -122,18 +149,20 @@ watch(() => props.open, (isOpen) => {
 
 const closeModal = () => {
   emit('close')
-  // Reset form when closing
+  // Reset form and error when closing
   form.value = {
     id: '',
     name: '',
     estimatedDays: null
   }
+  nameError.value = null
 }
 
 const handleSave = () => {
-  if (form.value.estimatedDays !== null) {
+  if (isFormValid.value) {
     emit('save', {
       id: form.value.id,
+      name: form.value.name.trim(),
       estimatedDays: form.value.estimatedDays
     })
     closeModal()

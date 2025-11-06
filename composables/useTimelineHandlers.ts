@@ -125,9 +125,9 @@ export const useTimelineHandlers = (
     }
   }
 
-  function handleSaveProjectEdit(data: { id: string; estimatedDays: number | null }) {
+  function handleSaveProjectEdit(data: { id: string; name: string; estimatedDays: number | null }) {
     try {
-      actions.updateProject(data.id, { estimatedDays: data.estimatedDays })
+      actions.updateProject(data.id, { name: data.name, estimatedDays: data.estimatedDays })
       editProjectOpen.value = false
       editingProject.value = null
     } catch (error) {

@@ -17,6 +17,7 @@
             v-model="form.name"
             size="xs"
             placeholder="Person name"
+            :color="nameExists ? 'error' : undefined"
           />
         </UFormField>
       </div>
