@@ -18,23 +18,38 @@
           :name="subrow.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
           :class="subrow.isTimeOff ? 'mr-2 text-blue-600 size-3' : 'mr-2 text-slate-400 size-3'"
         />
-        <div 
-          :class="[
-            subrow.isTimeOff 
-              ? 'truncate font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md' 
-              : 'truncate font-medium text-slate-500 dark:text-gray-500',
-            // Make project names clickable in person view (when we have a project_id and are showing project names)
-            groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
-              ? 'cursor-pointer hover:text-blue-600 hover:underline transition-colors' 
-              : '',
-            // Make person names clickable in project view (when we have a person_id and are showing person names)
-            groupType === 'project' && subrow.person_id && !subrow.isTimeOff 
-              ? 'cursor-pointer hover:text-green-600 hover:underline transition-colors' 
-              : ''
-          ]"
-          @click="handleLabelClick"
-        >
-          {{ subrow.label }}
+        <div class="flex items-center gap-2">
+          <div 
+            :class="[
+              subrow.isTimeOff 
+                ? 'truncate font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md' 
+                : 'truncate font-medium text-slate-500 dark:text-gray-500',
+              // Make project names clickable in person view (when we have a project_id and are showing project names)
+              groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
+                ? 'cursor-pointer hover:text-blue-600 hover:underline transition-colors' 
+                : '',
+              // Make person names clickable in project view (when we have a person_id and are showing person names)
+              groupType === 'project' && subrow.person_id && !subrow.isTimeOff 
+                ? 'cursor-pointer hover:text-green-600 hover:underline transition-colors' 
+                : ''
+            ]"
+            @click="handleLabelClick"
+          >
+            {{ subrow.label }}
+          </div>
+          
+          <!-- Notification circle for project time tracking (only in people view) -->
+          <div
+            v-if="notificationStatus"
+            class="flex-shrink-0 w-2 h-2 rounded-full"
+            :class="{
+              'bg-red-500': notificationStatus.color === 'red',
+              'bg-orange-500': notificationStatus.color === 'orange'
+            }"
+            :title="notificationStatus.color === 'red' 
+              ? `Project is overdue by ${Math.abs(notificationStatus.remaining)} days` 
+              : `Project has ${notificationStatus.remaining} days remaining`"
+          />
         </div>
       </div>
     </div>
@@ -103,6 +118,7 @@ import { computed } from 'vue'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import { computeLanes } from '@/utils/lanes'
+import { useProjectEstimation } from '@/composables/useProjectEstimation'
 
 interface SubrowItem {
   key: string
@@ -127,7 +143,7 @@ const props = defineProps<{
   dayOffsets: number[]
   weekStarts: number[]
   startISO: string
-  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null }>
+  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }>
   peopleMap?: Record<string, { id: string; name: string }>
   assignments: any[]
   rowHeights: Record<string, number>
@@ -170,6 +186,20 @@ const subAssignments = computed(() => {
   }
   
   return items
+})
+
+// Project estimation composable
+const assignmentsRef = computed(() => props.assignments)
+const projectsMapRef = computed(() => props.projectsMap)
+const projectEstimation = useProjectEstimation(assignmentsRef, projectsMapRef)
+
+// Calculate notification status for project time tracking
+const notificationStatus = computed(() => {
+  if (props.groupType !== 'person' || !props.subrow.project_id || props.subrow.isTimeOff) {
+    return null
+  }
+  
+  return projectEstimation.getProjectNotificationStatus(props.subrow.project_id)
 })
 
 function laneTop(lane: number) { 

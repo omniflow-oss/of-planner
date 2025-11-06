@@ -80,6 +80,7 @@ import { indexFromX } from '@/utils/grid'
 import { useCapacity } from '@/composables/useCapacity'
 import { useRowSorting } from '@/composables/useRowSorting'
 import { useDragToCreate } from '@/composables/useDragToCreate'
+import { useProjectEstimation } from '@/composables/useProjectEstimation'
 import RowGroupHeader from '@/components/internal/RowGroupHeader.vue'
 import SubrowTrack from '@/components/internal/SubrowTrack.vue'
 
@@ -96,10 +97,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person', 'project-click', 'person-click'])
-
-// Constants for project estimation thresholds
-const WARNING_DAYS_THRESHOLD = 5
-const OVERDUE_THRESHOLD = 0
 
 // Reactive references
 const pxPerDay = computed(() => props.pxPerDay)
@@ -226,48 +223,31 @@ const headerHeight = computed(() => baseRowMin)
 
 // Capacity per group in visible window (header overlays and total MD badge)
 const capacityApi = useCapacity(assignmentsRef, days, { type: props.groupType, id: props.groupId })
+
+// Project estimation composable
+const projectsMapRef = computed(() => props.projectsMap)
+const projectEstimation = useProjectEstimation(assignmentsRef, projectsMapRef)
 const capacityDaily = computed(() => capacityApi.daily.value)
 const totalMD = computed(() => capacityApi.totalMD.value)
 const totalMDBadge = computed(() => {
-  const val = totalMD.value
-  const suffix = 'd'
-  const currentTotal = Number.isInteger(val) ? `${val}` : `${Math.round(val * 10) / 10}`
-  
-  // For project view, add estimated time if available
+  // For project view, use the project estimation composable
   if (props.groupType === 'project') {
-    const project = props.projectsMap[props.groupId]
-    if (project?.estimatedDays) {
-      return `${currentTotal}/${project.estimatedDays}d`
-    }
+    return projectEstimation.formatProjectBadgeText(props.groupId)
   }
   
+  // For person view, use the existing capacity calculation
+  const val = totalMD.value
+  const currentTotal = Number.isInteger(val) ? `${val}` : `${Math.round(val * 10) / 10}`
   return `${currentTotal}d`
 })
 
-const badgeColor = computed((): 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' => {
+const badgeColor = computed(() => {
   // Only apply color logic for project view
   if (props.groupType !== 'project') {
     return 'neutral'
   }
   
-  const project = props.projectsMap[props.groupId]
-  if (!project?.estimatedDays) {
-    return 'neutral'
-  }
-  
-  const currentTotal = totalMD.value
-  const estimated = project.estimatedDays
-  const remaining = estimated - currentTotal
-  
-  // If over estimated time (remaining < 0), show red
-  if (remaining < OVERDUE_THRESHOLD) {
-    return 'error'
-  }
-  
-  // If less than warning threshold remaining, show orange
-  if (remaining < WARNING_DAYS_THRESHOLD) {
-    return 'warning'
-  }
+  return projectEstimation.getProjectBadgeColor(props.groupId)
   
   // Otherwise neutral/default
   return 'neutral'
