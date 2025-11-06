@@ -28,7 +28,7 @@
         >
           <UIcon
             :name="expanded ? 'i-heroicons-chevron-down-20-solid' : 'i-heroicons-chevron-right-20-solid'"
-            class="size-4 text-slate-700 dark:text-slate-300 font-bold"
+            class="size-4 text-slate-700 dark:text-slate-300"
           />
         </button>
       </div>
