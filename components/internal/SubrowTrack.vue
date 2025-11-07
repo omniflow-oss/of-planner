@@ -9,6 +9,7 @@
         <!-- Drag handle -->
         <div class="my-auto">
           <UIcon
+            v-if="!store.isReadOnly"
             name="i-lucide-grip-vertical"
             class="drag-handle mr-2 size-3"
             :class="subrow.isTimeOff 
@@ -124,6 +125,7 @@ import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import { computeLanes } from '@/utils/lanes'
 import { useProjectEstimation } from '@/composables/useProjectEstimation'
+import { usePlannerStore } from '@/stores/usePlannerStore'
 
 interface SubrowItem {
   key: string
@@ -172,6 +174,8 @@ const emit = defineEmits<{
   'project-click': [projectId: string]
   'person-click': [personId: string]
 }>()
+
+const store = usePlannerStore()
 
 const subAssignments = computed(() => {
   // Filter assignments for this specific subrow

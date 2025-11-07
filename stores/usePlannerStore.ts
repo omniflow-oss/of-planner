@@ -46,7 +46,9 @@ export const usePlannerStore = defineStore('planner', {
     peopleSortOrder: [],
     projectsSortOrder: [],
     // Subrow sort orders for each group (key: groupId, value: array of subrow keys)
-    subrowSortOrders: {}
+    subrowSortOrders: {},
+    // Read-only mode toggle
+    isReadOnly: false
   }),
   getters: {
     byPerson: (s) => (personId: string) => s.assignments.filter(a => a.person_id === personId),
@@ -61,6 +63,7 @@ export const usePlannerStore = defineStore('planner', {
     setDays(days: number) { this.view.days = Math.max(7, Math.min(90, days)) },
     setPxPerDay(px: number) { this.view.px_per_day = Math.max(24, Math.min(64, px)) },
     select(id: string | null) { this.view.selected_id = id },
+    toggleReadOnly() { this.isReadOnly = !this.isReadOnly },
 
     createAssignment(input: { person_id: string; project_id: string; start: string; end: string; allocation: Allocation; subtitle?: string | null }) {
       const { start, end } = clampDateRange(input.start, input.end)

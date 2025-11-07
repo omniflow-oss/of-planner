@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="open && editState"
-    class="fixed inset-0 z-[1000] grid place-items-center bg-black/30"
+    class="fixed inset-0 z-[1000] grid place-items-center bg-black/30 popin backdrop-blur-sm"
   >
     <div class="bg-default text-default border border-default rounded-md shadow-lg w-[28rem] max-w-[95vw] p-4 overflow-visible">
       <div class="flex items-center justify-between text-sm font-medium mb-3">

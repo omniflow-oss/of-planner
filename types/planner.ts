@@ -34,6 +34,7 @@ export type PlannerState = {
   peopleSortOrder: string[]
   projectsSortOrder: string[]
   subrowSortOrders: Record<string, string[]>
+  isReadOnly: boolean
 }
 
 export type ExternalPlannerData = {

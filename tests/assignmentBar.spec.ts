@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import { addDaysISO } from '@/composables/useDate'
 
@@ -15,6 +16,7 @@ describe('AssignmentBar interactions', () => {
     const wrapper = mount(AssignmentBar as any, {
       props: { assignment, startISO, pxPerDay, projectsMap },
       global: {
+        plugins: [createPinia()],
         stubs: {
           UTooltip: { template: '<div><slot /></div>' },
         },
@@ -27,7 +29,7 @@ describe('AssignmentBar interactions', () => {
 
     const emitted = wrapper.emitted('update')
     expect(emitted && emitted.length).toBeGreaterThan(0)
-    const last = emitted![emitted!.length - 1][0] as any
+    const last = emitted?.[emitted.length - 1]?.[0] as any
     expect(last.id).toBe('a_test')
     expect(last.start).toBe(addDaysISO(startISO, 1))
   })

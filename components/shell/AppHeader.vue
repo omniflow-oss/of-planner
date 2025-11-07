@@ -20,6 +20,15 @@
         @go-to-today="$emit('go-to-today', $event)"
         @add-weeks="$emit('add-weeks', $event)"
       />
+      
+      <!-- Read-only mode toggle -->
+      <div class="flex items-center gap-2 px-2 py-1 rounded-md border border-gray-200 bg-white/50">
+        <USwitch v-model="isReadOnlyMode" />
+        <span class="text-xs text-gray-600 font-medium whitespace-nowrap">
+          {{ store.isReadOnly ? 'Read-only' : 'Interactive' }}
+        </span>
+      </div>
+      
       <UButton
         size="xs"
         variant="outline"
@@ -34,12 +43,24 @@
 <script setup lang="ts">
 import ViewSwitcher from '@/components/ViewSwitcher.vue'
 import DataManager from '@/components/DataManager.vue'
-import { useColorMode } from '#imports'
+import { usePlannerStore } from '@/stores/usePlannerStore'
 
 defineEmits<{
   'go-to-today': [todayISO: string]
   'add-weeks': [{ direction: 'previous' | 'next', weeks: number }]
 }>()
+
+const store = usePlannerStore()
+
+// Create a computed property with getter/setter for the switch
+const isReadOnlyMode = computed({
+  get: () => !store.isReadOnly,
+  set: (value: boolean) => {
+    if (value === store.isReadOnly) {
+      store.toggleReadOnly()
+    }
+  }
+})
 
 const colorMode = useColorMode()
 const colorIcon = computed(() => colorMode.preference === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon')

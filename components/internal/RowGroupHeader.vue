@@ -11,6 +11,7 @@
     >
       <div class="my-auto">
         <UIcon
+          v-if="!store.isReadOnly"
           name="i-lucide-grip-vertical"
           class="group-drag-handle text-slate-400 size-3 cursor-grab hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
           title="Drag to reorder groups"
@@ -40,7 +41,7 @@
       </div>
       <div class="line-clamp-2 relative w-full group">        
         <UButton
-          v-if="groupType === 'project'"
+          v-if="groupType === 'project' && !store.isReadOnly"
           size="xs"
           variant="ghost"
           color="neutral"
@@ -50,7 +51,7 @@
           @click="$emit('edit-project')"
         />
         <UButton
-          v-else-if="groupType === 'person'"
+          v-else-if="groupType === 'person' && !store.isReadOnly"
           size="xs"
           variant="ghost"
           color="neutral"
@@ -71,6 +72,7 @@
         <span>{{ label }}</span>
       </div>      
       <UButton
+        v-if="!store.isReadOnly"
         size="xs"
         color="primary"
         variant="soft"
@@ -116,6 +118,9 @@
 
 <script setup lang="ts">
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
+import { usePlannerStore } from '@/stores/usePlannerStore'
+
+const store = usePlannerStore()
 
 defineProps<{
   label: string
