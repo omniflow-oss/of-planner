@@ -123,7 +123,6 @@
       </div>
       
       <div
-        v-if="!store.isReadOnly || (people.length === 0 && projects.length === 0)"
         class="grid empty-rows-filler sticky bottom-0 z-1"
         style="grid-template-columns: 240px 1fr; height: 100%; left:240px;"
         :style="{ width: timelineWidth+'px' }"
