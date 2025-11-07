@@ -39,7 +39,7 @@
           class="text-slate-500 size-4 align-sub"
         />
       </div>
-      <div class="line-clamp-2 relative w-full group" >        
+      <div class="line-clamp-2 relative w-full group">        
         <UButton
           v-if="groupType === 'project' && !store.isReadOnly"
           size="xs"

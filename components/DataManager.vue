@@ -65,7 +65,7 @@
     <!-- Download Button (only show when data is modified) -->
     <UButton 
       v-if="store.shouldShowDownload"
-      :disabled="store.isReadOnly"
+      :disabled="loading || store.isReadOnly"
       color="success" 
       size="xs"
       :leading-icon="'i-lucide-download'"
