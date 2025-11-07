@@ -22,9 +22,9 @@
       />
       
       <!-- Read-only mode toggle -->
-      <div class="flex items-center gap-2 px-2 py-1 rounded-md border border-gray-200 bg-white/50">
-        <USwitch v-model="isReadOnlyMode" />
-        <span class="text-xs text-gray-600 font-medium whitespace-nowrap">
+      <div class="flex items-center gap-2 px-2 py-1">
+        <USwitch v-model="isInteractiveMode" />
+        <span class="text-xs text-default font-medium whitespace-nowrap">
           {{ store.isReadOnly ? 'Read-only' : 'Interactive' }}
         </span>
       </div>
@@ -53,7 +53,7 @@ defineEmits<{
 const store = usePlannerStore()
 
 // Create a computed property with getter/setter for the switch
-const isReadOnlyMode = computed({
+const isInteractiveMode = computed({
   get: () => !store.isReadOnly,
   set: (value: boolean) => {
     if (value === store.isReadOnly) {

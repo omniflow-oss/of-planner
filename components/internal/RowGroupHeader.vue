@@ -9,9 +9,11 @@
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
-      <div class="my-auto">
+      <div       
+        v-if="!store.isReadOnly"
+        class="my-auto"        
+      >
         <UIcon
-          v-if="!store.isReadOnly"
           name="i-lucide-grip-vertical"
           class="group-drag-handle text-slate-400 size-3 cursor-grab hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
           title="Drag to reorder groups"
