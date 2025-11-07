@@ -11,7 +11,7 @@
       }
     ]"
     :style="barStyle"
-    draggable="true"
+    :draggable="!store.isReadOnly"
     @dragstart="onDragStart"
     @drag="onDrag"
     @dragend="onDragEnd"
@@ -45,11 +45,13 @@
       </div>
     </UTooltip>
     <div
+      v-if="!store.isReadOnly"
       class="handle left"
       draggable="false"
       @mousedown.stop.prevent="onResizeStart('left', $event)"
     />
     <div
+      v-if="!store.isReadOnly"
       class="handle right"
       draggable="false"
       @mousedown.stop.prevent="onResizeStart('right', $event)"
@@ -62,10 +64,12 @@ import { computed, ref, onUnmounted } from 'vue'
 import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import { generateUserColor } from '@/utils/colors'
 import { roundToDecimalPlaces } from '@/composables/useProjectEstimation'
+import { usePlannerStore } from '@/stores/usePlannerStore'
 import type { Assignment } from '@/types/planner'
 
 const props = defineProps<{ assignment: Assignment; startISO: string; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
 const emit = defineEmits(['update', 'edit', 'delete', 'resize'])
+const store = usePlannerStore()
 const project = computed(() => props.projectsMap[props.assignment.project_id])
 const person = computed(() => props.peopleMap?.[props.assignment.person_id])
 
@@ -169,6 +173,12 @@ function stopAutoScroll() {
 }
 
 function onDragStart(e: DragEvent) {
+  // Prevent drag when in read-only mode
+  if (store.isReadOnly) {
+    e.preventDefault()
+    return
+  }
+  
   // Prevent drag when resizing is active or when dragging from a resize handle
   if (resizing || (e.target as HTMLElement).classList.contains('handle')) {
     e.preventDefault()
@@ -270,6 +280,12 @@ function applyDragByClientX(clientX: number) {
 }
 
 function onDrag(e: DragEvent) {
+  // Prevent drag when in read-only mode
+  if (store.isReadOnly) {
+    e.preventDefault()
+    return
+  }
+  
   // Update last valid position if clientX is available
   if (e.clientX > 0 && dragging) {
     dragging.lastValidClientX = e.clientX
@@ -279,7 +295,13 @@ function onDrag(e: DragEvent) {
   applyDragByClientX(e.clientX)
 }
 
-function onDragEnd(_e: DragEvent) {
+function onDragEnd(e: DragEvent) {
+  // Prevent drag when in read-only mode
+  if (store.isReadOnly) {
+    e.preventDefault()
+    return
+  }
+  
   isDragging.value = false
   
   // Remove global mouse tracking using centralized cleanup
@@ -290,6 +312,9 @@ function onDragEnd(_e: DragEvent) {
 
 // Mouse-based drag (for environments/tests not using HTML5 drag)
 function onMouseDown(e: MouseEvent) {
+  // Prevent drag when in read-only mode
+  if (store.isReadOnly) return
+  
   // Ignore when resizing is active or when clicking on resize handles
   if (resizing || (e.target as HTMLElement).classList.contains('handle')) return
   
@@ -320,6 +345,9 @@ function onMouseUp() {
 }
 
 function onResizeStart(side: 'left'|'right', e: MouseEvent) {
+  // Prevent resize when in read-only mode
+  if (store.isReadOnly) return
+  
   // Prevent drag from interfering with resize
   isDragging.value = false
   isResizing.value = true
@@ -436,6 +464,9 @@ function onResizeEnd() {
 }
 
 function onRightClick(e: MouseEvent) {
+  // Prevent edit when in read-only mode
+  if (store.isReadOnly) return
+  
   emit('edit', { 
     assignment: props.assignment, 
     x: e.clientX, 

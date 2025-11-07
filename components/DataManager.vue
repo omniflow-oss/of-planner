@@ -11,7 +11,7 @@
     
     <!-- Custom File Input Button -->
     <UButton 
-      :disabled="loading"
+      :disabled="loading || store.isReadOnly"
       color="neutral"
       variant="outline"
       size="xs"
@@ -25,7 +25,7 @@
     <!-- Load Sample Data Button (only show when no data exists) -->
     <UButton 
       v-if="!store.hasData"
-      :disabled="loading"
+      :disabled="loading || store.isReadOnly"
       color="primary"
       size="xs"
       :leading-icon="'i-lucide-database'"
@@ -38,7 +38,7 @@
     <!-- Clear Data Button (only show when data exists but can't be reset) -->
     <UButton 
       v-if="store.hasData && !store.canReset"
-      :disabled="loading"
+      :disabled="loading || store.isReadOnly"
       color="error"
       variant="outline"
       size="xs"
@@ -52,7 +52,7 @@
     <!-- Reset Data Button (only show when data can be reset) -->
     <UButton 
       v-if="store.canReset"
-      :disabled="loading"
+      :disabled="loading || store.isReadOnly"
       color="warning"
       variant="outline"
       size="xs"
@@ -65,6 +65,7 @@
     <!-- Download Button (only show when data is modified) -->
     <UButton 
       v-if="store.shouldShowDownload"
+      :disabled="store.isReadOnly"
       color="success" 
       size="xs"
       :leading-icon="'i-lucide-download'"
