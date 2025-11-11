@@ -7,14 +7,11 @@
     <!-- Left spacer with timeline controls -->
     <div class="border-b-2 border-r-2 pane-border sticky left-0 z-30 bg-default">
       <div class="py-3 px-3 text-center h-full flex flex-col justify-center">
-        <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">
-          
+        <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">          
           <!-- Add Project Button (only show in project view) -->
-          
           <span>
             {{ viewMode === 'person' ? 'People View' : 'Project View' }} 
-          </span>
-          
+          </span>          
           <!-- Expand/Collapse all toggle (only show when there's data) -->
           <UButton
             v-if="hasData"
@@ -25,8 +22,7 @@
             :leading-icon="expanded ? 'i-lucide-chevrons-up' : 'i-lucide-chevrons-down'"
             :title="expanded ? 'Collapse all' : 'Expand all'"
             @click="emit('toggleExpandAll')"
-          >
-          </UButton>
+          />
         </div>          
       </div>
     </div>
@@ -105,9 +101,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggleExpandAll: []
 }>()
-
-// Calculate timeline width to match timeline content
-const timelineWidth = computed(() => props.days.length * props.pxPerDay)
 
 function monthWithYear(seg: { key:string; label:string }) {
   // seg.key is YYYY-MM

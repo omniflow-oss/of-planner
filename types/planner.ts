@@ -35,6 +35,9 @@ export type PlannerState = {
   projectsSortOrder: string[]
   subrowSortOrders: Record<string, string[]>
   isReadOnly: boolean
+  isLazyLoadEnabled: boolean
+  isLoadingFragments: boolean
+  isInitializingLazyLoad: boolean
 }
 
 export type ExternalPlannerData = {
