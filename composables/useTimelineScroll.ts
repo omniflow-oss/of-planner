@@ -4,6 +4,21 @@ import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
 // Business-day aware infinite scroll for the timeline
 export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_day:number }>, scrollArea: Ref<HTMLElement | null>) {
   const extending = ref(false)
+  
+  // Constants
+  const SCROLL_THRESHOLD_WEEKS = 4
+  const CHUNK_WEEKS = 4
+  const CHUNK_WEEKDAYS = CHUNK_WEEKS * 5 // 20 weekdays
+  
+  // Helper functions
+  const getScrollThreshold = () => view.value.px_per_day * SCROLL_THRESHOLD_WEEKS
+  const getScrollDistance = (weeks: number) => weeks * view.value.px_per_day
+  
+  const updateScrollPosition = (el: HTMLElement, scrollLeft: number) => {
+    if (scrollArea.value) {
+      scrollArea.value.scrollLeft = scrollLeft
+    }
+  }
 
   async function prependWeekdays(w: number, nextPrev: boolean = false) {
     const el = scrollArea.value
@@ -15,14 +30,14 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     view.value.start = addDaysISO(view.value.start, -cal)
     view.value.days = view.value.days + cal
     
-    await nextTick();
-    if (scrollArea.value) {
-      if(!nextPrev){
-        scrollArea.value.scrollLeft = anchor + w * view.value.px_per_day - half
-      }else{
-        scrollArea.value.scrollLeft = el.scrollLeft - (w * view.value.px_per_day);
-      }
-    }
+    await nextTick()
+    
+    const scrollDistance = getScrollDistance(w)
+    const newScrollLeft = nextPrev 
+      ? el.scrollLeft - scrollDistance
+      : anchor + scrollDistance - half
+    
+    updateScrollPosition(el, newScrollLeft)
   }
 
   async function appendWeekdays(w: number, nextPrev: boolean = false) {
@@ -35,38 +50,30 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     const cal = calendarSpanForWeekdays(endISO, w, +1)
     view.value.days = view.value.days + cal
     
-    // Wait for multiple ticks to ensure all grid components have updated
     await nextTick()
 
-    if (scrollArea.value) {  
-      if(!nextPrev){
-        scrollArea.value.scrollLeft = anchor - half;
-      }else{
-        scrollArea.value.scrollLeft =  el.scrollLeft + (w * view.value.px_per_day);
-      }
-    }
+    const scrollDistance = getScrollDistance(w)
+    const newScrollLeft = nextPrev 
+      ? el.scrollLeft + scrollDistance
+      : anchor - half
+    
+    updateScrollPosition(el, newScrollLeft)
   }
 
   function onScroll() {
     const el = scrollArea.value
-    if (!el) return
+    if (!el || extending.value) return
     
     const left = el.scrollLeft
     const right = left + el.clientWidth
-    const threshold = view.value.px_per_day * 4
+    const threshold = getScrollThreshold()
     const nearLeft = left < threshold
     const nearRight = right > el.scrollWidth - threshold
-    const chunk = 20 // 4 weeks * 5 weekdays = 20 weekdays
     
-    if (!extending.value) {
-      if (nearLeft) { 
-        extending.value = true
-        prependWeekdays(chunk).finally(() => { extending.value = false })
-      }
-      else if (nearRight) { 
-        extending.value = true
-        appendWeekdays(chunk).finally(() => { extending.value = false })
-      }
+    if (nearLeft || nearRight) {
+      extending.value = true
+      const operation = nearLeft ? prependWeekdays : appendWeekdays
+      operation(CHUNK_WEEKDAYS).finally(() => { extending.value = false })
     }
   }
 
@@ -98,51 +105,48 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     if (scrollArea.value) scrollArea.value.scrollLeft = 0
   }
 
-  // Smart navigation for next/prev buttons - expand only if near edges, otherwise just scroll
-  async function expandPrevious(weekdays: number) {
+  // Helper function for timeline expansion
+  async function expandTimeline(weekdays: number, direction: 'previous' | 'next') {
     const el = scrollArea.value
     if (!el) return
     
-    const threshold = view.value.px_per_day * 4 // Same threshold as mouse scroll
-    const nearLeft = el.scrollLeft < threshold
+    const threshold = getScrollThreshold()
+    const scrollDistance = getScrollDistance(weekdays)
     
-    if (nearLeft) {
-      // Near left edge - expand timeline by adding previous weeks
-      const cal = calendarSpanForWeekdays(view.value.start, weekdays, -1)
-      view.value.start = addDaysISO(view.value.start, -cal)
-      view.value.days = view.value.days + cal
+    if (direction === 'previous') {
+      const nearLeft = el.scrollLeft < threshold
+      
+      if (nearLeft) {
+        // Near left edge - expand timeline by adding previous weeks
+        const cal = calendarSpanForWeekdays(view.value.start, weekdays, -1)
+        view.value.start = addDaysISO(view.value.start, -cal)
+        view.value.days = view.value.days + cal
+      } else {
+        // Not near edge - just scroll left to show existing content
+        el.scrollLeft = Math.max(0, el.scrollLeft - scrollDistance)
+      }
     } else {
-      // Not near edge - just scroll left to show existing content
-      const scrollDistance = weekdays * view.value.px_per_day
-      el.scrollLeft = Math.max(0, el.scrollLeft - scrollDistance)
+      const nearRight = el.scrollLeft + el.clientWidth > el.scrollWidth - threshold
+      
+      if (nearRight) {
+        // Near right edge - expand timeline by adding next weeks
+        const endISO = addDaysISO(view.value.start, view.value.days - 1)
+        const cal = calendarSpanForWeekdays(endISO, weekdays, +1)
+        view.value.days = view.value.days + cal
+        
+        // Scroll to show some of the newly added content
+        await nextTick()
+        updateScrollPosition(el, el.scrollLeft + scrollDistance)
+      } else {
+        // Not near edge - just scroll right to show existing content
+        el.scrollLeft += scrollDistance
+      }
     }
   }
 
-  async function expandNext(weekdays: number) {
-    const el = scrollArea.value
-    if (!el) return
-    
-    const threshold = view.value.px_per_day * 4 // Same threshold as mouse scroll
-    const nearRight = el.scrollLeft + el.clientWidth > el.scrollWidth - threshold
-    
-    if (nearRight) {
-      // Near right edge - expand timeline by adding next weeks
-      const endISO = addDaysISO(view.value.start, view.value.days - 1)
-      const cal = calendarSpanForWeekdays(endISO, weekdays, +1)
-      view.value.days = view.value.days + cal
-      
-      // Scroll to show some of the newly added content
-      await nextTick()
-      if (scrollArea.value) {
-        const scrollDistance = weekdays * view.value.px_per_day
-        scrollArea.value.scrollLeft += scrollDistance
-      }
-    } else {
-      // Not near edge - just scroll right to show existing content
-      const scrollDistance = weekdays * view.value.px_per_day
-      el.scrollLeft += scrollDistance
-    }
-  }
+  // Smart navigation for next/prev buttons - expand only if near edges, otherwise just scroll
+  const expandPrevious = (weekdays: number) => expandTimeline(weekdays, 'previous')
+  const expandNext = (weekdays: number) => expandTimeline(weekdays, 'next')
 
   return { onScroll, init, prependWeekdays, appendWeekdays, expandPrevious, expandNext }
 }
