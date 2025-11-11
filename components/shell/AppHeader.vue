@@ -29,6 +29,18 @@
         </span>
       </div>
       
+      <!-- Lazy loading toggle -->
+      <div class="flex items-center gap-2 px-2 py-1 rounded-md border border-gray-200 bg-white/50">
+        <USwitch 
+          v-model="isLazyLoadEnabled" 
+          :loading="store.isLoadingFragments"
+          :disabled="store.isLoadingFragments"
+        />
+        <span class="text-xs text-gray-600 font-medium whitespace-nowrap">
+          {{ store.isLazyLoadEnabled ? 'Lazy Load' : 'Full Load' }}
+        </span>
+      </div>
+      
       <UButton
         size="xs"
         variant="outline"
@@ -58,6 +70,16 @@ const isInteractiveMode = computed({
   set: (value: boolean) => {
     if (value === store.isReadOnly) {
       store.toggleReadOnly()
+    }
+  }
+})
+
+// Create a computed property for lazy loading toggle
+const isLazyLoadEnabled = computed({
+  get: () => store.isLazyLoadEnabled,
+  set: async (value: boolean) => {
+    if (value !== store.isLazyLoadEnabled) {
+      await store.toggleLazyLoading()
     }
   }
 })

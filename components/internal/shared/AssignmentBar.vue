@@ -1,7 +1,7 @@
 <template>
   <div 
     :class="[
-      'absolute flex items-center overflow-hidden rounded-full bar-shadow border text-default',
+      'absolute flex items-center overflow-hidden rounded-full bar-shadow border text-default assignment-bar',
       isTimeOff 
         ? 'border-gray-500 bg-gray-300 dark:bg-gray-600 dark:text-gray-100' 
         : 'border-default bg-default dark:bg-gray-300 dark:text-gray-800',
@@ -28,7 +28,8 @@
         ]"
         @mousedown="onMouseDown"
       >
-        <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">{{ person?.name ?? assignment.person_id }}</span>
+        <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">
+          {{ person?.name ?? assignment.person_id }}</span>
         <span :class="[
           'px-1.5 rounded-full border text-[11px]',
           isTimeOff 

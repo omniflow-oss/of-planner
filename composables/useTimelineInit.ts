@@ -64,7 +64,7 @@ export const useTimelineInit = (
     const totalDays = Math.floor((finalEnd.getTime() - finalStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
     
     view.value.start = finalStart.toISOString().slice(0, 10)
-    view.value.days = Math.min(365, Math.max(35, totalDays))
+    view.value.days = Math.max(35, totalDays) // Remove 365-day limit to show all assignments
   }
 
   // Check if timeline needs expansion based on assignment range

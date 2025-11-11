@@ -21,6 +21,9 @@ export function daysBetweenInclusive(startISO: string, endISO: string) {
 }
 
 export function eachDay(startISO: string, count: number) {
+  if (count <= 0) {
+    return []
+  }
   return Array.from({ length: count }, (_, i) => addDaysISO(startISO, i))
 }
 
@@ -72,8 +75,11 @@ export function businessOffset(baseISO: string, dateISO: string) {
 // Convert a number of weekdays into the equivalent calendar-day span
 // starting from a base date (exclusive), moving forward (dir=+1) or backward (dir=-1).
 export function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
+  if (weekdays <= 0) return 0
+  
   let span = 0
   let counted = 0
+  
   while (counted < weekdays) {
     span += 1
     const d = parseISO(baseISO)
@@ -81,6 +87,7 @@ export function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 
     const wd = d.getUTCDay()
     if (wd !== 0 && wd !== 6) counted += 1
   }
+  
   return span
 }
 

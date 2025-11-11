@@ -82,12 +82,11 @@
       />
       <!-- Timeoff background overlays for this specific user (project view only) -->
       <template
-        v-if="groupType === 'project'"
         v-for="(day, i) in days"
         :key="'timeoff-sub' + i"
       >
         <div
-          v-if="hasUserTimeoffOnDay(subrow.person_id, day)"
+          v-if="hasUserTimeoffOnDay(subrow.person_id, day) && groupType === 'project'"
           class="absolute inset-y-0 timeoff-hashed"
           :style="{ left: lineLeft(i) + 'px', width: dayWidth(i) + 'px' }"
         />
