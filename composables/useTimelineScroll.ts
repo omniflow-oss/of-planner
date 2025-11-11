@@ -135,10 +135,12 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     
     // Set up resize observer to update cached dimensions when container resizes
     if (resizeObserver) resizeObserver.disconnect()
-    resizeObserver = new ResizeObserver(() => {
-      updateCachedDimensions()
-    })
-    resizeObserver.observe(el)
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        updateCachedDimensions()
+      })
+      resizeObserver.observe(el)
+    }
   }
   // Cleanup function
   function cleanup() {

@@ -22,10 +22,40 @@ describe('AssignmentBar interactions', () => {
         },
       },
     })
+    
+    // Create a mock scrollable container and append the wrapper to it
+    const mockContainer = document.createElement('div')
+    mockContainer.classList.add('overflow-auto')
+    Object.defineProperty(mockContainer, 'scrollLeft', { value: 0, writable: true })
+    Object.defineProperty(mockContainer, 'getBoundingClientRect', {
+      value: () => ({ left: 0, right: 1000, top: 0, bottom: 500 })
+    })
+    document.body.appendChild(mockContainer)
+    mockContainer.appendChild(wrapper.element)
+    
+    // Trigger mousedown event
     await wrapper.trigger('mousedown', { clientX: 0 })
-    // simulate drag ~1 day to the right
-    window.dispatchEvent(new MouseEvent('mousemove', { clientX: pxPerDay + 2 }))
-    window.dispatchEvent(new MouseEvent('mouseup'))
+    
+    // Allow component to process mousedown
+    await wrapper.vm.$nextTick()
+    
+    // Simulate drag ~1 day to the right with mousemove
+    window.dispatchEvent(new MouseEvent('mousemove', { 
+      clientX: pxPerDay + 2,
+      bubbles: true 
+    }))
+    
+    // Wait for requestAnimationFrame to process
+    await new Promise(resolve => requestAnimationFrame(resolve))
+    
+    // Trigger mouseup to end drag
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+    
+    // Wait for any final processing
+    await wrapper.vm.$nextTick()
+    
+    // Cleanup
+    document.body.removeChild(mockContainer)
 
     const emitted = wrapper.emitted('update')
     expect(emitted && emitted.length).toBeGreaterThan(0)
