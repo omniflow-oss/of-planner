@@ -11,10 +11,7 @@
       }
     ]"
     :style="barStyle"
-    :draggable="!store.isReadOnly"
-    @dragstart="onDragStart"
-    @drag="onDrag"
-    @dragend="onDragEnd"
+    :draggable="false"
     @mousedown.self="onMouseDown"
     @contextmenu.prevent.stop="onRightClick"
   >
@@ -25,8 +22,11 @@
     />
     <UTooltip :text="tooltipText">
       <div 
-        class="flex items-center gap-2 px-3 text-[12px] w-full draggable-content"
-        @mousedown.self="onMouseDown"
+        :class="[
+          'flex items-center gap-2 px-3 text-[12px] w-full draggable-content',
+          { 'readonly': store.isReadOnly }
+        ]"
+        @mousedown="onMouseDown"
       >
         <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">{{ person?.name ?? assignment.person_id }}</span>
         <span :class="[
@@ -117,6 +117,7 @@ let dragging: {
   lastValidClientX: number;
   scrollContainer: HTMLElement | null;
   initialScrollLeft: number;
+  animationId: number | null;
 } | null = null
 let resizing: { 
   side: 'left'|'right'; 
@@ -136,10 +137,11 @@ const autoScrollState = ref({
 
 // Centralized cleanup function for drag event listeners
 function cleanupDragListeners() {
-  document.removeEventListener('mousemove', onGlobalMouseMove)
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
 }
 
-// Auto-scroll helper functions for resize operations
+// Auto-scroll helper functions for both resize and drag operations
 function startAutoScroll(direction: number, timelineContainer: HTMLElement) {
   if (autoScrollState.value.isScrolling && autoScrollState.value.direction === direction) {
     return // Already scrolling in this direction
@@ -150,7 +152,7 @@ function startAutoScroll(direction: number, timelineContainer: HTMLElement) {
   autoScrollState.value.direction = direction
   
   const scroll = () => {
-    if (!autoScrollState.value.isScrolling || !resizing) {
+    if (!autoScrollState.value.isScrolling || (!resizing && !dragging)) {
       return
     }
     
@@ -172,67 +174,7 @@ function stopAutoScroll() {
   autoScrollState.value.direction = 0
 }
 
-function onDragStart(e: DragEvent) {
-  // Prevent drag when in read-only mode
-  if (store.isReadOnly) {
-    e.preventDefault()
-    return
-  }
-  
-  // Prevent drag when resizing is active or when dragging from a resize handle
-  if (resizing || (e.target as HTMLElement).classList.contains('handle')) {
-    e.preventDefault()
-    return
-  }
-  
-  // Prevent duplicate drag initialization
-  if (isDragging.value || dragging) {
-    cleanupDragListeners()
-  }
-  
-  isDragging.value = true
-  
-  // Find the scrollable timeline container
-  const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
-  
-  dragging = { 
-    startX: e.clientX, 
-    startIndex: startIndex.value,
-    initialStart: props.assignment.start,
-    initialEnd: props.assignment.end,
-    lastValidClientX: e.clientX,
-    scrollContainer,
-    initialScrollLeft: scrollContainer?.scrollLeft || 0
-  }
-  
-  // Set drag effect and create a transparent drag image
-  if (e.dataTransfer) {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', '')
-    
-    // Create invisible drag image to prevent default ghost
-    const dragImage = document.createElement('div')
-    dragImage.style.opacity = '0'
-    document.body.appendChild(dragImage)
-    e.dataTransfer.setDragImage(dragImage, 0, 0)
-    setTimeout(() => document.body.removeChild(dragImage), 0)
-  }
-  
-  // Remove any existing listener before adding new one to prevent duplicates
-  document.removeEventListener('mousemove', onGlobalMouseMove)
-  // Add global mouse tracking for more reliable position updates
-  document.addEventListener('mousemove', onGlobalMouseMove, { passive: true })
-}
 
-function onGlobalMouseMove(e: MouseEvent) {
-  if (!dragging) return
-  
-  // Update last valid position
-  dragging.lastValidClientX = e.clientX
-  
-  // Apply drag with current mouse position, accounting for scroll changes
-  applyDragByClientX(e.clientX)
-}
 
 function applyDragByClientX(clientX: number) {
   if (!dragging) return
@@ -279,44 +221,19 @@ function applyDragByClientX(clientX: number) {
   emit('update', { id: props.assignment.id, start: newStart, end: newEnd })
 }
 
-function onDrag(e: DragEvent) {
-  // Prevent drag when in read-only mode
-  if (store.isReadOnly) {
-    e.preventDefault()
-    return
-  }
-  
-  // Update last valid position if clientX is available
-  if (e.clientX > 0 && dragging) {
-    dragging.lastValidClientX = e.clientX
-  }
-  
-  // Apply drag with current or last known position
-  applyDragByClientX(e.clientX)
-}
 
-function onDragEnd(e: DragEvent) {
-  // Prevent drag when in read-only mode
-  if (store.isReadOnly) {
-    e.preventDefault()
-    return
-  }
-  
-  isDragging.value = false
-  
-  // Remove global mouse tracking using centralized cleanup
-  cleanupDragListeners()
-  
-  dragging = null
-}
 
-// Mouse-based drag (for environments/tests not using HTML5 drag)
+// Smooth mouse-based drag implementation
 function onMouseDown(e: MouseEvent) {
   // Prevent drag when in read-only mode
   if (store.isReadOnly) return
   
   // Ignore when resizing is active or when clicking on resize handles
   if (resizing || (e.target as HTMLElement).classList.contains('handle')) return
+  
+  // Prevent event bubbling to avoid conflicts
+  e.stopPropagation()
+  e.preventDefault()
   
   isDragging.value = true
   
@@ -330,18 +247,72 @@ function onMouseDown(e: MouseEvent) {
     initialEnd: props.assignment.end,
     lastValidClientX: e.clientX,
     scrollContainer,
-    initialScrollLeft: scrollContainer?.scrollLeft || 0
+    initialScrollLeft: scrollContainer?.scrollLeft || 0,
+    animationId: null
   }
-  window.addEventListener('mousemove', onMouseMove)
+  
+  window.addEventListener('mousemove', onMouseMove, { passive: false })
   window.addEventListener('mouseup', onMouseUp)
 }
+
 function onMouseMove(e: MouseEvent) {
-  applyDragByClientX(e.clientX)
+  if (!dragging) return
+  
+  // Prevent text selection during drag
+  e.preventDefault()
+  
+  // Auto-scroll when dragging near the edges of the timeline
+  const timelineContainer = dragging.scrollContainer
+  if (timelineContainer) {
+    const containerRect = timelineContainer.getBoundingClientRect()
+    const scrollThreshold = 80 // pixels from edge to trigger scroll
+    
+    // Check if mouse is near right edge and should trigger auto-scroll
+    if (e.clientX > containerRect.right - scrollThreshold) {
+      startAutoScroll(1, timelineContainer)
+    }
+    // Auto-scroll left when near left edge
+    else if (e.clientX < containerRect.left + scrollThreshold + 240 && timelineContainer.scrollLeft > 0) {
+      // +240 accounts for the left sidebar width
+      startAutoScroll(-1, timelineContainer)
+    }
+    // Stop auto-scroll when mouse is in the middle area
+    else if (autoScrollState.value.isScrolling) {
+      stopAutoScroll()
+    }
+  }
+  
+  // Update last valid position
+  dragging.lastValidClientX = e.clientX
+  
+  // Use requestAnimationFrame for smooth updates
+  if (dragging.animationId) {
+    cancelAnimationFrame(dragging.animationId)
+  }
+  
+  dragging.animationId = requestAnimationFrame(() => {
+    if (dragging) {
+      applyDragByClientX(dragging.lastValidClientX)
+      dragging.animationId = null
+    }
+  })
 }
+
 function onMouseUp() {
-  onDragEnd({} as DragEvent)
-  window.removeEventListener('mousemove', onMouseMove)
-  window.removeEventListener('mouseup', onMouseUp)
+  isDragging.value = false
+  
+  // Cancel any pending animation frame
+  if (dragging?.animationId) {
+    cancelAnimationFrame(dragging.animationId)
+  }
+  
+  dragging = null
+  
+  // Stop any active auto-scrolling
+  stopAutoScroll()
+  
+  // Clean up event listeners
+  cleanupDragListeners()
 }
 
 function onResizeStart(side: 'left'|'right', e: MouseEvent) {
@@ -481,10 +452,6 @@ onUnmounted(() => {
   // Stop any active auto-scrolling
   stopAutoScroll()
   
-  // Cleanup mouse-based drag listeners if they exist
-  window.removeEventListener('mousemove', onMouseMove)
-  window.removeEventListener('mouseup', onMouseUp)
-  
   // Cleanup resize listeners if they exist
   window.removeEventListener('mousemove', onResize)
   window.removeEventListener('mouseup', onResizeEnd)
@@ -516,9 +483,11 @@ onUnmounted(() => {
 
 /* Dragging and resizing states */
 .dragging {
-  opacity: 0.8;
+  opacity: 0.9;
   box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.15);
   z-index: 1000;
+  transform: scale(1.02);
+  filter: brightness(1.05);
 }
 
 .resizing {
@@ -532,22 +501,31 @@ onUnmounted(() => {
 }
 
 /* Make the entire bar draggable by default */
-div[draggable="true"] {
+.draggable-content {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Only show drag cursor and hover effects when not in readonly mode */
+.draggable-content:not(.readonly) {
   cursor: move;
 }
 
-div[draggable="true"]:hover {
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+/* Readonly mode styling */
+.draggable-content.readonly {
+  cursor: default;
 }
 
 /* Ensure draggable area remains accessible even when resizing */
-.resizing div[draggable="true"] {
+.resizing .draggable-content {
   cursor: move;
   pointer-events: auto;
 }
 
 /* Resize handles should be smaller and only active on hover */
-.handle[draggable="false"] {
+.handle {
   cursor: ew-resize;
   pointer-events: auto;
 }
@@ -557,22 +535,16 @@ div[draggable="true"]:hover {
   pointer-events: auto;
 }
 
-.resizing div[draggable="true"]:not(.handle) {
-  pointer-events: auto;
-  cursor: move;
+/* Smooth dragging transitions */
+.dragging {
+  transition: none !important;
 }
 
-/* Ensure the draggable content area is always accessible */
-.draggable-content {
-  cursor: move;
-  pointer-events: auto;
-  position: relative;
-  z-index: 5;
-}
-
-.resizing .draggable-content {
-  cursor: move;
-  pointer-events: auto;
+/* Prevent text selection during drag operations */
+.dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
 }
 </style>
- 

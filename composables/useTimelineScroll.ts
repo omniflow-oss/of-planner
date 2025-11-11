@@ -4,6 +4,12 @@ import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
 // Business-day aware infinite scroll for the timeline
 export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_day:number }>, scrollArea: Ref<HTMLElement | null>) {
   const extending = ref(false)
+  
+  // Cache scroll container dimensions to avoid repeated DOM measurements
+  let cachedClientWidth = 0
+  let cachedScrollWidth = 0
+  let lastScrollLeft = 0
+  let resizeObserver: ResizeObserver | null = null
 
   async function prependWeekdays(w: number, nextPrev: boolean = false) {
     const el = scrollArea.value
@@ -42,18 +48,52 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     }
   }
 
-  function onScroll() {
+  // Update cached dimensions without causing forced reflow
+  function updateCachedDimensions() {
     const el = scrollArea.value
     if (!el) return
-    const left = el.scrollLeft
-    const right = left + el.clientWidth
+    
+    // Only read DOM properties when absolutely necessary
+    requestAnimationFrame(() => {
+      if (!el) return
+      cachedClientWidth = el.clientWidth
+      cachedScrollWidth = el.scrollWidth
+    })
+  }
+
+  function onScroll() {
+    const el = scrollArea.value
+    if (!el || extending.value) return
+    
+    // Only read scrollLeft - this is unavoidable but minimize other DOM reads
+    const currentScrollLeft = el.scrollLeft
+    
+    // Skip if scroll position hasn't changed meaningfully (debounce micro-scrolls)
+    if (Math.abs(currentScrollLeft - lastScrollLeft) < 2) return
+    lastScrollLeft = currentScrollLeft
+    
+    // Use cached dimensions instead of live DOM measurements
     const threshold = view.value.px_per_day * 4
-    const nearLeft = left < threshold
-    const nearRight = right > el.scrollWidth - threshold
     const chunk = 5
-    if (!extending.value) {
-      if (nearLeft) { extending.value = true; prependWeekdays(chunk).finally(() => { extending.value = false }) }
-      else if (nearRight) { extending.value = true; appendWeekdays(chunk).finally(() => { extending.value = false }) }
+    
+    const nearLeft = currentScrollLeft < threshold
+    const nearRight = currentScrollLeft + cachedClientWidth > cachedScrollWidth - threshold
+    
+    if (nearLeft) { 
+      extending.value = true
+      prependWeekdays(chunk).finally(() => { 
+        extending.value = false
+        // Update cache after timeline changes
+        updateCachedDimensions()
+      })
+    }
+    else if (nearRight) { 
+      extending.value = true
+      appendWeekdays(chunk).finally(() => { 
+        extending.value = false
+        // Update cache after timeline changes
+        updateCachedDimensions()
+      })
     }
   }
 
@@ -82,8 +122,29 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
 
     // Start with scrollLeft = 0 so the viewport begins at previous Monday
     await nextTick()
-    if (scrollArea.value) scrollArea.value.scrollLeft = 0
+    if (scrollArea.value) {
+      scrollArea.value.scrollLeft = 0
+      lastScrollLeft = 0
+    }
+    
+    // Initialize cached dimensions
+    updateCachedDimensions()
+    
+    // Set up resize observer to update cached dimensions when container resizes
+    if (resizeObserver) resizeObserver.disconnect()
+    resizeObserver = new ResizeObserver(() => {
+      updateCachedDimensions()
+    })
+    resizeObserver.observe(el)
   }
 
-  return { onScroll, init, prependWeekdays, appendWeekdays }
+  // Cleanup function
+  function cleanup() {
+    if (resizeObserver) {
+      resizeObserver.disconnect()
+      resizeObserver = null
+    }
+  }
+
+  return { onScroll, init, prependWeekdays, appendWeekdays, cleanup }
 }

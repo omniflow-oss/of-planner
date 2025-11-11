@@ -310,13 +310,22 @@ const {
   handleDeletePerson
 } = timelineHandlers
 
-const { onScroll, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
+const { onScroll, prependWeekdays, appendWeekdays, cleanup } = useTimelineScroll(view, scrollArea)
+
+// Throttle scroll handler to prevent performance issues
+let scrollTimer: number | null = null
 
 function handleScroll() {
-  // Hide modals when scrolling to keep UX coherent on large moves
+  // Immediate modal close for responsive UX
   modals.closeAllModals()
   
-  onScroll()
+  // Throttle the expensive scroll logic
+  if (scrollTimer) return
+  
+  scrollTimer = requestAnimationFrame(() => {
+    onScroll()
+    scrollTimer = null
+  })
 }
 
 // Inject timeline events from app.vue
@@ -359,16 +368,29 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
     }
     
     if (todayIndex >= 0 && scrollArea.value) {
-      // Calculate scroll position to center today on screen
-      const todayPosition = todayIndex * view.value.px_per_day
-      const containerWidth = scrollArea.value.clientWidth
-      const sidebarWidth = 240 // Left column width for labels
-      const timelineVisibleWidth = containerWidth - sidebarWidth
-      const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
-      
-      scrollArea.value.scrollTo({
-        left: Math.max(0, scrollPosition),
-        behavior: 'smooth',
+      // Use requestAnimationFrame to avoid forced reflow during scroll
+      requestAnimationFrame(() => {
+        if (!scrollArea.value) return
+        
+        // Calculate scroll position to center today on screen
+        const todayPosition = todayIndex * view.value.px_per_day
+        const containerWidth = scrollArea.value.clientWidth
+        const sidebarWidth = 240 // Left column width for labels
+        const timelineVisibleWidth = containerWidth - sidebarWidth
+        const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
+        
+        // For large scroll distances, use instant scroll to avoid performance issues
+        const currentScroll = scrollArea.value.scrollLeft
+        const targetScroll = Math.max(0, scrollPosition)
+        const scrollDistance = Math.abs(targetScroll - currentScroll)
+        
+        // If scrolling more than 3 months worth of timeline, use instant scroll
+        const maxSmoothScrollDistance = 90 * view.value.px_per_day // ~3 months of business days
+        
+        scrollArea.value.scrollTo({
+          left: targetScroll,
+          behavior: scrollDistance > maxSmoothScrollDistance ? 'instant' : 'smooth',
+        })
       })
     }
   }
@@ -428,6 +450,17 @@ onMounted(async () => {
       }
     })
   }
+})
+
+onUnmounted(() => {
+  // Clean up pending animation frame
+  if (scrollTimer) {
+    cancelAnimationFrame(scrollTimer)
+    scrollTimer = null
+  }
+  
+  // Clean up timeline scroll composable
+  cleanup()
 })
 
 // Expand/Collapse state and handlers (separate for each view)
