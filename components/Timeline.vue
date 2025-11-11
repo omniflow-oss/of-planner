@@ -207,7 +207,6 @@ import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import { useTimelineActions } from '@/composables/useTimelineActions'
 import { useTimelineModals } from '@/composables/useTimelineModals'
 import { useTimelineSorting } from '@/composables/useTimelineSorting'
-import { addDaysISO } from '@/composables/useDate'
 import { useTimelineInit } from '@/composables/useTimelineInit'
 import { useViewNavigation } from '@/composables/useViewNavigation'
 import { useSubrows } from '@/composables/useSubrows'
@@ -312,7 +311,7 @@ const {
   handleDeletePerson
 } = timelineHandlers
 
-const { onScroll, prependWeekdays, appendWeekdays, expandPrevious, expandNext } = useTimelineScroll(view, scrollArea)
+const { onScroll, expandPrevious, expandNext } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
   // Hide modals when scrolling to keep UX coherent on large moves
@@ -425,7 +424,7 @@ watch(() => ({ start: view.value.start, days: view.value.days }), async (newView
       await store.loadAssignmentsForCurrentViewportOnly()  
 
     } catch (error) {
-
+      console.error('Error during lazy loading of assignments:', error)
     }
   }
 }, { deep: true })

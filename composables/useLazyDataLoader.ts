@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import type { Assignment, Person, Project, ExternalPlannerData } from '@/types/planner'
-import { addDaysISO, businessDaysBetweenInclusive } from '@/composables/useDate'
+import { addDaysISO } from '@/composables/useDate'
 
 export interface DataFragment {
   id: string

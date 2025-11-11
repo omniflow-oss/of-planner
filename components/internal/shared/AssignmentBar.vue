@@ -28,7 +28,8 @@
         class="flex items-center gap-2 px-3 text-[12px] w-full draggable-content"
         @mousedown.self="onMouseDown"
       >
-        <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">{{ person?.name ?? assignment.person_id }}</span>
+        <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">
+          {{ person?.name ?? assignment.person_id }}</span>
         <span :class="[
           'px-1.5 rounded-full border text-[11px]',
           isTimeOff 

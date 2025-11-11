@@ -60,14 +60,17 @@
           </UButton>
           <UButton
             size="xs"
-            @click="handleSave"
             :disabled="!isFormValid"
+            @click="handleSave"            
           >
             Save Changes
           </UButton>
         </div>
       </div>
-      <div v-if="nameError" class="text-xs text-red-500 mt-1">
+      <div 
+        v-if="nameError" 
+        class="text-xs text-red-500 mt-1"
+      >
         {{ nameError }}
       </div>
     </div>

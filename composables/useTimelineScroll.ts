@@ -1,6 +1,5 @@
 import { nextTick, type Ref, ref } from 'vue'
 import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
-import { usePlannerStore } from '@/stores/usePlannerStore'
 
 // Business-day aware infinite scroll for the timeline
 export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_day:number }>, scrollArea: Ref<HTMLElement | null>) {
