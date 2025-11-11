@@ -1,7 +1,7 @@
 <template>
   <div 
     :class="[
-      'absolute flex items-center overflow-hidden rounded-full bar-shadow border text-default',
+      'absolute flex items-center overflow-hidden rounded-full bar-shadow border text-default assignment-bar',
       isTimeOff 
         ? 'border-gray-500 bg-gray-300 dark:bg-gray-600 dark:text-gray-100' 
         : 'border-default bg-default dark:bg-gray-300 dark:text-gray-800',
@@ -535,7 +535,9 @@ onUnmounted(() => {
 div[draggable="true"] {
   cursor: move;
 }
-
+div[draggable="false"] {
+  cursor: default;
+}
 div[draggable="true"]:hover {
   box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
 }
@@ -573,6 +575,9 @@ div[draggable="true"]:hover {
 .resizing .draggable-content {
   cursor: move;
   pointer-events: auto;
+}
+.assignment-bar[draggable="false"] .draggable-content {
+  cursor: default;
 }
 </style>
  

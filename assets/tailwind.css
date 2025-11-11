@@ -2,6 +2,7 @@
 @import "@nuxt/ui";
 :root{
   --today-color: #baa7cb14;
+  overscroll-behavior-x: none;
 }
 /* App-specific utilities (token-based for dark/light) */
 .today-line { position: absolute; top: 0; bottom: -1px; width: 2px; background-color: var(--ring-color-inverted); opacity: .9; }

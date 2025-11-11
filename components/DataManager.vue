@@ -75,6 +75,8 @@
       Download
     </UButton>
 
+
+
     <!-- Loading State -->
     <div
       v-if="loading"
@@ -123,6 +125,21 @@ const triggerFileInput = () => {
   fileInput.value?.click()
 }
 
+// Common function to handle data loading with lazy loading support
+const processDataWithLazyLoading = async (data: ExternalPlannerData) => {
+  if (store.isLazyLoadEnabled) {
+    // Use lazy loading system
+    await store.enableLazyLoading(data)
+    
+    // Always navigate to today when loading JSON data (not to earliest assignment)
+    navigateToToday()
+  } else {
+    // Use regular loading method
+    store.loadDataFromObject(data)
+    navigateToToday()
+  }
+}
+
 const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
@@ -142,12 +159,10 @@ const handleFileSelect = async (event: Event) => {
     const text = await file.text()
     const data: ExternalPlannerData = JSON.parse(text)
     
-    // Load data using store method (automatically refreshes)
-    store.loadDataFromObject(data)
-    toast.add({ title: 'Data loaded', description: 'JSON file imported successfully', color: 'success' })
+    // Process data with lazy loading support
+    await processDataWithLazyLoading(data)
     
-    // Navigate to today after loading data
-    navigateToToday()
+    toast.add({ title: 'Data loaded', description: 'JSON file imported successfully', color: 'success' })
     
   } catch (error) {
     console.error('Error loading JSON file:', error)
@@ -171,11 +186,12 @@ const loadSampleData = async () => {
   loading.value = true
   
   try {
-    await store.loadDataFromJSON('planner-data.json')
-    toast.add({ title: 'Sample loaded', description: 'Sample planner data loaded', color: 'success' })
+    const data = await store.loadDataFromJSON('planner-data.json')
     
-    // Navigate to today after loading sample data
-    navigateToToday()
+    // Process data with lazy loading support
+    await processDataWithLazyLoading(data)
+    
+    toast.add({ title: 'Sample loaded', description: 'Sample planner data loaded', color: 'success' })
   } catch (error) {
     console.error('Error loading sample data:', error)
     toast.add({ title: 'Sample load failed', description: 'Could not load sample data', color: 'error' })
@@ -208,4 +224,6 @@ const downloadData = () => {
   store.downloadPlannerData(filename)
   toast.add({ title: 'Download started', description: filename, color: 'success' })
 }
+
+
 </script>

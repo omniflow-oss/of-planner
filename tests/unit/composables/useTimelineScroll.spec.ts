@@ -1,6 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { ref, nextTick } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import { useTimelineScroll } from '@/composables/useTimelineScroll'
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
 
 function makeScrollArea(width = 1120) {
   const el = document.createElement('div') as any

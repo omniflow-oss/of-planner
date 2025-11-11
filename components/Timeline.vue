@@ -25,6 +25,7 @@
           :has-data="hasData"
           @toggle-expand-all="toggleExpandAll"
         />
+      
         <template v-if="view.mode==='person'">
           <VueDraggableNext
             :list="sortablePeople"
@@ -206,6 +207,7 @@ import { useTimelineScroll } from '@/composables/useTimelineScroll'
 import { useTimelineActions } from '@/composables/useTimelineActions'
 import { useTimelineModals } from '@/composables/useTimelineModals'
 import { useTimelineSorting } from '@/composables/useTimelineSorting'
+import { addDaysISO } from '@/composables/useDate'
 import { useTimelineInit } from '@/composables/useTimelineInit'
 import { useViewNavigation } from '@/composables/useViewNavigation'
 import { useSubrows } from '@/composables/useSubrows'
@@ -310,7 +312,7 @@ const {
   handleDeletePerson
 } = timelineHandlers
 
-const { onScroll, prependWeekdays, appendWeekdays } = useTimelineScroll(view, scrollArea)
+const { onScroll, prependWeekdays, appendWeekdays, expandPrevious, expandNext } = useTimelineScroll(view, scrollArea)
 
 function handleScroll() {
   // Hide modals when scrolling to keep UX coherent on large moves
@@ -358,6 +360,21 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
       todayIndex = days.value.findIndex(d => d === todayISO)
     }
     
+    // If lazy loading is enabled, load assignments for the target date specifically
+    if (store.isLazyLoadEnabled) {
+      await store.loadAssignmentsForTargetDate(todayISO)
+      
+      // Give extra time for the DOM to update with the loaded assignments
+      await nextTick()
+      await new Promise(resolve => setTimeout(resolve, 50))
+      
+      // Re-check the index after lazy loading in case the timeline changed
+      todayIndex = days.value.findIndex(d => d === todayISO)
+    }
+    
+    // Ensure we have the scrollArea available and the timeline is ready
+    await nextTick()
+    
     if (todayIndex >= 0 && scrollArea.value) {
       // Calculate scroll position to center today on screen
       const todayPosition = todayIndex * view.value.px_per_day
@@ -370,11 +387,13 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
         left: Math.max(0, scrollPosition),
         behavior: 'smooth',
       })
+    } else {
+      console.warn('Could not find target date in timeline:', todayISO, 'Available days:', days.value.length)
     }
   }
 })
 
-// Watch for add weeks events
+// Watch for add weeks events - use simple expansion like mouse scroll fix
 watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
   if (data) {
     const { direction, weeks } = data
@@ -382,10 +401,13 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
     // Convert weeks to weekdays (5 working days per week)
     const weekdays = weeks * 5
     
-    if (direction === 'previous') {
-      prependWeekdays(weekdays, true)
+    // Fix: direction mapping was backwards
+    // 'next' should expand forward (add future dates)
+    // 'previous' should expand backward (add past dates)
+    if (direction === 'next') {
+      expandNext(weekdays)
     } else {
-      appendWeekdays(weekdays, true)
+      expandPrevious(weekdays)
     }
   }
 })
@@ -393,21 +415,27 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
 // Timeline initialization functions from composable
 const { initTimelineWithAssignments, needsTimelineExpansion } = timelineInit
 
+// Lazy loading watcher - but WITHOUT timeline expansion
+watch(() => ({ start: view.value.start, days: view.value.days }), async (newView, oldView) => {
+  // Only trigger lazy loading if the view actually changed and lazy loading is enabled
+  if (store.isLazyLoadEnabled && 
+      (newView.start !== oldView?.start || newView.days !== oldView?.days)) {    
+    try {
+      // Load events for current viewport only - do NOT expand timeline
+      await store.loadAssignmentsForCurrentViewportOnly()  
+
+    } catch (error) {
+
+    }
+  }
+}, { deep: true })
+
 // Watch for assignment changes and re-initialize timeline if needed
 watch(assignments, async (_newAssignments) => {
   if (needsTimelineExpansion.value) {
     await initTimelineWithAssignments()
-    
-    // Auto-scroll to today after expansion
-    await nextTick()
-    if (timelineEvents?.goToTodayEvent) {
-      timelineEvents.goToTodayEvent.value = todayISO
-      nextTick(() => {
-        if (timelineEvents?.goToTodayEvent) {
-          timelineEvents.goToTodayEvent.value = null
-        }
-      })
-    }
+    // Don't auto-scroll to today when assignments change during scrolling/lazy loading
+    // This was causing unwanted navigation during user exploration
   }
 }, { deep: true })
 
