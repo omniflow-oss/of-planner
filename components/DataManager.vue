@@ -74,9 +74,6 @@
     >
       Download
     </UButton>
-
-
-
     <!-- Loading State -->
     <div
       v-if="loading"
@@ -160,8 +157,7 @@ const handleFileSelect = async (event: Event) => {
     const data: ExternalPlannerData = JSON.parse(text)
     
     // Process data with lazy loading support
-    await processDataWithLazyLoading(data)
-    
+    await processDataWithLazyLoading(data)    
     toast.add({ title: 'Data loaded', description: 'JSON file imported successfully', color: 'success' })
     
   } catch (error) {
@@ -224,6 +220,4 @@ const downloadData = () => {
   store.downloadPlannerData(filename)
   toast.add({ title: 'Download started', description: filename, color: 'success' })
 }
-
-
 </script>

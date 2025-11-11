@@ -355,38 +355,38 @@ export const usePlannerStore = defineStore('planner', {
         const loader = this.lazyLoader
         await loader.initializeFromData(data)
       
-      // Set people and projects (these are always fully loaded)
-      this.people = [...loader.allPeople.value]
-      this.projects = [...loader.allProjects.value]
-      
-      // Instead of clearing assignments, load initial range based on data
-      if (data.assignments && data.assignments.length > 0) {
-        // Find the date range of all assignments to determine initial load range
-        const dates = data.assignments.flatMap(a => [a.start, a.end])
-        const minDate = dates.reduce((min, date) => date < min ? date : min)
-        const maxDate = dates.reduce((max, date) => date > max ? date : max)
+        // Set people and projects (these are always fully loaded)
+        this.people = [...loader.allPeople.value]
+        this.projects = [...loader.allProjects.value]
         
-        // Load fragments for the full assignment range initially
-        await loader.loadFragmentsForRange(minDate, maxDate)
+        // Instead of clearing assignments, load initial range based on data
+        if (data.assignments && data.assignments.length > 0) {
+          // Find the date range of all assignments to determine initial load range
+          const dates = data.assignments.flatMap(a => [a.start, a.end])
+          const minDate = dates.reduce((min, date) => date < min ? date : min)
+          const maxDate = dates.reduce((max, date) => date > max ? date : max)
+          
+          // Load fragments for the full assignment range initially
+          await loader.loadFragmentsForRange(minDate, maxDate)
+          
+          // Get assignments for a view centered around today (not earliest assignment)
+          const today = new Date().toISOString().slice(0, 10)
+          const viewStart = addDaysISO(today, -45) // 45 days before today
+          const viewEnd = addDaysISO(today, 45)    // 45 days after today (3 months total)
+          
+          this.assignments = loader.getAssignmentsForRange(viewStart, viewEnd, false)
+          
+          // Update the timeline view to center around today
+          this.view.start = viewStart
+          const totalDays = Math.floor((new Date(viewEnd).getTime() - new Date(viewStart).getTime()) / (1000 * 60 * 60 * 24)) + 1
+          this.view.days = Math.min(365, Math.max(35, totalDays))
+        } else {
+          // No assignments, clear them
+          this.assignments = []
+        }
         
-        // Get assignments for a view centered around today (not earliest assignment)
-        const today = new Date().toISOString().slice(0, 10)
-        const viewStart = addDaysISO(today, -45) // 45 days before today
-        const viewEnd = addDaysISO(today, 45)    // 45 days after today (3 months total)
-        
-        this.assignments = loader.getAssignmentsForRange(viewStart, viewEnd, false)
-        
-        // Update the timeline view to center around today
-        this.view.start = viewStart
-        const totalDays = Math.floor((new Date(viewEnd).getTime() - new Date(viewStart).getTime()) / (1000 * 60 * 60 * 24)) + 1
-        this.view.days = Math.min(365, Math.max(35, totalDays))
-      } else {
-        // No assignments, clear them
-        this.assignments = []
-      }
-      
-      // Store initial data for reset functionality
-      this._initialData = JSON.parse(JSON.stringify(data))
+        // Store initial data for reset functionality
+        this._initialData = JSON.parse(JSON.stringify(data))
       
         // Initialize sort orders
         this.initializeSortOrders()
@@ -419,8 +419,6 @@ export const usePlannerStore = defineStore('planner', {
         // Simple assignment loading - no longer tied to timeline expansion
         const newAssignments = loader.getAssignmentsForRange(timelineStart, timelineEnd, false)
         
-
-        
         this.assignments = newAssignments
         
       } finally {
@@ -439,8 +437,6 @@ export const usePlannerStore = defineStore('planner', {
         const viewportStart = this.view.start
         const viewportEnd = addDaysISO(viewportStart, this.view.days - 1)
         
-
-        
         // Load fragments for the current viewport
         await loader.loadFragmentsForRange(viewportStart, viewportEnd)
         
@@ -451,8 +447,6 @@ export const usePlannerStore = defineStore('planner', {
         const fittingAssignments = viewportAssignments.filter(assignment => {
           return assignment.start >= viewportStart && assignment.start <= viewportEnd
         })
-        
-
         
         this.assignments = fittingAssignments
         
