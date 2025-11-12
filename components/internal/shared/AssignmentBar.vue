@@ -68,6 +68,72 @@ import { roundToDecimalPlaces } from '@/composables/useProjectEstimation'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import type { Assignment } from '@/types/planner'
 
+// --- Helper Functions ---
+function getFirstBusinessDay(days?: string[], fallbackISO?: string) {
+  if (!days || days.length === 0) return fallbackISO || '';
+  const firstBusinessDay = days.find(d => {
+    const wd = new Date(d).getUTCDay();
+    return wd >= 1 && wd <= 5;
+  });
+  return firstBusinessDay || days[0] || fallbackISO || '';
+}
+
+function moveBusinessDays(startISO: string, offset: number) {
+  let result = startISO;
+  let businessDaysToAdd = offset;
+  while (businessDaysToAdd !== 0) {
+    if (businessDaysToAdd > 0) {
+      result = addDaysISO(result, 1);
+      if (!isWeekendISO(result)) businessDaysToAdd--;
+    } else {
+      result = addDaysISO(result, -1);
+      if (!isWeekendISO(result)) businessDaysToAdd++;
+    }
+  }
+  return result;
+}
+
+function getBaseISO(props: any) {
+  return getFirstBusinessDay(props.days, props.startISO);
+}
+
+function getStartIndex(props: any) {
+  return Math.max(0, businessOffset(getBaseISO(props), props.assignment.start));
+}
+
+function getBarDatesForDrag(props: any, dragging: any, deltaPx: number) {
+  const pxPerDay = props.pxPerDay;
+  let deltaDays = 0;
+  if (deltaPx >= pxPerDay) {
+    deltaDays = Math.floor(deltaPx / pxPerDay);
+  } else if (deltaPx <= -pxPerDay) {
+    deltaDays = Math.ceil(deltaPx / pxPerDay);
+  }
+  const baseISO = getBaseISO(props);
+  const newStartIndex = dragging.startIndex + deltaDays;
+  const newStart = moveBusinessDays(baseISO, newStartIndex);
+  const lengthBusinessDays = businessDaysBetweenInclusive(dragging.initialStart, dragging.initialEnd);
+  let newEnd = newStart;
+  let businessDaysLeft = lengthBusinessDays - 1;
+  while (businessDaysLeft > 0) {
+    newEnd = addDaysISO(newEnd, 1);
+    if (!isWeekendISO(newEnd)) businessDaysLeft--;
+  }
+  return { newStart, newEnd };
+}
+
+function getBarDatesForResize(props: any, resizing: any, deltaPx: number) {
+  const pxPerDay = props.pxPerDay;
+  const deltaDays = Math.round(deltaPx / pxPerDay);
+  if (resizing.side === 'left') {
+    let newStart = moveBusinessDays(resizing.startStart, deltaDays);
+    return { newStart };
+  } else {
+    let newEnd = moveBusinessDays(resizing.startEnd, deltaDays);
+    return { newEnd };
+  }
+}
+
 const props = defineProps<{ assignment: Assignment; startISO: string; days?: string[]; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
 const emit = defineEmits(['update', 'edit', 'delete', 'resize'])
 const store = usePlannerStore()
@@ -86,11 +152,7 @@ const allocBadge = computed(() => {
 
 // Use first visible business day for offset calculation
 const startIndex = computed(() => {
-  let baseISO: string = props.startISO
-  if (props.days && props.days.length > 0 && typeof props.days[0] === 'string') {
-    baseISO = props.days[0] || props.startISO
-  }
-  return Math.max(0, businessOffset(baseISO, props.assignment.start))
+  return getStartIndex(props)
 })
 const lengthDays = computed(() => Math.max(1, businessDaysBetweenInclusive(props.assignment.start, props.assignment.end)))
 const barStyle = computed(() => ({
@@ -202,21 +264,9 @@ function onMouseDown(e: MouseEvent) {
   // Find the scrollable timeline container
   const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
 
-  // Always use the first visible business day as base for startIndex
-  let baseISO = props.startISO;
-  if (props.days && props.days.length > 0 && typeof props.days[0] === 'string') {
-    // Find first business day (Mon-Fri) in visible days
-    const firstBusinessDay = props.days.find(d => {
-      const wd = new Date(d).getUTCDay();
-      return wd >= 1 && wd <= 5;
-    });
-    baseISO = firstBusinessDay || props.days[0] || props.startISO;
-  }
-  const startIndexFromBusinessDay = Math.max(0, businessOffset(baseISO, props.assignment.start));
-
   dragging = {
     startX: e.clientX,
-    startIndex: startIndexFromBusinessDay,
+    startIndex: getStartIndex(props),
     initialStart: props.assignment.start,
     initialEnd: props.assignment.end,
     lastValidClientX: e.clientX,
@@ -296,51 +346,7 @@ function applyDragByClientX(clientX: number) {
   
   // Adjust for scroll change in pixel calculation
   const deltaPx = (effectiveClientX - dragging.startX) + scrollDelta
-  // Only move to next day after dragging a full cell width, never shift by day-1 on initial movement
-  let deltaDays = 0;
-  if (deltaPx >= props.pxPerDay) {
-    deltaDays = Math.floor(deltaPx / props.pxPerDay);
-  } else if (deltaPx <= -props.pxPerDay) {
-    deltaDays = Math.ceil(deltaPx / props.pxPerDay);
-  } else {
-    deltaDays = 0;
-  }
-
-  // Calculate new start position by adding business days from the first visible business day
-  let baseISO = props.startISO;
-  if (props.days && props.days.length > 0 && typeof props.days[0] === 'string') {
-    const firstBusinessDay = props.days.find(d => {
-      const wd = new Date(d).getUTCDay();
-      return wd >= 1 && wd <= 5;
-    });
-    baseISO = firstBusinessDay || props.days[0] || props.startISO;
-  }
-  const newStartIndex = dragging.startIndex + deltaDays;
-  let newStart = baseISO;
-  let businessDaysToAdd = newStartIndex;
-
-  // Move forward/backward to reach the target business day
-  while (businessDaysToAdd !== 0) {
-    if (businessDaysToAdd > 0) {
-      newStart = addDaysISO(newStart, 1);
-      if (!isWeekendISO(newStart)) businessDaysToAdd--;
-    } else {
-      newStart = addDaysISO(newStart, -1);
-      if (!isWeekendISO(newStart)) businessDaysToAdd++;
-    }
-  }
-
-  // Use business days for length calculation to match the display
-  const lengthBusinessDays = businessDaysBetweenInclusive(dragging.initialStart, dragging.initialEnd)
-
-  // Calculate end date by adding business days to start
-  let newEnd = newStart
-  let businessDaysLeft = lengthBusinessDays - 1
-  while (businessDaysLeft > 0) {
-    newEnd = addDaysISO(newEnd, 1)
-    if (!isWeekendISO(newEnd)) businessDaysLeft--
-  }
-
+  const { newStart, newEnd } = getBarDatesForDrag(props, dragging, deltaPx);
   emit('update', { id: props.assignment.id, start: newStart, end: newEnd })
 }
 
@@ -397,50 +403,17 @@ function onResize(e: MouseEvent) {
   // Account for scroll changes since resize started
   const currentScrollLeft = resizing.scrollContainer?.scrollLeft || 0
   const scrollDelta = currentScrollLeft - resizing.initialScrollLeft
-  
-  // Adjust for scroll change in pixel calculation
   const deltaPx = (e.clientX - resizing.startX) + scrollDelta
-  const deltaDays = Math.round(deltaPx / props.pxPerDay)
-  
+  const { newStart, newEnd } = getBarDatesForResize(props, resizing, deltaPx);
   if (resizing.side === 'left') {
-    // Left resize: change start date while keeping end date fixed
-    let newStart = resizing.startStart
-    let businessDaysToAdd = deltaDays
-    
-    // Move forward/backward to reach the target business day
-    while (businessDaysToAdd !== 0) {
-      if (businessDaysToAdd > 0) {
-        newStart = addDaysISO(newStart, 1)
-        if (!isWeekendISO(newStart)) businessDaysToAdd--
-      } else {
-        newStart = addDaysISO(newStart, -1)
-        if (!isWeekendISO(newStart)) businessDaysToAdd++
-      }
-    }
-    
-    // Ensure new start is not after the end date
-    if (newStart <= resizing.startEnd) {
-      emit('update', { id: props.assignment.id, start: newStart })
+    const safeNewStart = newStart ?? resizing.startStart;
+    if (safeNewStart <= resizing.startEnd) {
+      emit('update', { id: props.assignment.id, start: safeNewStart })
     }
   } else {
-    // Right resize: change end date while keeping start date fixed
-    let newEnd = resizing.startEnd
-    let businessDaysToAdd = deltaDays
-    
-    // Move forward/backward to reach the target business day
-    while (businessDaysToAdd !== 0) {
-      if (businessDaysToAdd > 0) {
-        newEnd = addDaysISO(newEnd, 1)
-        if (!isWeekendISO(newEnd)) businessDaysToAdd--
-      } else {
-        newEnd = addDaysISO(newEnd, -1)
-        if (!isWeekendISO(newEnd)) businessDaysToAdd++
-      }
-    }
-    
-    // Ensure new end is not before the start date
-    if (newEnd >= resizing.startStart) {
-      emit('update', { id: props.assignment.id, end: newEnd })
+    const safeNewEnd = newEnd ?? resizing.startEnd;
+    if (safeNewEnd >= resizing.startStart) {
+      emit('update', { id: props.assignment.id, end: safeNewEnd })
     }
   }
 }
