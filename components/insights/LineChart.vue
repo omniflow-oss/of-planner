@@ -1,6 +1,5 @@
 <template>
   <div>
-     {{ chartData }}
     <canvas ref="canvas"></canvas>
   </div>
 </template>

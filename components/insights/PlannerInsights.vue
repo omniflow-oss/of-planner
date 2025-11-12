@@ -1,11 +1,11 @@
 <template>
   <div class="p-4">
+    {{ store.assignments }}
     <h2 class="text-lg font-bold mb-2">Planner Insights</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4">
       <!-- Workload Level Line Chart -->
       <div class="bg-white rounded shadow p-3">
         <h3 class="text-sm font-semibold mb-2">Project Workload Over Time</h3>
-         {{ projectWorkloadData }}
         <LineChart :chart-data="projectWorkloadData" />
       </div>
       <!-- Overburdened People -->
@@ -31,19 +31,60 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { usePlannerStore } from '@/stores/usePlannerStore'
 import LineChart from '@/components/insights/LineChart.vue'
+import { addDaysISO } from '@/composables/useDate'
 
 const store = usePlannerStore()
 
-// Project workload data for line chart (dummy structure, real logic needed)
+// Project Workload Over Time: total assignation of all people per day
 const projectWorkloadData = computed(() => {
-  // Example: [{ label: 'Project A', data: [1,2,3,...] }, ...]
-  // TODO: Aggregate assignments per project per day
+  const assignments = store.assignments
+  if (!assignments.length || !assignments[0]) return { labels: [], datasets: [] }
+
+  // Find date range
+  let minDate = assignments[0]?.start ?? ''
+  let maxDate = assignments[0]?.end ?? ''
+  for (const a of assignments) {
+    if (a.start && a.start < minDate) minDate = a.start
+    if (a.end && a.end > maxDate) maxDate = a.end
+  }
+
+  if (!minDate || !maxDate) return { labels: [], datasets: [] }
+
+  // Build date labels
+  const labels: string[] = []
+  const dateAllocMap: Record<string, number> = {}
+  let d = minDate
+  while (d <= maxDate) {
+    labels.push(d)
+    dateAllocMap[d] = 0
+    d = addDaysISO(d, 1)
+  }
+
+  // For each assignment, add allocation to each day in its range
+  for (const a of assignments) {
+    let d = a.start
+    while (d <= a.end) {
+      if (dateAllocMap[d] !== undefined && typeof a.allocation === 'number') {
+        dateAllocMap[d] += a.allocation
+      }
+      d = addDaysISO(d, 1)
+    }
+  }
+
+  // Prepare chart.js dataset
   return {
-    labels: [],
-    datasets: []
+    labels,
+    datasets: [
+      {
+        label: 'Total Assignation',
+        data: labels.map(l => dateAllocMap[l]),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.1)',
+        fill: true,
+        tension: 0.2
+      }
+    ]
   }
 })
 
