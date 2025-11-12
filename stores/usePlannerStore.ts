@@ -236,6 +236,12 @@ export const usePlannerStore = defineStore('planner', {
       this.view.selected_id = null
       this._initialData = null
       this.isDataModified = false
+      // Also clear assignments and fragments in lazyLoader if enabled
+      if (this.isLazyLoadEnabled && this.lazyLoader) {
+        // use the loader's API to clear its internal state
+        this.lazyLoader.clearData()
+      }
+      
     },
 
     // Reset data to initial loaded state

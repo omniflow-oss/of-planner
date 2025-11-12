@@ -1,6 +1,5 @@
 <template>
   <div class="p-4">
-    {{ store.assignments }}
     <h2 class="text-lg font-bold mb-2">Planner Insights</h2>
     <div class="grid grid-cols-1 gap-4">
       <!-- Workload Level Line Chart -->

@@ -211,8 +211,7 @@ const clearAllData = () => {
     toast.add({ title: 'Data cleared', description: 'All data removed', color: 'error' })
     // Navigate to today after clearing data
     navigateToToday()
-    // Ensure Load Sample button is shown
-    store.hasData = false
+    // No need to set hasData, it is a getter
   }
 }
 
