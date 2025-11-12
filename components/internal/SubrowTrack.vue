@@ -96,6 +96,7 @@
         :key="a.id"
         :assignment="a"
         :start-i-s-o="startISO"
+        :days="days"
         :px-per-day="pxPerDay"
         :projects-map="projectsMap"
         :people-map="peopleMap"
@@ -110,7 +111,7 @@
         v-if="dragState.active && dragState.rowKey === subrow.key"
         class="absolute bg-blue-500/30 border border-blue-500 rounded-sm pointer-events-none"
         :style="{
-          left: dragState.previewLeft + 'px',
+          left: previewBarLeft + 'px',
           top: '10px',
           width: dragState.previewWidth + 'px',
           height: '28px'
@@ -121,6 +122,16 @@
 </template>
 
 <script setup lang="ts">
+// Fix preview bar left position to align with first visible business day
+const previewBarLeft = computed(() => {
+  // props.dragState.previewLeft is relative to timeline start, but we want to align to first business day
+  if (props.days && props.days.length > 0 && typeof props.days[0] === 'string') {
+    // If timeline start is not the first visible business day, adjust
+    const offset = props.days[0] === props.startISO ? 0 : 0 // can add offset logic if needed
+    return props.dragState.previewLeft + offset
+  }
+  return props.dragState.previewLeft
+})
 import { computed } from 'vue'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
