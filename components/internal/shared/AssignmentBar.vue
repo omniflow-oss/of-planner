@@ -11,10 +11,6 @@
       }
     ]"
     :style="barStyle"
-    :draggable="!store.isReadOnly"
-    @dragstart="onDragStart"
-    @drag="onDrag"
-    @dragend="onDragEnd"
     @mousedown.self="onMouseDown"
     @contextmenu.prevent.stop="onRightClick"
   >
@@ -25,8 +21,11 @@
     />
     <UTooltip :text="tooltipText">
       <div 
-        class="flex items-center gap-2 px-3 text-[12px] w-full draggable-content"
-        @mousedown.self="onMouseDown"
+        :class="[
+          'flex items-center gap-2 px-3 text-[12px] w-full draggable-content',
+          { 'readonly': store.isReadOnly }
+        ]"
+        @mousedown="onMouseDown"
       >
         <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">
           {{ person?.name ?? assignment.person_id }}</span>
@@ -84,14 +83,35 @@ const allocBadge = computed(() => {
   return a === 1 ? '1' : a === 0.75 ? '¾' : a === 0.5 ? '½' : '¼'
 })
 
-const startIndex = computed(() => Math.max(0, businessOffset(props.startISO, props.assignment.start)))
+const startIndex = computed(() => {
+  const baseOffset = businessOffset(props.startISO, props.assignment.start)
+  
+  // If prepending fixes the issue, then we need to simulate what prepending does
+  // Prepending typically moves the timeline start to align with business day boundaries
+  // Let's try to detect if the current timeline start needs this alignment
+  
+  let adjustedOffset = baseOffset
+  
+  if (store.isLazyLoadEnabled) {
+    // Prepending tends to align the timeline start to Monday
+    // If we're not starting on Monday, we might need an adjustment
+    const timelineStartDay = new Date(props.startISO).getUTCDay() // 0=Sun, 1=Mon, etc.
+    
+    // If timeline doesn't start on Monday and we have a positive offset, 
+    // apply adjustment based on how far from Monday we are
+    if (timelineStartDay !== 1 && baseOffset > 0) {
+      // The adjustment might depend on the day of week the timeline starts on
+      adjustedOffset = baseOffset - 1
+    }
+  }
+  
+  return Math.max(0, adjustedOffset)
+})
 const lengthDays = computed(() => Math.max(1, businessDaysBetweenInclusive(props.assignment.start, props.assignment.end)))
 const barStyle = computed(() => ({
-  position: 'absolute' as const,
   left: (startIndex.value * props.pxPerDay) + 'px',
-  width: Math.max(1, lengthDays.value * props.pxPerDay - 2) + 'px',
-  top: (props.top ?? 8) + 'px',
-  height: '30px'
+  width: Math.max(1, lengthDays.value * props.pxPerDay) + 'px',
+  top: (props.top ?? 8) + 'px'
 }))
 
 // Man-days badge
@@ -118,6 +138,7 @@ let dragging: {
   lastValidClientX: number;
   scrollContainer: HTMLElement | null;
   initialScrollLeft: number;
+  animationId: number | null;
 } | null = null
 let resizing: { 
   side: 'left'|'right'; 
@@ -135,12 +156,18 @@ const autoScrollState = ref({
   animationId: null as number | null
 })
 
+// Auto-scroll configuration constants
+const DRAG_SCROLL_THRESHOLD = 80  // pixels from edge to trigger auto-scroll during drag
+const RESIZE_SCROLL_THRESHOLD = 100  // pixels from edge to trigger auto-scroll during resize
+const LEFT_SIDEBAR_WIDTH = 240  // width of the left sidebar in pixels
+
 // Centralized cleanup function for drag event listeners
 function cleanupDragListeners() {
-  document.removeEventListener('mousemove', onGlobalMouseMove)
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
 }
 
-// Auto-scroll helper functions for resize operations
+// Auto-scroll helper functions for both resize and drag operations
 function startAutoScroll(direction: number, timelineContainer: HTMLElement) {
   if (autoScrollState.value.isScrolling && autoScrollState.value.direction === direction) {
     return // Already scrolling in this direction
@@ -151,7 +178,7 @@ function startAutoScroll(direction: number, timelineContainer: HTMLElement) {
   autoScrollState.value.direction = direction
   
   const scroll = () => {
-    if (!autoScrollState.value.isScrolling || !resizing) {
+    if (!autoScrollState.value.isScrolling || (!resizing && !dragging)) {
       return
     }
     
@@ -173,76 +200,100 @@ function stopAutoScroll() {
   autoScrollState.value.direction = 0
 }
 
-function onDragStart(e: DragEvent) {
+// Smooth mouse-based drag implementation
+function onMouseDown(e: MouseEvent) {
   // Prevent drag when in read-only mode
-  if (store.isReadOnly) {
-    e.preventDefault()
-    return
-  }
-  
-  // Prevent drag when resizing is active or when dragging from a resize handle
-  if (resizing || (e.target as HTMLElement).classList.contains('handle')) {
-    e.preventDefault()
-    return
-  }
-  
-  // Prevent duplicate drag initialization
-  if (isDragging.value || dragging) {
-    cleanupDragListeners()
-  }
-  
+  if (store.isReadOnly) return
+
+  // Ignore when resizing is active or when clicking on resize handles
+  if (resizing || (e.target as HTMLElement).classList.contains('handle')) return
+
+  // Prevent event bubbling to avoid conflicts
+  e.stopPropagation()
+  e.preventDefault()
+
   isDragging.value = true
   
   // Find the scrollable timeline container
   const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
-  
-  dragging = { 
-    startX: e.clientX, 
+
+  dragging = {
+    startX: e.clientX,
     startIndex: startIndex.value,
     initialStart: props.assignment.start,
     initialEnd: props.assignment.end,
     lastValidClientX: e.clientX,
     scrollContainer,
-    initialScrollLeft: scrollContainer?.scrollLeft || 0
+    initialScrollLeft: scrollContainer?.scrollLeft || 0,
+    animationId: null
   }
-  
-  // Set drag effect and create a transparent drag image
-  if (e.dataTransfer) {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', '')
-    
-    // Create invisible drag image to prevent default ghost
-    const dragImage = document.createElement('div')
-    dragImage.style.opacity = '0'
-    document.body.appendChild(dragImage)
-    e.dataTransfer.setDragImage(dragImage, 0, 0)
-    setTimeout(() => document.body.removeChild(dragImage), 0)
-  }
-  
-  // Remove any existing listener before adding new one to prevent duplicates
-  document.removeEventListener('mousemove', onGlobalMouseMove)
-  // Add global mouse tracking for more reliable position updates
-  document.addEventListener('mousemove', onGlobalMouseMove, { passive: true })
+
+  window.addEventListener('mousemove', onMouseMove, { passive: false })
+  window.addEventListener('mouseup', onMouseUp)
 }
 
-function onGlobalMouseMove(e: MouseEvent) {
+function onMouseMove(e: MouseEvent) {
   if (!dragging) return
+
+  // Prevent text selection during drag
+  e.preventDefault()  // Auto-scroll when dragging near the edges of the timeline
+  const timelineContainer = dragging.scrollContainer
+  if (timelineContainer) {
+    const containerRect = timelineContainer.getBoundingClientRect()
+    
+    // Check if mouse is near right edge and should trigger auto-scroll
+    if (e.clientX > containerRect.right - DRAG_SCROLL_THRESHOLD) {
+      startAutoScroll(1, timelineContainer)
+    }
+    // Auto-scroll left when near left edge
+    else if (e.clientX < containerRect.left + DRAG_SCROLL_THRESHOLD + LEFT_SIDEBAR_WIDTH && timelineContainer.scrollLeft > 0) {
+      startAutoScroll(-1, timelineContainer)
+    }
+    // Stop auto-scroll when mouse is in the middle area
+    else if (autoScrollState.value.isScrolling) {
+      stopAutoScroll()
+    }
+  }
   
   // Update last valid position
   dragging.lastValidClientX = e.clientX
   
-  // Apply drag with current mouse position, accounting for scroll changes
-  applyDragByClientX(e.clientX)
+  // Use requestAnimationFrame for smooth updates
+  if (dragging.animationId) {
+    cancelAnimationFrame(dragging.animationId)
+  }
+  
+  dragging.animationId = requestAnimationFrame(() => {
+    if (dragging) {
+      applyDragByClientX(dragging.lastValidClientX)
+      dragging.animationId = null
+    }
+  })
+}
+
+function onMouseUp() {
+  isDragging.value = false
+  
+  // Cancel any pending animation frame
+  if (dragging?.animationId) {
+    cancelAnimationFrame(dragging.animationId)
+  }
+  
+  dragging = null
+  
+  // Stop any active auto-scrolling
+  stopAutoScroll()
+  
+  // Clean up event listeners
+  cleanupDragListeners()
 }
 
 function applyDragByClientX(clientX: number) {
   if (!dragging) return
-  
+
   // Use clientX if valid, otherwise use last known position
   const effectiveClientX = clientX > 0 ? clientX : dragging.lastValidClientX
-  if (effectiveClientX === 0) return
-  
-  // Account for scroll changes since drag started
+  if (effectiveClientX === 0) return  // Account for scroll changes since drag started
   const currentScrollLeft = dragging.scrollContainer?.scrollLeft || 0
   const scrollDelta = currentScrollLeft - dragging.initialScrollLeft
   
@@ -280,71 +331,6 @@ function applyDragByClientX(clientX: number) {
   emit('update', { id: props.assignment.id, start: newStart, end: newEnd })
 }
 
-function onDrag(e: DragEvent) {
-  // Prevent drag when in read-only mode
-  if (store.isReadOnly) {
-    e.preventDefault()
-    return
-  }
-  
-  // Update last valid position if clientX is available
-  if (e.clientX > 0 && dragging) {
-    dragging.lastValidClientX = e.clientX
-  }
-  
-  // Apply drag with current or last known position
-  applyDragByClientX(e.clientX)
-}
-
-function onDragEnd(e: DragEvent) {
-  // Prevent drag when in read-only mode
-  if (store.isReadOnly) {
-    e.preventDefault()
-    return
-  }
-  
-  isDragging.value = false
-  
-  // Remove global mouse tracking using centralized cleanup
-  cleanupDragListeners()
-  
-  dragging = null
-}
-
-// Mouse-based drag (for environments/tests not using HTML5 drag)
-function onMouseDown(e: MouseEvent) {
-  // Prevent drag when in read-only mode
-  if (store.isReadOnly) return
-  
-  // Ignore when resizing is active or when clicking on resize handles
-  if (resizing || (e.target as HTMLElement).classList.contains('handle')) return
-  
-  isDragging.value = true
-  
-  // Find the scrollable timeline container
-  const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
-  
-  dragging = {
-    startX: e.clientX,
-    startIndex: startIndex.value,
-    initialStart: props.assignment.start,
-    initialEnd: props.assignment.end,
-    lastValidClientX: e.clientX,
-    scrollContainer,
-    initialScrollLeft: scrollContainer?.scrollLeft || 0
-  }
-  window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('mouseup', onMouseUp)
-}
-function onMouseMove(e: MouseEvent) {
-  applyDragByClientX(e.clientX)
-}
-function onMouseUp() {
-  onDragEnd({} as DragEvent)
-  window.removeEventListener('mousemove', onMouseMove)
-  window.removeEventListener('mouseup', onMouseUp)
-}
-
 function onResizeStart(side: 'left'|'right', e: MouseEvent) {
   // Prevent resize when in read-only mode
   if (store.isReadOnly) return
@@ -380,14 +366,13 @@ function onResize(e: MouseEvent) {
   const timelineContainer = (e.target as HTMLElement)?.closest('.overflow-auto') as HTMLElement
   if (timelineContainer) {
     const containerRect = timelineContainer.getBoundingClientRect()
-    const scrollThreshold = 100 // pixels from edge to trigger scroll
     
     // Check if mouse is near right edge and should trigger auto-scroll
-    if (e.clientX > containerRect.right - scrollThreshold) {
+    if (e.clientX > containerRect.right - RESIZE_SCROLL_THRESHOLD) {
       startAutoScroll(1, timelineContainer)
     }
     // Auto-scroll left when near left edge
-    else if (e.clientX < containerRect.left + scrollThreshold && timelineContainer.scrollLeft > 0) {
+    else if (e.clientX < containerRect.left + RESIZE_SCROLL_THRESHOLD && timelineContainer.scrollLeft > 0) {
       startAutoScroll(-1, timelineContainer)
     }
     // Stop auto-scroll when mouse is in the middle area
@@ -517,9 +502,11 @@ onUnmounted(() => {
 
 /* Dragging and resizing states */
 .dragging {
-  opacity: 0.8;
+  opacity: 0.9;
   box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.15);
   z-index: 1000;
+  transform: scale(1.02);
+  filter: brightness(1.05);
 }
 
 .resizing {
@@ -533,24 +520,31 @@ onUnmounted(() => {
 }
 
 /* Make the entire bar draggable by default */
-div[draggable="true"] {
+.draggable-content {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Only show drag cursor and hover effects when not in readonly mode */
+.draggable-content:not(.readonly) {
   cursor: move;
 }
-div[draggable="false"] {
+
+/* Readonly mode styling */
+.draggable-content.readonly {
   cursor: default;
-}
-div[draggable="true"]:hover {
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
 }
 
 /* Ensure draggable area remains accessible even when resizing */
-.resizing div[draggable="true"] {
+.resizing .draggable-content {
   cursor: move;
   pointer-events: auto;
 }
 
 /* Resize handles should be smaller and only active on hover */
-.handle[draggable="false"] {
+.handle {
   cursor: ew-resize;
   pointer-events: auto;
 }
@@ -560,25 +554,21 @@ div[draggable="true"]:hover {
   pointer-events: auto;
 }
 
-.resizing div[draggable="true"]:not(.handle) {
-  pointer-events: auto;
-  cursor: move;
+/* Smooth dragging transitions */
+.dragging {
+  transition: none !important;
 }
 
-/* Ensure the draggable content area is always accessible */
-.draggable-content {
-  cursor: move;
-  pointer-events: auto;
-  position: relative;
-  z-index: 5;
+/* Prevent text selection during drag operations */
+.dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
 }
 
-.resizing .draggable-content {
-  cursor: move;
-  pointer-events: auto;
-}
-.assignment-bar[draggable="false"] .draggable-content {
-  cursor: default;
+.assignment-bar {
+  height: 30px;
 }
 </style>
  
