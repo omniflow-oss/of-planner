@@ -30,7 +30,7 @@
       </div>
       
       <!-- Lazy loading toggle -->
-      <div class="flex items-center gap-2 px-2 py-1 rounded-md border border-gray-200 bg-white/50">
+      <div class="flex items-center gap-2">
         <USwitch 
           v-model="isLazyLoadEnabled" 
           :loading="store.isLoadingFragments"

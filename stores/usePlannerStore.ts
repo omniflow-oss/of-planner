@@ -96,6 +96,17 @@ export const usePlannerStore = defineStore('planner', {
       const id = generateSequentialId('a', this.assignments)
       const a: Assignment = { id, ...input, start, end }
       this.assignments.push(a)
+      // Also update lazyLoader's allAssignments
+      if (this.isLazyLoadEnabled && this.lazyLoader?.allAssignments) {
+        this.lazyLoader.allAssignments.value.push(a)
+        // Mark affected fragments as not loaded so they reload
+        const fragments = this.lazyLoader.fragments.value
+        for (const fragment of fragments.values()) {
+          if (a.start <= fragment.endDate && a.end >= fragment.startDate) {
+            fragment.isLoaded = false
+          }
+        }
+      }
       this.view.selected_id = a.id
       this.isDataModified = true
       return a
@@ -112,11 +123,35 @@ export const usePlannerStore = defineStore('planner', {
         next.end = clamped.end
       }
       this.assignments[idx] = next
+      // Also update lazyLoader's allAssignments
+      if (this.isLazyLoadEnabled && this.lazyLoader?.allAssignments) {
+        const lazyIdx = this.lazyLoader.allAssignments.value.findIndex(a => a.id === id)
+        if (lazyIdx !== -1) this.lazyLoader.allAssignments.value[lazyIdx] = next
+        // Mark affected fragments as not loaded so they reload
+        const fragments = this.lazyLoader.fragments.value
+        for (const fragment of fragments.values()) {
+          if (next.start <= fragment.endDate && next.end >= fragment.startDate) {
+            fragment.isLoaded = false
+          }
+        }
+      }
       this.isDataModified = true
     },
 
     deleteAssignment(id: string) { 
-      this.assignments = this.assignments.filter(a => a.id !== id) 
+      this.assignments = this.assignments.filter(a => a.id !== id)
+      // Also update lazyLoader's allAssignments (mutate in-place)
+      if (this.isLazyLoadEnabled && this.lazyLoader?.allAssignments) {
+        const arr = this.lazyLoader.allAssignments.value
+        for (let i = arr.length - 1; i >= 0; i--) {
+          if (arr[i].id === id) arr.splice(i, 1)
+        }
+        // Mark all fragments as not loaded so they reload (safe for deletes)
+        const fragments = this.lazyLoader.fragments.value
+        for (const fragment of fragments.values()) {
+          fragment.isLoaded = false
+        }
+      }
       this.isDataModified = true
     },
 
