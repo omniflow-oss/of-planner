@@ -61,13 +61,14 @@
 
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from 'vue'
+import { inject } from 'vue'
 import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import { generateUserColor } from '@/utils/colors'
 import { roundToDecimalPlaces } from '@/composables/useProjectEstimation'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import type { Assignment } from '@/types/planner'
 
-const props = defineProps<{ assignment: Assignment; startISO: string; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
+const props = defineProps<{ assignment: Assignment; startISO: string; days?: string[]; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
 const emit = defineEmits(['update', 'edit', 'delete', 'resize'])
 const store = usePlannerStore()
 const project = computed(() => props.projectsMap[props.assignment.project_id])
@@ -83,29 +84,13 @@ const allocBadge = computed(() => {
   return a === 1 ? '1' : a === 0.75 ? '¾' : a === 0.5 ? '½' : '¼'
 })
 
+// Use first visible business day for offset calculation
 const startIndex = computed(() => {
-  const baseOffset = businessOffset(props.startISO, props.assignment.start)
-  
-  // If prepending fixes the issue, then we need to simulate what prepending does
-  // Prepending typically moves the timeline start to align with business day boundaries
-  // Let's try to detect if the current timeline start needs this alignment
-  
-  let adjustedOffset = baseOffset
-  
-  if (store.isLazyLoadEnabled) {
-    // Prepending tends to align the timeline start to Monday
-    // If we're not starting on Monday, we might need an adjustment
-    const timelineStartDay = new Date(props.startISO).getUTCDay() // 0=Sun, 1=Mon, etc.
-    
-    // If timeline doesn't start on Monday and we have a positive offset, 
-    // apply adjustment based on how far from Monday we are
-    if (timelineStartDay !== 1 && baseOffset > 0) {
-      // The adjustment might depend on the day of week the timeline starts on
-      adjustedOffset = baseOffset - 1
-    }
+  let baseISO: string = props.startISO
+  if (props.days && props.days.length > 0 && typeof props.days[0] === 'string') {
+    baseISO = props.days[0] || props.startISO
   }
-  
-  return Math.max(0, adjustedOffset)
+  return Math.max(0, businessOffset(baseISO, props.assignment.start))
 })
 const lengthDays = computed(() => Math.max(1, businessDaysBetweenInclusive(props.assignment.start, props.assignment.end)))
 const barStyle = computed(() => ({

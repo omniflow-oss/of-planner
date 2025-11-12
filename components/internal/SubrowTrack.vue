@@ -96,6 +96,7 @@
         :key="a.id"
         :assignment="a"
         :start-i-s-o="startISO"
+        :days="days"
         :px-per-day="pxPerDay"
         :projects-map="projectsMap"
         :people-map="peopleMap"
