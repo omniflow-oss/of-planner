@@ -15,7 +15,17 @@
       </div>
       <DataManager @go-to-today="$emit('go-to-today', $event)" />
     </div>
-    <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2">
+      <!-- Insides Sidebar Toggle Button -->
+      <UButton
+        size="xs"
+        variant="outline"
+        icon="i-lucide-bar-chart-2"
+        aria-label="Show workload insights"
+        @click="$emit('toggle-insides')"
+      >
+        Insights
+      </UButton>
       <ViewSwitcher 
         @go-to-today="$emit('go-to-today', $event)"
         @add-weeks="$emit('add-weeks', $event)"
@@ -60,6 +70,7 @@ import { usePlannerStore } from '@/stores/usePlannerStore'
 defineEmits<{
   'go-to-today': [todayISO: string]
   'add-weeks': [{ direction: 'previous' | 'next', weeks: number }]
+  'toggle-insides': []
 }>()
 
 const store = usePlannerStore()
