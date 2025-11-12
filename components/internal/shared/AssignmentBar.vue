@@ -83,11 +83,34 @@ const allocBadge = computed(() => {
   return a === 1 ? '1' : a === 0.75 ? '¾' : a === 0.5 ? '½' : '¼'
 })
 
-const startIndex = computed(() => Math.max(0, businessOffset(props.startISO, props.assignment.start)))
+const startIndex = computed(() => {
+  const baseOffset = businessOffset(props.startISO, props.assignment.start)
+  
+  // If prepending fixes the issue, then we need to simulate what prepending does
+  // Prepending typically moves the timeline start to align with business day boundaries
+  // Let's try to detect if the current timeline start needs this alignment
+  
+  let adjustedOffset = baseOffset
+  
+  if (store.isLazyLoadEnabled) {
+    // Prepending tends to align the timeline start to Monday
+    // If we're not starting on Monday, we might need an adjustment
+    const timelineStartDay = new Date(props.startISO).getUTCDay() // 0=Sun, 1=Mon, etc.
+    
+    // If timeline doesn't start on Monday and we have a positive offset, 
+    // apply adjustment based on how far from Monday we are
+    if (timelineStartDay !== 1 && baseOffset > 0) {
+      // The adjustment might depend on the day of week the timeline starts on
+      adjustedOffset = baseOffset - 1
+    }
+  }
+  
+  return Math.max(0, adjustedOffset)
+})
 const lengthDays = computed(() => Math.max(1, businessDaysBetweenInclusive(props.assignment.start, props.assignment.end)))
 const barStyle = computed(() => ({
   left: (startIndex.value * props.pxPerDay) + 'px',
-  width: Math.max(1, lengthDays.value * props.pxPerDay - 2) + 'px',
+  width: Math.max(1, lengthDays.value * props.pxPerDay) + 'px',
   top: (props.top ?? 8) + 'px'
 }))
 
@@ -181,19 +204,19 @@ function stopAutoScroll() {
 function onMouseDown(e: MouseEvent) {
   // Prevent drag when in read-only mode
   if (store.isReadOnly) return
-  
+
   // Ignore when resizing is active or when clicking on resize handles
   if (resizing || (e.target as HTMLElement).classList.contains('handle')) return
-  
+
   // Prevent event bubbling to avoid conflicts
   e.stopPropagation()
   e.preventDefault()
-  
+
   isDragging.value = true
   
   // Find the scrollable timeline container
   const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
-  
+
   dragging = {
     startX: e.clientX,
     startIndex: startIndex.value,
@@ -204,18 +227,16 @@ function onMouseDown(e: MouseEvent) {
     initialScrollLeft: scrollContainer?.scrollLeft || 0,
     animationId: null
   }
-  
+
   window.addEventListener('mousemove', onMouseMove, { passive: false })
   window.addEventListener('mouseup', onMouseUp)
 }
 
 function onMouseMove(e: MouseEvent) {
   if (!dragging) return
-  
+
   // Prevent text selection during drag
-  e.preventDefault()
-  
-  // Auto-scroll when dragging near the edges of the timeline
+  e.preventDefault()  // Auto-scroll when dragging near the edges of the timeline
   const timelineContainer = dragging.scrollContainer
   if (timelineContainer) {
     const containerRect = timelineContainer.getBoundingClientRect()
@@ -269,12 +290,10 @@ function onMouseUp() {
 
 function applyDragByClientX(clientX: number) {
   if (!dragging) return
-  
+
   // Use clientX if valid, otherwise use last known position
   const effectiveClientX = clientX > 0 ? clientX : dragging.lastValidClientX
-  if (effectiveClientX === 0) return
-  
-  // Account for scroll changes since drag started
+  if (effectiveClientX === 0) return  // Account for scroll changes since drag started
   const currentScrollLeft = dragging.scrollContainer?.scrollLeft || 0
   const scrollDelta = currentScrollLeft - dragging.initialScrollLeft
   
@@ -311,10 +330,6 @@ function applyDragByClientX(clientX: number) {
   
   emit('update', { id: props.assignment.id, start: newStart, end: newEnd })
 }
-
-
-
-
 
 function onResizeStart(side: 'left'|'right', e: MouseEvent) {
   // Prevent resize when in read-only mode

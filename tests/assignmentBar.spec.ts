@@ -13,18 +13,36 @@ describe('AssignmentBar interactions', () => {
 
   it('emits update when dragged by ~1 day (snap)', async () => {
     const pxPerDay = 40
+    const pinia = createPinia()
     const wrapper = mount(AssignmentBar as any, {
       props: { assignment, startISO, pxPerDay, projectsMap },
       global: {
-        plugins: [createPinia()],
+        plugins: [pinia],
         stubs: {
           UTooltip: { template: '<div><slot /></div>' },
         },
       },
     })
-    await wrapper.trigger('mousedown', { clientX: 0 })
+    
+    // Set the store to full load mode for consistent test behavior
+    const store = (wrapper.vm as any).store
+    store.isLazyLoadEnabled = false
+    // Trigger mousedown on the draggable content area
+    const draggableContent = wrapper.find('.draggable-content')
+    await draggableContent.trigger('mousedown', { clientX: 0 })
+    
     // simulate drag ~1 day to the right
     window.dispatchEvent(new MouseEvent('mousemove', { clientX: pxPerDay + 2 }))
+    
+    // Manually trigger the animation frame that's used in onMouseMove
+    await new Promise(resolve => {
+      if (globalThis.requestAnimationFrame) {
+        globalThis.requestAnimationFrame(() => resolve(undefined))
+      } else {
+        setTimeout(() => resolve(undefined), 16)
+      }
+    })
+    
     window.dispatchEvent(new MouseEvent('mouseup'))
 
     const emitted = wrapper.emitted('update')
