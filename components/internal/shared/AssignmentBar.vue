@@ -202,9 +202,21 @@ function onMouseDown(e: MouseEvent) {
   // Find the scrollable timeline container
   const scrollContainer = (e.target as HTMLElement).closest('.overflow-auto') as HTMLElement
 
+  // Always use the first visible business day as base for startIndex
+  let baseISO = props.startISO;
+  if (props.days && props.days.length > 0 && typeof props.days[0] === 'string') {
+    // Find first business day (Mon-Fri) in visible days
+    const firstBusinessDay = props.days.find(d => {
+      const wd = new Date(d).getUTCDay();
+      return wd >= 1 && wd <= 5;
+    });
+    baseISO = firstBusinessDay || props.days[0] || props.startISO;
+  }
+  const startIndexFromBusinessDay = Math.max(0, businessOffset(baseISO, props.assignment.start));
+
   dragging = {
     startX: e.clientX,
-    startIndex: startIndex.value,
+    startIndex: startIndexFromBusinessDay,
     initialStart: props.assignment.start,
     initialEnd: props.assignment.end,
     lastValidClientX: e.clientX,
@@ -284,27 +296,43 @@ function applyDragByClientX(clientX: number) {
   
   // Adjust for scroll change in pixel calculation
   const deltaPx = (effectiveClientX - dragging.startX) + scrollDelta
-  const deltaDays = Math.round(deltaPx / props.pxPerDay)
-  
-  // Calculate new start position by adding business days from the timeline start
-  const newStartIndex = dragging.startIndex + deltaDays
-  let newStart = props.startISO
-  let businessDaysToAdd = newStartIndex
-  
+  // Only move to next day after dragging a full cell width, never shift by day-1 on initial movement
+  let deltaDays = 0;
+  if (deltaPx >= props.pxPerDay) {
+    deltaDays = Math.floor(deltaPx / props.pxPerDay);
+  } else if (deltaPx <= -props.pxPerDay) {
+    deltaDays = Math.ceil(deltaPx / props.pxPerDay);
+  } else {
+    deltaDays = 0;
+  }
+
+  // Calculate new start position by adding business days from the first visible business day
+  let baseISO = props.startISO;
+  if (props.days && props.days.length > 0 && typeof props.days[0] === 'string') {
+    const firstBusinessDay = props.days.find(d => {
+      const wd = new Date(d).getUTCDay();
+      return wd >= 1 && wd <= 5;
+    });
+    baseISO = firstBusinessDay || props.days[0] || props.startISO;
+  }
+  const newStartIndex = dragging.startIndex + deltaDays;
+  let newStart = baseISO;
+  let businessDaysToAdd = newStartIndex;
+
   // Move forward/backward to reach the target business day
   while (businessDaysToAdd !== 0) {
     if (businessDaysToAdd > 0) {
-      newStart = addDaysISO(newStart, 1)
-      if (!isWeekendISO(newStart)) businessDaysToAdd--
+      newStart = addDaysISO(newStart, 1);
+      if (!isWeekendISO(newStart)) businessDaysToAdd--;
     } else {
-      newStart = addDaysISO(newStart, -1)
-      if (!isWeekendISO(newStart)) businessDaysToAdd++
+      newStart = addDaysISO(newStart, -1);
+      if (!isWeekendISO(newStart)) businessDaysToAdd++;
     }
   }
-  
+
   // Use business days for length calculation to match the display
   const lengthBusinessDays = businessDaysBetweenInclusive(dragging.initialStart, dragging.initialEnd)
-  
+
   // Calculate end date by adding business days to start
   let newEnd = newStart
   let businessDaysLeft = lengthBusinessDays - 1
@@ -312,7 +340,7 @@ function applyDragByClientX(clientX: number) {
     newEnd = addDaysISO(newEnd, 1)
     if (!isWeekendISO(newEnd)) businessDaysLeft--
   }
-  
+
   emit('update', { id: props.assignment.id, start: newStart, end: newEnd })
 }
 

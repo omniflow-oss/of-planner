@@ -53,12 +53,17 @@ export function useDragToCreate(
   function updatePreviewBar() {
     const startIndex = Math.min(dragState.value.startDayIndex, dragState.value.endDayIndex)
     const endIndex = Math.max(dragState.value.startDayIndex, dragState.value.endDayIndex)
-    
+
     if (startIndex < 0 || endIndex < 0 || startIndex >= days.value.length || endIndex >= days.value.length) return
     const startDay = days.value[startIndex]
     const endDay = days.value[endIndex]
+    // Use first visible business day as base
+    let baseISO: string = startISO.value
+    if (days.value.length > 0 && typeof days.value[0] === 'string') {
+      baseISO = days.value[0] || startISO.value
+    }
     if (startDay && endDay) {
-      const seg = businessSegment(startISO.value, startDay, endDay, pxPerDay.value)
+      const seg = businessSegment(baseISO, startDay, endDay, pxPerDay.value)
       dragState.value.previewLeft = seg.left
       dragState.value.previewWidth = seg.width
     }
@@ -151,14 +156,29 @@ export function useDragToCreate(
     
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     const x = e.clientX - rect.left
-    
+
     // Save all critical state immediately before any mouse movement
     dragState.value.rowKey = sr.key
     dragState.value.startX = x
     dragState.value.currentX = x
     dragState.value.startDayIndex = getDayIndexFromX(x)
     dragState.value.endDayIndex = dragState.value.startDayIndex
-    
+
+    // Immediately set preview bar position using days[0] as base
+    const startIndex = dragState.value.startDayIndex
+    if (startIndex >= 0 && startIndex < days.value.length) {
+      const startDay = days.value[startIndex]
+      let baseISO: string = startISO.value
+      if (days.value.length > 0 && typeof days.value[0] === 'string') {
+        baseISO = days.value[0] || startISO.value
+      }
+      if (startDay) {
+        const seg = businessSegment(baseISO, startDay, startDay, pxPerDay.value)
+        dragState.value.previewLeft = seg.left
+        dragState.value.previewWidth = seg.width
+      }
+    }
+
     // Start long click timer (now just for preview display timing)
     dragState.value.longClickTimer = window.setTimeout(() => {
       dragState.value.active = true
