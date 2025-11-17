@@ -12,7 +12,7 @@
         <h3 class="text-sm font-semibold mb-2">Overburdened People</h3>
         <ul>
           <li v-for="person in overburdenedPeople" :key="person.id" class="mb-1">
-            <span class="font-medium">{{ person.name }}</span> — {{ person.totalAllocation }}d
+            <span class="font-medium">{{ person.name }}</span> — {{ person.totalAllocationPercent }}%
           </li>
         </ul>
       </div>
@@ -83,10 +83,27 @@ const projectWorkloadData = computed(() => {
   }
 })
 
-// Overburdened people (allocation > threshold)
+// Overburdened people (total allocation > 100%)
 const overburdenedPeople = computed(() => {
-  // TODO: Calculate total allocation per person, filter by threshold
-  return []
+  const people = store.people
+  const assignments = store.assignments
+  // Map personId to total allocation percent
+  const allocationPercentMap: Record<string, number> = {}
+  for (const a of assignments) {
+    const person = people.find(p => p.id === a.person_id)
+    
+    if (!person || typeof a.allocation !== 'number' ) continue
+    if (!allocationPercentMap[a.person_id]) allocationPercentMap[a.person_id] = 0
+    allocationPercentMap[a.person_id] += (a.allocation * 100)
+  }
+  // Filter people with total allocation percent > 100
+  return people
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      totalAllocationPercent: Math.round(allocationPercentMap[p.id] || 0)
+    }))
+    .filter(p => p.totalAllocationPercent > 100)
 })
 
 // Projects starting soon (start date within next 7 days)
