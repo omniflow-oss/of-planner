@@ -48,7 +48,7 @@
               :people-map="peopleMap"
               @create="actions.onCreate"
               @update="actions.onUpdate"
-              @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, view.start)"
+              @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, getTodayWorkingDay())"
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
               @edit-project="handleEditProject"
@@ -79,7 +79,7 @@
               :people-map="peopleMap"
               @create="actions.onCreate"
               @update="actions.onUpdate"
-              @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, view.start)"
+              @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, getTodayWorkingDay())"
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
               @edit-project="handleEditProject"
@@ -221,6 +221,7 @@ import NewPersonModal from '@/components/timeline/NewPersonModal.vue'
 import EditProjectModal from '@/components/timeline/EditProjectModal.vue'
 import EditPersonModal from '@/components/timeline/EditPersonModal.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
+import { addDaysISO, isWeekendISO } from '@/composables/useDate'
 
 const store = usePlannerStore()
 const { people, projects, view, assignments } = storeToRefs(store)
@@ -325,6 +326,20 @@ const timelineEvents = inject<{
   goToTodayEvent: Ref<string | null>
   addWeeksEvent: Ref<{ direction: 'previous' | 'next', weeks: number } | null>
 }>('timelineEvents')
+
+// Inject personClickEvent from index.vue
+const personClickEvent = inject('personClickEvent', null)
+
+// Watch for personClickEvent and scroll to person in people view
+watch(() => personClickEvent?.value, (personId) => {
+  if (personId) {
+    // Switch to people view and scroll to person
+    store.switchMode('person')
+    nextTick(() => {
+      handlePersonClick(personId)
+    })
+  }
+})
 
 // Expand/Collapse all controls provided to RowGroup
 const rowGroupControls = {
@@ -476,5 +491,13 @@ function toggleExpandAll() {
     rowGroupControls.expandAllToken.value = Date.now()
     expandState.value[view.value.mode] = true
   }
+}
+
+function getTodayWorkingDay() {
+  let todayISO = new Date().toISOString().slice(0, 10)
+  while (isWeekendISO(todayISO)) {
+    todayISO = addDaysISO(todayISO, 1)
+  }
+  return todayISO
 }
 </script>

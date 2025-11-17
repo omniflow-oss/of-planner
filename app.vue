@@ -10,11 +10,11 @@
         <NuxtPage />
         <div v-if="showInsides" class="fixed top-0 right-0 h-full w-[420px] bg-white border-l border-slate-200 shadow-xl z-50 flex flex-col">
           <div class="flex items-center justify-between px-4 py-2 border-b">
-            <span class="font-semibold text-[15px]">Workload Insights</span>
+            <h2 class="text-lg font-bold mb-2">Planner Insights</h2>
             <button class="text-xs px-2 py-1" @click="showInsides = false">Close</button>
           </div>
           <div class="flex-1 overflow-auto p-4">
-            <PlannerInsights />
+            <PlannerInsights @person-click="handlePersonClick" />
           </div>
         </div>
       </main>
@@ -40,6 +40,18 @@ provide('timelineEvents', {
   goToTodayEvent,
   addWeeksEvent
 })
+
+// Person click event handler to forward to Timeline
+import { ref as vueRef } from 'vue'
+const personClickEvent = vueRef<string | null>(null)
+provide('personClickEvent', personClickEvent)
+
+function handlePersonClick(personId: string) {
+  personClickEvent.value = personId
+  nextTick(() => {
+    personClickEvent.value = null
+  })
+}
 
 // Handle events from ViewSwitcher using Vue emit functions
 function handleGoToToday(todayISO: string) {
