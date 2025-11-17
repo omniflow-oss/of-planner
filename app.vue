@@ -14,7 +14,7 @@
             <button class="text-xs px-2 py-1" @click="showInsides = false">Close</button>
           </div>
           <div class="flex-1 overflow-auto p-4">
-            <PlannerInsights />
+            <PlannerInsights @person-click="handlePersonClick" />
           </div>
         </div>
       </main>
@@ -40,6 +40,18 @@ provide('timelineEvents', {
   goToTodayEvent,
   addWeeksEvent
 })
+
+// Person click event handler to forward to Timeline
+import { ref as vueRef } from 'vue'
+const personClickEvent = vueRef<string | null>(null)
+provide('personClickEvent', personClickEvent)
+
+function handlePersonClick(personId: string) {
+  personClickEvent.value = personId
+  nextTick(() => {
+    personClickEvent.value = null
+  })
+}
 
 // Handle events from ViewSwitcher using Vue emit functions
 function handleGoToToday(todayISO: string) {

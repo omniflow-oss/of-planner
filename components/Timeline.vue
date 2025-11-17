@@ -327,6 +327,20 @@ const timelineEvents = inject<{
   addWeeksEvent: Ref<{ direction: 'previous' | 'next', weeks: number } | null>
 }>('timelineEvents')
 
+// Inject personClickEvent from index.vue
+const personClickEvent = inject('personClickEvent', null)
+
+// Watch for personClickEvent and scroll to person in people view
+watch(() => personClickEvent?.value, (personId) => {
+  if (personId) {
+    // Switch to people view and scroll to person
+    store.switchMode('person')
+    nextTick(() => {
+      handlePersonClick(personId)
+    })
+  }
+})
+
 // Expand/Collapse all controls provided to RowGroup
 const rowGroupControls = {
   expandAllToken: ref<number>(0),

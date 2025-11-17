@@ -12,7 +12,7 @@
         <ul>
           <template v-if="overburdenedPeople.length > 0">
             <li v-for="person in overburdenedPeople" :key="person.id" class="mb-1">
-              <span class="font-medium">{{ person.name }}</span> — {{ person.overburdenedDays }} days overburdened
+              <span class="font-medium">{{ person.name }}</span> — {{ person.overburdenedDays }} days overburdened ({{ person.overburdenedPercent }}% average)
             </li>
           </template>
           <template v-else>
@@ -34,6 +34,20 @@
           </template>
         </ul>
       </div>
+      <!-- Who's Free Next 2 Weeks -->
+      <div class="bg-white rounded shadow p-3">
+        <h3 class="text-sm font-semibold mb-2">Who's Free Next 2 Weeks</h3>
+        <ul>
+          <template v-if="whosFreeNext2Weeks.length > 0">
+            <li v-for="person in whosFreeNext2Weeks" :key="person.id" class="mb-1">
+                <button class="font-medium text-blue-700 hover:underline focus:outline-none" @click="$emit('person-click', person.id)">{{ person.name }}</button>
+            </li>
+          </template>
+          <template v-else>
+            <li class="text-slate-500 text-xs">Everyone is occupied in the next 2 weeks.</li>
+          </template>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -41,7 +55,6 @@
 <script setup lang="ts">
 import LineChart from '@/components/insights/LineChart.vue'
 import { addDaysISO, isWeekendISO } from '@/composables/useDate'
-
 const store = usePlannerStore()
 
 // Project Workload Over Time: total assignation of all people per day
@@ -164,6 +177,24 @@ const startingSoonProjects = computed(() => {
       startDate
     }
   })
+})
+
+// Who's Free insight: people with 0 allocation for the next 2 weeks
+const whosFreeNext2Weeks = computed(() => {
+  const people = store.people
+  const assignments = store.assignments
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const endISO = addDaysISO(todayISO, 13) // 14 days including today
+  // For each person, check if they have any allocation in the next 2 weeks
+  const allocationMap: Record<string, boolean> = {}
+  for (const a of assignments) {
+    // If assignment overlaps with any day in the next 2 weeks
+    if (a.end >= todayISO && a.start <= endISO) {
+      allocationMap[a.person_id] = true
+    }
+  }
+  // People with no allocation in the next 2 weeks
+  return people.filter(p => !allocationMap[p.id])
 })
 </script>
 
