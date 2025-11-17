@@ -29,6 +29,49 @@
 /* Day background bands (can be used for weekend if needed) */
 .day-bg { position: absolute; top: 0; bottom: 0;  background: var(--today-color); }
 .day-bg.weekend { background-color: color-mix(in lab, var(--background-color-default) 92%, white); }
+.day-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--divide-color-muted); 
+} 
+.day-bg.week::before {
+  background-color: var(--divide-color-accented); width: 2px;
+}
+.rows-group .day-bg.today::before,
+.empty-rows-filler .day-bg.today::before {
+  background-color: var(--ring-color-inverted); width: 2px; bottom:-1px;
+}
+.header-grid .today::after { 
+  position: absolute;
+  content: ''; 
+  display: block; 
+  width: 10px;
+  height:5px; 
+  bottom:-1px;
+  transform:  translateX(-4px);
+  background-color: var(--ring-color-inverted); 
+  z-index: 1;
+  border-top-left-radius: 5px; /* Half of the width for a perfect curve */
+  border-top-right-radius: 5px;
+}
+.drag-group-row:first-child .header-row .day-bg.today::after,
+.empty-rows-filler .day-bg.today::after {
+  position: absolute;
+  content: ''; 
+  display: block; 
+  width: 10px;
+  height:5px; 
+  top:-1px;
+  transform:  translateX(-4px);
+  background-color: var(--ring-color-inverted); 
+  z-index: 1;
+  border-bottom-left-radius: 5px; /* Half of the width for a perfect curve */
+  border-bottom-right-radius: 5px;
+}
 body{  overflow-x: hidden; }
 .cell-text { background-color: var(--background-color-elevated); }
 

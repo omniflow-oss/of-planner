@@ -3,20 +3,20 @@
     <div
       v-for="(day, i) in days"
       :key="'bg'+i"
-      class="day-bg"
+      :class="['day-bg', isWeekStart(i)?'week':'', i==todayIdx?'today':'']"
       :style="{ left: left(i)+'px', width: width(i)+'px' }"
     />
-    <div
+    <!-- <div
       v-for="(day, i) in days"
       :key="'v'+i"
       :class="['grid-v', isWeekStart(i)?'week':'']"
       :style="{ left: left(i)+'px' }"
-    />
-    <div
+    /> -->
+    <!-- <div
       v-if="todayIdx>=0 && todayIdx<days.length"
       class="today-line"
       :style="{ left: left(todayIdx)+'px' }"
-    />
+    /> -->
   </div>
 </template>
 
