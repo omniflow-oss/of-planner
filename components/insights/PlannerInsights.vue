@@ -10,18 +10,28 @@
       <div class="bg-white rounded shadow p-3">
         <h3 class="text-sm font-semibold mb-2">Overburdened People</h3>
         <ul>
-          <li v-for="person in overburdenedPeople" :key="person.id" class="mb-1">
-            <span class="font-medium">{{ person.name }}</span> — <b>{{ person.overburdenedDays }}</b> days overburdened ({{ person.overburdenedPercent }}%)
-          </li>
+          <template v-if="overburdenedPeople.length > 0">
+            <li v-for="person in overburdenedPeople" :key="person.id" class="mb-1">
+              <span class="font-medium">{{ person.name }}</span> — {{ person.overburdenedDays }} days overburdened
+            </li>
+          </template>
+          <template v-else>
+            <li class="text-slate-500 text-xs">No overburdened people.</li>
+          </template>
         </ul>
       </div>
       <!-- Starting Soon Projects -->
       <div class="bg-white rounded shadow p-3">
         <h3 class="text-sm font-semibold mb-2">Projects Starting Soon</h3>
         <ul>
-          <li v-for="project in startingSoonProjects" :key="project.id" class="mb-1">
-            <span class="font-medium">{{ project.name }}</span> — Starts {{ project.startDate }}
-          </li>
+          <template v-if="startingSoonProjects.length > 0">
+            <li v-for="project in startingSoonProjects" :key="project.id" class="mb-1">
+              <span class="font-medium">{{ project.name }}</span> — Starts {{ project.startDate }}
+            </li>
+          </template>
+          <template v-else>
+            <li class="text-slate-500 text-xs">No projects starting soon.</li>
+          </template>
         </ul>
       </div>
     </div>
@@ -133,10 +143,27 @@ const overburdenedPeople = computed(() => {
     .filter(p => p.overburdenedDays > 0)
 })
 
-// Projects starting soon (start date within next 7 days)
+// Projects starting soon (start date within the next 7 days)
 const startingSoonProjects = computed(() => {
-  // TODO: Filter projects by start date
-  return []
+  const projects = store.projects
+  const assignments = store.assignments
+  const today = new Date().toISOString().slice(0, 10)
+  // Projects with at least one assignment in the future and none in the past
+  return projects.filter(project => {
+    const projectAssignments = assignments.filter(a => a.project_id === project.id)
+    const hasFuture = projectAssignments.some(a => a.start > today)
+    const hasPast = projectAssignments.some(a => a.end < today)
+    return hasFuture && !hasPast
+  }).map(project => {
+    // Find the earliest future assignment start date
+    const futureAssignments = assignments.filter(a => a.project_id === project.id && a.start > today)
+    const startDate = futureAssignments.length > 0 ? futureAssignments.reduce((min, a) => a.start < min ? a.start : min, futureAssignments[0].start) : null
+    return {
+      id: project.id,
+      name: project.name,
+      startDate
+    }
+  })
 })
 </script>
 
