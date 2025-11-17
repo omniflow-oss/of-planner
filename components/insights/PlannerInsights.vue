@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4">
+  <div>
     <h2 class="text-lg font-bold mb-2">Planner Insights</h2>
     <div class="grid grid-cols-1 gap-4">
       <!-- Workload Level Line Chart -->
@@ -77,11 +77,7 @@ const projectWorkloadData = computed(() => {
     datasets: [
       {
         label: 'Total Assignation',
-        data: labels.map(l => dateAllocMap[l]),
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.1)',
-        fill: true,
-        tension: 0.2
+        data: labels.map(l => dateAllocMap[l])
       }
     ]
   }
