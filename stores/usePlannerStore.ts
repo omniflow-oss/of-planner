@@ -54,7 +54,7 @@ export const usePlannerStore = defineStore('planner', {
     // Read-only mode toggle
     isReadOnly: false,
     // Lazy loading state
-    isLazyLoadEnabled: true,
+    isLazyLoadEnabled: false,
     isLoadingFragments: false,
     isInitializingLazyLoad: false
   }),

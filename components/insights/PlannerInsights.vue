@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h2 class="text-lg font-bold mb-2">Planner Insights</h2>
     <div class="grid grid-cols-1 gap-4">
       <!-- Workload Level Line Chart -->
       <div class="bg-white rounded shadow p-3">
@@ -12,7 +11,7 @@
         <h3 class="text-sm font-semibold mb-2">Overburdened People</h3>
         <ul>
           <li v-for="person in overburdenedPeople" :key="person.id" class="mb-1">
-            <span class="font-medium">{{ person.name }}</span> — {{ person.totalAllocationPercent }}%
+            <span class="font-medium">{{ person.name }}</span> — <b>{{ person.overburdenedDays }}</b> days overburdened ({{ person.overburdenedPercent }}%)
           </li>
         </ul>
       </div>
@@ -31,7 +30,7 @@
 
 <script setup lang="ts">
 import LineChart from '@/components/insights/LineChart.vue'
-import { addDaysISO } from '@/composables/useDate'
+import { addDaysISO, isWeekendISO } from '@/composables/useDate'
 
 const store = usePlannerStore()
 
@@ -87,23 +86,51 @@ const projectWorkloadData = computed(() => {
 const overburdenedPeople = computed(() => {
   const people = store.people
   const assignments = store.assignments
-  // Map personId to total allocation percent
-  const allocationPercentMap: Record<string, number> = {}
+  // Map personId to per-day total allocation (business days only)
+  const personDayAlloc: Record<string, Record<string, number>> = {}
+  let minDate = null, maxDate = null
+  // Find global min/max date
   for (const a of assignments) {
-    const person = people.find(p => p.id === a.person_id)
-    
-    if (!person || typeof a.allocation !== 'number' ) continue
-    if (!allocationPercentMap[a.person_id]) allocationPercentMap[a.person_id] = 0
-    allocationPercentMap[a.person_id] += (a.allocation * 100)
+    if (!minDate || a.start < minDate) minDate = a.start
+    if (!maxDate || a.end > maxDate) maxDate = a.end
   }
-  // Filter people with total allocation percent > 100
+  // Build per-person, per-day allocation (business days only)
+  for (const a of assignments) {
+    let d = a.start
+    while (d <= a.end) {
+      if (isWeekendISO(d)) {
+        d = addDaysISO(d, 1)
+        continue
+      }
+      if (!personDayAlloc[a.person_id]) personDayAlloc[a.person_id] = {}
+      if (typeof personDayAlloc[a.person_id][d] !== 'number') personDayAlloc[a.person_id][d] = 0
+      personDayAlloc[a.person_id][d] += typeof a.allocation === 'number' ? a.allocation * 100 : 0
+      d = addDaysISO(d, 1)
+    }
+  }
+  // Calculate total business days in timeline
+  let totalDays = 0
+  if (minDate && maxDate) {
+    let d = minDate
+    while (d <= maxDate) {
+      if (!isWeekendISO(d)) totalDays++
+      d = addDaysISO(d, 1)
+    }
+  }
+  // For each person, count days where allocation > 100% out of all business days
   return people
-    .map(p => ({
-      id: p.id,
-      name: p.name,
-      totalAllocationPercent: Math.round(allocationPercentMap[p.id] || 0)
-    }))
-    .filter(p => p.totalAllocationPercent > 100)
+    .map(p => {
+      const dayAlloc = personDayAlloc[p.id] || {}
+      const overDays = Object.values(dayAlloc).filter(val => val > 100)
+      const percent = totalDays > 0 ? Math.round(overDays.reduce((a,b) => a + b, 0) / overDays.length ) : 0
+      return {
+        id: p.id,
+        name: p.name,
+        overburdenedDays: overDays.length,
+        overburdenedPercent: percent
+      }
+    })
+    .filter(p => p.overburdenedDays > 0)
 })
 
 // Projects starting soon (start date within next 7 days)
