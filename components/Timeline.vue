@@ -398,8 +398,7 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
       const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
       
       scrollArea.value.scrollTo({
-        left: Math.max(0, scrollPosition),
-        behavior: 'smooth',
+        left: Math.max(0, scrollPosition)
       })
     } else {
       console.warn('Could not find target date in timeline:', todayISO, 'Available days:', days.value.length)
