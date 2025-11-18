@@ -10,7 +10,7 @@
       style="-webkit-user-select: none; user-select: none;"
     >
       <div       
-        v-if="!store.isReadOnly"
+        v-if="!readonly"
         class="my-auto"        
       >
         <UIcon
@@ -43,7 +43,7 @@
       </div>
       <div class="line-clamp-2 relative w-full group">        
         <UButton
-          v-if="groupType === 'project' && !store.isReadOnly"
+          v-if="groupType === 'project' && !readonly"
           size="xs"
           variant="ghost"
           color="neutral"
@@ -53,7 +53,7 @@
           @click="$emit('edit-project')"
         />
         <UButton
-          v-else-if="groupType === 'person' && !store.isReadOnly"
+          v-else-if="groupType === 'person' && !readonly"
           size="xs"
           variant="ghost"
           color="neutral"
@@ -73,17 +73,48 @@
         </UBadge>
         <span>{{ label }}</span>
       </div>      
-      <UButton
-        v-if="!store.isReadOnly"
-        size="xs"
-        color="primary"
-        variant="soft"
-        class="ml-auto"
-        :title="groupType === 'person' ? 'Assign project' : 'Assign person'"
-        :icon="'i-lucide-plus'"
-        aria-label="Add"
-        @click="$emit('add-click')"
-      />
+        <div class="ml-auto">
+          <template v-if="!readonly">
+            <UPopover v-model:open="popoverOpen" :content="{ side: 'right', align: 'start' }">
+              <UButton
+                size="xs"
+                color="primary"
+                variant="soft"
+                :title="groupType === 'person' ? 'Assign project' : 'Assign person'"
+                :icon="'i-lucide-plus'"
+                aria-label="Add"
+              />
+              <template #content>
+                <div style="width:20rem;">
+                  <UCommandPalette
+                    v-model="selection"
+                    :multiple="true"
+                    selected-icon="i-heroicons-check-20-solid"
+                    :groups="[{ id: 'items', items: itemsForPalette } ]"
+                    :ui="{ input: '[&>input]:h-8 [&>input]:text-sm' }"
+                    placeholder="Search..."
+                    @update:model-value="onSelect"
+                  >
+                    <template #item="{ item }">
+                      <div class="flex items-center justify-between w-full">
+                        <div class="truncate">{{ item.label }}</div>
+                        <div class="ml-4 text-slate-400">
+                          <UIcon v-if="item?.meta?.assigned" name="i-heroicons-check-20-solid" class="size-4" />
+                        </div>
+                      </div>
+                    </template>
+                    <template #empty>
+                      <div class="flex flex-col items-center justify-center ">
+                        <p class="text-gray-500 dark:text-gray-400 mb-4">No matching results found.</p>
+                        <UButton :label="`New ${groupType=='project' ? 'person' : 'project'}?`" :leading-icon="'i-lucide-plus'" @click="handleCreateNew" />
+                      </div>
+                    </template>
+                  </UCommandPalette>
+                </div>
+              </template>
+            </UPopover>
+          </template>
+        </div>
     </div>
     <div
       class="relative border-r-2 pane-border timeline-bg disabled-rows min-h-full"
@@ -101,7 +132,7 @@
         :key="'cap' + i"
       >
         <div
-          v-if="capacityDaily[i] > 0"
+          v-if="(capacityDaily && capacityDaily[i] !== undefined) && capacityDaily[i] > 0"
           class="absolute inset-y-0"
           :class="coverageClass(i)"
           :style="{ left: lineLeft(i) + 'px', width: dayWidth(i) + 'px' }"
@@ -110,7 +141,7 @@
             v-if="pxPerDay >= 44"
             class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700 dark:text-slate-400"
           >
-            {{ groupType === 'project' ? capacityDaily[i] + 'd' : Math.round(capacityDaily[i] * 100) + '%' }}
+            {{ groupType === 'project' ? (capacityDaily[i] ?? 0) + 'd' : Math.round((capacityDaily[i] ?? 0) * 100) + '%' }}
           </div>
         </div>
       </template>
@@ -120,13 +151,11 @@
 
 <script setup lang="ts">
 import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
-import { usePlannerStore } from '@/stores/usePlannerStore'
 
-const store = usePlannerStore()
-
-defineProps<{
+const props = defineProps<{
   label: string
   groupType: 'person' | 'project'
+  groupId: string,
   expanded: boolean
   days: string[]
   pxPerDay: number
@@ -135,18 +164,51 @@ defineProps<{
   headerHeight: number
   capacityDaily: number[]
   totalMDBadge: string
+  readonly: boolean,
   badgeColor: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
   lineLeft: (i: number) => number
   dayWidth: (i: number) => number
   coverageClass: (i: number) => string
+  assignments: { id: string; person_id: string; project_id: string;  estimatedDays?: number | null }[]
+  assignmentsOptions: { id: string; name: string; color?: string | null; emoji?: string | null; }[]
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   'toggle-expanded': []
-  'add-click': []
+  'add-click': [{ selectedId?: string | null }]
+  'create-popover': [{ newItem?: 'project' | 'person' }]
   'edit-project': []
   'edit-person': []
 }>()
+
+import { ref, computed, watch } from 'vue'
+
+const selection = ref<any>(props.assignmentsOptions ?? null)
+const popoverOpen = ref(false)
+const itemsForPalette = computed(() => (props.assignmentsOptions ?? []).map((i: { id: string; name: string;  }) => ({ id: i.id, label: i.name, value: i.id, meta: { assigned: checkAssigned(i.id) }, disabled: checkAssigned(i.id) , onSelect: (e: Event) => onSelect(i) })))
+const checkAssigned = (itemId: string) => {
+  if (props.groupType === 'person') {
+    return props.assignments.findIndex(o => o.person_id == props.groupId && o.project_id == itemId) > -1
+  } else {
+    return props.assignments.findIndex(o => o.project_id == props.groupId && o.person_id == itemId) > -1
+  }
+}
+
+function onSelect (item: any) {
+  if(item.id){
+    emit('add-click', { selectedId: item.id })
+  }
+}
+
+function handleCreateNew() {
+  // Emit a create-popover request marked as a new item so parents can route to the correct modal
+  if (props.groupType === 'person') {
+    emit('create-popover', { newItem: 'project' })
+  } else {
+    emit('create-popover', { newItem: 'person' })
+  }
+  popoverOpen.value = false
+}
 
 // Handle keyboard interactions for drag handle accessibility
 function handleDragHandleKeydown(e: KeyboardEvent) {

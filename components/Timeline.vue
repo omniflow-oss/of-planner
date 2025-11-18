@@ -49,6 +49,8 @@
               @create="actions.onCreate"
               @update="actions.onUpdate"
               @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, getTodayWorkingDay())"
+              @open-new-project="modals.openNewProjectModal"
+              @open-new-person="modals.openNewPersonModal"
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
               @edit-project="handleEditProject"
@@ -80,6 +82,8 @@
               @create="actions.onCreate"
               @update="actions.onUpdate"
               @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, getTodayWorkingDay())"
+              @open-new-project="modals.openNewProjectModal"
+              @open-new-person="modals.openNewPersonModal"
               @edit="handleEdit"
               @create-popover="handleCreatePopover"
               @edit-project="handleEditProject"
@@ -328,18 +332,20 @@ const timelineEvents = inject<{
 }>('timelineEvents')
 
 // Inject personClickEvent from index.vue
-const personClickEvent = inject('personClickEvent', null)
+const personClickEvent = inject<Ref<string | null> | null>('personClickEvent', null)
 
 // Watch for personClickEvent and scroll to person in people view
-watch(() => personClickEvent?.value, (personId) => {
-  if (personId) {
-    // Switch to people view and scroll to person
-    store.switchMode('person')
-    nextTick(() => {
-      handlePersonClick(personId)
-    })
-  }
-})
+if (personClickEvent) {
+  watch(() => personClickEvent.value, (personId) => {
+    if (personId) {
+      // Switch to people view and scroll to person
+      store.switchMode('person')
+      nextTick(() => {
+        handlePersonClick(personId)
+      })
+    }
+  })
+}
 
 // Expand/Collapse all controls provided to RowGroup
 const rowGroupControls = {
