@@ -31,19 +31,6 @@
     <div
       class="relative border-b top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75 flex flex-col justify-between"
     >
-      <!-- Grid overlay aligned with days (uses shared GridOverlay for consistency) -->
-      <div
-        class="absolute inset-0 pointer-events-none"
-        style="top: 26px;"
-      >
-        <GridOverlay
-          :days="days"
-          :px-per-day="pxPerDay"
-          :offsets="dayOffsets"
-          :week-starts="weekStarts"
-        />
-      </div>
-
       <!-- Top: Month + Year -->
       <div
         class="grid text-[12px] text-highlighted select-none border-b-2 border-default bg-default "
@@ -63,9 +50,10 @@
         :style="{ gridTemplateColumns: dayColumns }"
       >
         <div
-          v-for="day in days"
+          v-for="(day, i) in days"
           :key="day"
-          class="text-center py-1.5 whitespace-nowrap"
+          class="text-center py-1.5 whitespace-nowrap header-day relative"
+          :class="[ weekStarts.includes(i)?'week':'', isToday(day)?'today':'']"
         >
           <!-- eslint-disable-next-line vue/no-v-html -->
           <span
@@ -79,7 +67,9 @@
 </template>
 
 <script setup lang="ts">
-import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
+const isWeekStart = (i: number) => {
+  return props.weekStarts.includes(i)
+}
 
 const props = defineProps<{
   days: string[]
