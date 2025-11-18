@@ -9,6 +9,7 @@
     <RowGroupHeader
       :label="label"
       :group-type="groupType"
+      :group-id="groupId"
       :expanded="expanded"
       :days="days"
       :px-per-day="pxPerDay"
@@ -20,10 +21,15 @@
       :badge-color="badgeColor"
       :line-left="lineLeft"
       :day-width="dayWidth"
+      :readonly="store.isReadOnly"
       :coverage-class="coverageClass"
+      :assignments-options="assignmentsOptions"
+      :assignments="store.assignments"      
       @toggle-expanded="expanded = !expanded"
-      @add-click="handleAddClick"
-      @edit-project="handleEditProject"
+      @add-click="(payload) => handleAddClick(payload?.selectedId)"
+      @create-popover="(p) => { 
+        emit(p?.newItem === 'person'?'open-new-person':'open-new-project')
+      }"
       @edit-person="handleEditPerson"
     />   
     <!-- Subrows Container -->
@@ -114,6 +120,7 @@ import { useCapacity } from '@/composables/useCapacity'
 import { useRowSorting } from '@/composables/useRowSorting'
 import { useDragToCreate } from '@/composables/useDragToCreate'
 import { useProjectEstimation, roundToDecimalPlaces } from '@/composables/useProjectEstimation'
+import { addBusinessDaysISO, addDaysISO, isWeekendISO } from '@/composables/useDate'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import RowGroupHeader from '@/components/internal/RowGroupHeader.vue'
 import SubrowTrack from '@/components/internal/SubrowTrack.vue'
@@ -130,7 +137,7 @@ const props = defineProps<{
   peopleMap?: Record<string, { id: string; name: string }>
 }>()
 
-const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person', 'project-click', 'person-click'])
+const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person', 'project-click', 'person-click', 'open-new-project', 'open-new-person'])
 
 // Reactive references
 const pxPerDay = computed(() => props.pxPerDay)
@@ -149,6 +156,7 @@ function dayWidth(i: number) {
 
 // Component state
 const store = usePlannerStore()
+const assignmentsOptions = computed(() => props.groupType === 'project' ? store.people : store.projects)
 const rowHeights = ref<Record<string, number>>({})
 const baseRowMin = 44
 const expanded = ref(true)
@@ -174,16 +182,16 @@ function updateRowHeight(key: string, height: number) {
 }
 
 // Handle the + button click in the header
-function handleAddClick() {
+function handleAddClick(selectedId?: string | null) {
   if (store.isReadOnly) return
-  
-  const addRowData = {
+
+  const addRowData: any = {
     key: `${props.groupId}:__add__`,
     label: props.groupType === 'person' ? 'Assign project' : 'Add person',
-    person_id: props.groupType === 'person' ? props.groupId : null,
-    project_id: props.groupType === 'project' ? props.groupId : null
+    person_id: props.groupType === 'person' ? props.groupId : selectedId,
+    project_id: props.groupType === 'project' ? props.groupId : selectedId
   }
-  
+
   emit('createFromSidebar', addRowData)
 }
 
