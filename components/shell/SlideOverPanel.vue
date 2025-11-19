@@ -41,6 +41,7 @@ defineProps<{
 }>()
 
 defineEmits<{
-  close: []
+  close: [],
+  'go-to-today': []
 }>()
 </script>

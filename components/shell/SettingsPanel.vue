@@ -1,5 +1,5 @@
 <template>
-  <SlideOverPanel :is-open="isOpen" width="w-80" @close="$emit('close')">
+  <SlideOverPanel :is-open="isOpen" width="w-80" @close="$emit('close')" @go-to-today="$emit('go-to-today')">
     <div class="flex flex-col h-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border-l border-gray-200/50 dark:border-gray-800/50">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
@@ -143,7 +143,7 @@ const props = defineProps<{
   modelValue: boolean
 }>()
 
-const emit = defineEmits(['close', 'update:modelValue'])
+const emit = defineEmits(['close', 'update:modelValue', 'go-to-today'])
 
 const store = usePlannerStore()
 const toast = useToast()
@@ -188,6 +188,7 @@ const handleFileSelect = async (event: Event) => {
     const data: ExternalPlannerData = JSON.parse(text)
     await processDataWithLazyLoading(data)    
     toast.add({ title: 'Data loaded', description: 'JSON file imported successfully', color: 'success' })
+    emit('go-to-today')
   } catch (error) {
     console.error('Error loading JSON file:', error)
     toast.add({ title: 'Load failed', description: 'Invalid JSON file', color: 'error' })
@@ -209,6 +210,7 @@ const loadSampleData = async () => {
     const data = await store.loadDataFromJSON('planner-data.json')
     await processDataWithLazyLoading(data)
     toast.add({ title: 'Sample loaded', description: 'Sample planner data loaded', color: 'success' })
+    emit('go-to-today')
   } catch (error) {
     console.error('Error loading sample data:', error)
     toast.add({ title: 'Sample load failed', description: 'Could not load sample data', color: 'error' })
@@ -222,6 +224,7 @@ const clearAllData = () => {
   if (confirmed) {
     store.clearState()
     toast.add({ title: 'Data cleared', description: 'All data removed', color: 'error' })
+    emit('go-to-today')
   }
 }
 </script>

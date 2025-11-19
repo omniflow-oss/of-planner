@@ -13,7 +13,7 @@
         >
           <UIcon
             name="i-lucide-grip-vertical"
-            class="drag-handle mr-2 size-3.5"
+            class="drag-handle mr-2 size-3.5 hover:text-slate-500 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
             :class="subrow.isTimeOff 
               ? 'invisible cursor-not-allowed opacity-50'
               : 'text-slate-300 cursor-grab hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400'"
@@ -270,6 +270,6 @@ function handleLabelClick() {
   border-bottom-color: rgba(0,0,0,.1);
 }
 .dark .drag-row {
-  border-bottom-color: rgba(255,255,255,.1);
+  border-bottom-color: rgba(255,255,255,.25);
 }
 </style>

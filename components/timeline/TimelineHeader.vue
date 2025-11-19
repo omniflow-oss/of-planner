@@ -73,7 +73,7 @@
             v-if="isMonthStart(day) || i === 0" 
             class="absolute top-0 left-1 text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider z-10"
           >
-            {{ getMonthLabel(day) }}
+            {{ getMonthLabel(day) }} {{ getYearLabel(day) }}
           </span>
 
           <!-- Day Number -->
@@ -148,6 +148,9 @@ function getMonthLabel(iso: string) {
 
 function isMonthStart(iso: string) {
   return new Date(iso).getUTCDate() === 1
+}
+function getYearLabel(iso: string) {
+  return new Date(iso).getUTCFullYear()
 }
 </script>
 

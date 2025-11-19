@@ -25,12 +25,13 @@
       :coverage-class="coverageClass"
       :assignments-options="assignmentsOptions"
       :assignments="store.assignments"      
-      @toggle-expanded="expanded = !expanded"
+      @toggle-expanded="()=> { expanded = !expanded, $emit('collapse-toggle-row') }"
       @add-click="(payload) => handleAddClick(payload?.selectedId)"
       @create-popover="(p) => { 
         emit(p?.newItem === 'person'?'open-new-person':'open-new-project')
       }"
       @edit-person="handleEditPerson"
+      @edit-project="handleEditProject"
     />   
     <!-- Subrows Container -->
     <div class="draggable-container">
@@ -120,7 +121,6 @@ import { useCapacity } from '@/composables/useCapacity'
 import { useRowSorting } from '@/composables/useRowSorting'
 import { useDragToCreate } from '@/composables/useDragToCreate'
 import { useProjectEstimation, roundToDecimalPlaces } from '@/composables/useProjectEstimation'
-import { addBusinessDaysISO, addDaysISO, isWeekendISO } from '@/composables/useDate'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import RowGroupHeader from '@/components/internal/RowGroupHeader.vue'
 import SubrowTrack from '@/components/internal/SubrowTrack.vue'
@@ -137,7 +137,7 @@ const props = defineProps<{
   peopleMap?: Record<string, { id: string; name: string }>
 }>()
 
-const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person', 'project-click', 'person-click', 'open-new-project', 'open-new-person'])
+const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person', 'project-click', 'person-click', 'open-new-project', 'open-new-person', 'collapse-toggle-row'])
 
 // Reactive references
 const pxPerDay = computed(() => props.pxPerDay)
@@ -353,29 +353,6 @@ defineExpose({ rowHeights })
   background-color: transparent;
 } 
 
-.timeoff-hashed {
-  /* background-image: repeating-linear-gradient(
-    45deg,
-    rgba(156, 163, 175, 0.15) 0px,
-    rgba(156, 163, 175, 0.15) 4px,
-    transparent 4px,
-    transparent 8px
-  ); */
-}
-
-.dark .timeoff-hashed {
-  /* background-image: repeating-linear-gradient(
-    45deg,
-    rgba(75, 85, 99, 0.4) 0px,
-    rgba(75, 85, 99, 0.4) 4px,
-    transparent 4px,
-    transparent 8px
-  ); */
-}
-.header-row,
-.drag-row {
-  /* background-color: var(--background-color-default); */
-}
 .drag-group-row:last-child{
   margin-bottom: 56px;
 }

@@ -14,7 +14,7 @@
       <AppFooter />
     </div>
     
-    <SlideOverPanel :is-open="showInsights" width="w-[420px]" @close="showInsights = false">
+    <SlideOverPanel :is-open="showInsights" width="w-[420px]" @close="showInsights = false" @go-to-today="handleGoToToday">
       <div class="flex flex-col h-full bg-white dark:bg-gray-900">
         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
           <h2 class="text-lg font-bold text-gray-900 dark:text-white">Planner Insights</h2>
@@ -35,6 +35,7 @@
     <UToaster />
     <SettingsPanel
       v-model="showSettings"
+      @go-to-today="handleGoToToday"
       @close="showSettings = false"
     />
   </UApp>
@@ -75,7 +76,9 @@ function handlePersonClick(personId: string) {
 }
 
 // Handle events from ViewSwitcher using Vue emit functions
-function handleGoToToday(todayISO: string) {
+function handleGoToToday() {
+  const d = new Date(); d.setUTCHours(0,0,0,0)
+  const todayISO = d.toISOString().slice(0,10)
   goToTodayEvent.value = todayISO
   // Auto-reset to allow re-triggering same event
   nextTick(() => {

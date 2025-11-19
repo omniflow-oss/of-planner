@@ -106,7 +106,7 @@ const toast = useToast()
 
 // Define emits for navigation
 const emit = defineEmits<{
-  'go-to-today': [todayISO: string]
+  'go-to-today': []
 }>()
 
 // Helper function to navigate to today
@@ -115,7 +115,7 @@ const navigateToToday = () => {
   today.setUTCHours(0, 0, 0, 0)
   const todayISO = today.toISOString().slice(0, 10)
   
-  emit('go-to-today', todayISO)
+  emit('go-to-today')
 }
 
 const triggerFileInput = () => {

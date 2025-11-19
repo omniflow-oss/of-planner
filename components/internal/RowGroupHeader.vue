@@ -6,18 +6,18 @@
     <!-- Group header row -->
     <!-- Group header row -->
     <div
-      class="px-4 py-2 border-r-2 pane-border flex items-center gap-3 sticky left-0 z-10 bg-default left-label group border-b-2 border-slate-200 dark:border-slate-700"
+      class="px-2 py-2 border-r-2 pane-border flex items-center gap-3 sticky left-0 z-10 bg-default left-label group border-b-2 border-slate-200 dark:border-slate-700"
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
       <!-- Drag Handle -->
       <div       
         v-if="!readonly"
-        class="my-auto"        
+        class="my-auto"   
       >
         <UIcon
           name="i-lucide-grip-vertical"
-          class="group-drag-handle text-slate-300 size-4 cursor-grab hover:text-slate-500 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+          class="align-middle group-drag-handle text-slate-300 size-4 cursor-grab hover:text-slate-500 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
           title="Drag to reorder"
         />
       </div>
@@ -60,11 +60,16 @@
       </div>
 
       <!-- Capacity Badge -->
-      <div class="flex-shrink-0">
-         <span class="text-xs font-semibold text-slate-700 dark:text-slate-300" :title="'Total man-days (visible window)'">
-           {{ totalMDBadge }}
-         </span>
-      </div>
+      <UBadge
+        class="float-right"
+        size="sm"
+        :color="badgeColor"
+        variant="soft"
+        :title="'Total man-days (visible window)'"
+      >
+        {{ totalMDBadge }}
+      </UBadge>
+
 
       <!-- Actions Menu -->
       <div class="flex-shrink-0" v-if="!readonly">
@@ -80,42 +85,38 @@
             class="opacity-0 group-hover:opacity-100 transition-opacity"
           />
         </UDropdownMenu>
-      </div>
-      
-      <!-- Hidden Popover for 'Add Assignment' logic (keeping existing logic for now) -->
-      <div class="hidden">
-         <UPopover v-model:open="popoverOpen">
-            <div ref="popoverTrigger"></div>
-            <template #content>
-                <div style="width:20rem;">
-                  <UCommandPalette
-                    v-model="selection"
-                    :multiple="true"
-                    selected-icon="i-heroicons-check-20-solid"
-                    :groups="[{ id: 'items', items: itemsForPalette } ]"
-                    :ui="{ input: '[&>input]:h-8 [&>input]:text-sm' }"
-                    placeholder="Search..."
-                    @update:model-value="onSelect"
-                  >
-                    <template #item="{ item }">
-                      <div class="flex items-center justify-between w-full">
-                        <div class="truncate">{{ item.label }}</div>
-                        <div class="ml-4 text-slate-400">
-                          <UIcon v-if="item?.meta?.assigned" name="i-heroicons-check-20-solid" class="size-4" />
-                        </div>
-                      </div>
-                    </template>
-                    <template #empty>
-                      <div class="flex flex-col items-center justify-center ">
-                        <p class="text-gray-500 dark:text-gray-400 mb-4">No matching results found.</p>
-                        <UButton :label="`New ${groupType=='project' ? 'person' : 'project'}?`" :leading-icon="'i-lucide-plus'" @click="handleCreateNew" />
-                      </div>
-                    </template>
-                  </UCommandPalette>
-                </div>
-            </template>
-         </UPopover>
-      </div>
+        <UPopover v-model:open="popoverOpen">
+          <div ref="popoverTrigger"></div>
+          <template #content>
+            <div style="width:20rem;">
+              <UCommandPalette
+                v-model="selection"
+                :multiple="true"
+                selected-icon="i-heroicons-check-20-solid"
+                :groups="[{ id: 'items', items: itemsForPalette } ]"
+                :ui="{ input: '[&>input]:h-8 [&>input]:text-sm' }"
+                placeholder="Search..."
+                @update:model-value="onSelect"
+              >
+                <template #item="{ item }">
+                  <div class="flex items-center justify-between w-full">
+                    <div class="truncate">{{ item.label }}</div>
+                    <div class="ml-4 text-slate-400">
+                      <UIcon v-if="item?.meta?.assigned" name="i-heroicons-check-20-solid" class="size-4" />
+                    </div>
+                  </div>
+                </template>
+                <template #empty>
+                  <div class="flex flex-col items-center justify-center ">
+                    <p class="text-gray-500 dark:text-gray-400 mb-4">No matching results found.</p>
+                    <UButton :label="`New ${groupType=='project' ? 'person' : 'project'}?`" :leading-icon="'i-lucide-plus'" @click="handleCreateNew" />
+                  </div>
+                </template>
+              </UCommandPalette>
+            </div>
+          </template>
+        </UPopover>
+      </div>      
     </div>
     <div
       class="relative border-r-2 pane-border timeline-bg bg-default/10 disabled-rows min-h-full"
@@ -223,18 +224,18 @@ const actionItems = computed(() => [
   [{
     label: props.groupType === 'person' ? 'Edit Person' : 'Edit Project',
     icon: 'i-lucide-edit-2',
-    click: () => props.groupType === 'person' ? emit('edit-person') : emit('edit-project')
+    onSelect: () => props.groupType === 'person' ? emit('edit-person') : emit('edit-project')
   }],
   [{
     label: props.groupType === 'person' ? 'Assign Project' : 'Assign Person',
     icon: 'i-lucide-plus',
-    click: () => { popoverOpen.value = true }
+    onSelect: () => { setTimeout(() => { popoverOpen.value = true }, 200)  }
   }],
   // Add Time Off option only for persons
   ...(props.groupType === 'person' ? [[{
     label: 'Add Time Off',
     icon: 'i-lucide-calendar-off',
-    click: () => emit('add-click', { selectedId: 'TIMEOFF' })
+    onSelect: () => emit('add-click', { selectedId: 'TIMEOFF' })
   }]] : [])
 ])
 
@@ -292,6 +293,6 @@ function handleDragHandleKeydown(e: KeyboardEvent) {
   border-bottom-color: rgba(0,0,0,.1);
 }
 .dark .header-row {
-  border-bottom-color: rgba(255,255,255,.1);
+  border-bottom-color: rgba(255,255,255,.25);
 }
 </style>

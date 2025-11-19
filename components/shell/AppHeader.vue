@@ -14,33 +14,11 @@
 
     <!-- Center: Navigation & View Controls -->
     <div class="flex items-center justify-center gap-4">
-      <ViewSwitcher />
+      <ViewSwitcher 
+        @go-to-today="$emit('go-to-today')"
+        @add-weeks="$emit('add-weeks', $event)"
+      />
       
-      <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
-      
-      <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-        <UButton
-          size="xs"
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-chevron-left-20-solid"
-          @click="$emit('navigate', 'prev')"
-        />
-        <UButton
-          size="xs"
-          variant="ghost"
-          color="neutral"
-          label="Today"
-          @click="$emit('navigate', 'today')"
-        />
-        <UButton
-          size="xs"
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-chevron-right-20-solid"
-          @click="$emit('navigate', 'next')"
-        />
-      </div>
     </div>
 
     <!-- Right: Actions & Settings -->
@@ -80,6 +58,7 @@ defineProps<{
 defineEmits<{
   'toggle-insights': []
   'toggle-settings': []
-  'navigate': ['prev' | 'today' | 'next']
+  'go-to-today': []
+  'add-weeks': [{ direction: 'previous' | 'next', weeks: number }]
 }>()
 </script>
