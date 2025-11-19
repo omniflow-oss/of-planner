@@ -80,6 +80,7 @@
               :start-i-s-o="view.start"
               :projects-map="projectsMap"
               :people-map="peopleMap"
+              @collapse-toggle-row="setTimelineHeight"
               @create="actions.onCreate"
               @update="actions.onUpdate"
               @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, getTodayWorkingDay())"
