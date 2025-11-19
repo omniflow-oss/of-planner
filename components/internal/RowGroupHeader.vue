@@ -125,23 +125,22 @@
 
       <!-- Per-day coverage overlays on header track -->
       <template
-        v-for="(day, i) in days"
+        v-for="(day, i) in capacityDisplay"
         :key="'cap' + i"
       >
         <div
-          v-if="(capacityDaily && capacityDaily[i] !== undefined) && capacityDaily[i] > 0"
           class="absolute inset-y-0"
-          :class="coverageClass(i)"
-          :style="{ left: lineLeft(i) + 'px', width: dayWidth(i) + 'px' }"
+          :class="coverageClass(day.index)"
+          :style="{ left: lineLeft(day.index) + 'px', width: dayWidth(day.index) + 'px' }"
         >
           <div
-            v-if="pxPerDay >= 44"
+            :class="{'hidden': pxPerDay < 44}"
             class="absolute top-0 right-0 px-1 py-0.5 text-[10px] text-slate-700 dark:text-slate-400"
           >
-            {{ groupType === 'project' ? (capacityDaily[i] ?? 0) + 'd' : Math.round((capacityDaily[i] ?? 0) * 100) + '%' }}
+            {{ groupType === 'project' ? (capacityDaily[day.index] ?? 0) + 'd' : Math.round((capacityDaily[day.index] ?? 0) * 100) + '%' }}
           </div>
         </div>
-      </template>
+      </template> 
     </div>
   </div>
 </template>
@@ -191,6 +190,18 @@ const popoverTrigger = ref<HTMLElement | null>(null)
 // Avatar computed properties
 const avatarInitials = computed(() => getInitials(props.label))
 const avatarBgColor = computed(() => getAvatarColor(props.label))
+
+const capacityDisplay = computed(() => {
+  const list = props.days.map((d, i) => ({day: d, index: i})).filter((d:any) => {
+  //  if(props.hasUserTimeoffOnDay(props.subrow.person_id, d.day) && props.groupType === 'project') {
+    if(props.capacityDaily && props.capacityDaily[d.index] !== undefined && props.capacityDaily[d.index] > 0) {
+     return {day: d.day, index: d.index}
+   }else {
+     return null
+   }
+  })
+  return list
+})
 
 // Role label - get from store if person, otherwise show "Project"
 const roleLabel = computed(() => {

@@ -82,17 +82,12 @@
       @mouseup="$emit('mouse-up', $event, subrow)"
       @dragstart="$emit('drag-start')"
     >
-      <!-- Timeoff background overlays for this specific user (project view only) -->
-      <template
-        v-for="(day, i) in days"
-        :key="'timeoff-sub' + i"
+      <div v-for="value in peopleOffDays" 
+        :key="value.index"
+         class="absolute inset-y-0 timeoff-hashed"
+        :style="{ left: lineLeft(value.index) + 'px', width: dayWidth(value.index) + 'px' }"
       >
-        <div
-          v-if="hasUserTimeoffOnDay(subrow.person_id, day) && groupType === 'project'"
-          class="absolute inset-y-0 timeoff-hashed"
-          :style="{ left: lineLeft(i) + 'px', width: dayWidth(i) + 'px' }"
-        />
-      </template>
+      </div>
       <AssignmentBar
         v-for="a in subAssignments"
         :key="a.id"
@@ -190,7 +185,16 @@ const emit = defineEmits<{
 }>()
 
 const store = usePlannerStore()
-
+const peopleOffDays = computed(() => {
+  const list = props.days.map((d, i) => ({day: d, index: i})).filter((d:any) => {
+   if(props.hasUserTimeoffOnDay(props.subrow.person_id, d.day) && props.groupType === 'project') {
+     return {day: d.day, index: d.index}
+   }else {
+     return null
+   }
+  })
+  return list
+})
 const subAssignments = computed(() => {
   // Filter assignments for this specific subrow
   const list = props.assignments.filter((a: any) => 
