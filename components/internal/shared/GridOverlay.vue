@@ -5,7 +5,7 @@
       :key="'bg'+i"
       :class="[
         'day-bg',
-        weekStarts && weekStarts.includes(i) ? 'week week-boundary' : '', 
+        weekStarts && weekStarts.includes(i) ? 'week' : '', 
         day === toISO(new Date()) ? 'today' : '',
         isWeekend(day) ? 'weekend-bg' : ''
       ]"

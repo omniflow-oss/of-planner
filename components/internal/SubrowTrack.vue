@@ -1,11 +1,11 @@
 <template>
   <div
-    class="grid border-b pane-border drag-row"
+    class="grid border-b-1 pane-border drag-row"
     style="grid-template-columns: 280px 1fr;"
   >
     <!-- Left: label -->
-    <div class="border-r-2 pane-border sticky left-0 z-10 bg-default left-label subrow-container group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-      <div class="flex items-center h-full px-4 pl-10 py-1.5 text-sm text-default border-l-2 border-transparent group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
+    <div class="border-r-2 pane-border sticky left-0 z-10 bg-default left-label subrow-container group">
+      <div class="flex items-center h-full px-4 pl-10 py-1.5 text-sm text-default border-l-2 border-transparent">
         <!-- Drag handle -->
         <div 
           v-if="!store.isReadOnly"
@@ -13,7 +13,7 @@
         >
           <UIcon
             name="i-lucide-grip-vertical"
-            class="drag-handle mr-2 size-3.5"
+            class="drag-handle mr-2 size-3.5 hover:text-slate-500 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
             :class="subrow.isTimeOff 
               ? 'invisible cursor-not-allowed opacity-50'
               : 'text-slate-300 cursor-grab hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400'"
@@ -73,7 +73,7 @@
     <!-- Right: timeline track -->
     <div
       class="relative min-h-full"
-      :class="{'bg-violet-100/60 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg':!subrow.isTimeOff}"
+      :class="{'bg-violet-400/10 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg bg-neutral-300/20':!subrow.isTimeOff}"
       :style="{ height: (rowHeights[subrow.key] || baseRowMin) + 'px' }"
       :data-row-key="subrow.key"
       @contextmenu="$emit('context-menu', $event, subrow)"
@@ -82,12 +82,6 @@
       @mouseup="$emit('mouse-up', $event, subrow)"
       @dragstart="$emit('drag-start')"
     >
-      <GridOverlay
-        :days="days"
-        :px-per-day="pxPerDay"
-        :offsets="dayOffsets"
-        :week-starts="weekStarts"
-      />
       <!-- Timeoff background overlays for this specific user (project view only) -->
       <template
         v-for="(day, i) in days"
@@ -272,6 +266,10 @@ function handleLabelClick() {
 }
 
 .drag-row {
-  background-color: var(--background-color-default);
+  /* background-color: var(--background-color-default); */
+  border-bottom-color: rgba(0,0,0,.1);
+}
+.dark .drag-row {
+  border-bottom-color: rgba(255,255,255,.25);
 }
 </style>

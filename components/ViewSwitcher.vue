@@ -27,41 +27,6 @@
         Projects
       </UButton>
     </UFieldGroup>
-    <div class="w-px h-6 bg-slate-200/70 mx-2" />
-    <div class="inline-flex items-center gap-1">
-      <UButton
-        size="xs"
-        variant="outline"
-        :icon="'i-lucide-chevron-left'"
-        aria-label="Previous"
-        @click="shift(-1)"
-      />
-      <UButton
-        size="xs"
-        variant="outline"
-        :disabled="true"
-        class="whitespace-nowrap"
-      >
-        {{ todayLabel }}
-      </UButton>
-      <UButton
-        size="xs"
-        variant="outline"
-        :icon="'i-lucide-chevron-right'"
-        aria-label="Next"
-        @click="shift(1)"
-      />
-      <UButton
-        size="xs"
-        variant="solid"
-        color="primary"
-        class="ml-1 font-medium"
-        :leading-icon="'i-lucide-calendar'"
-        @click="today"
-      >
-        Today
-      </UButton>
-    </div>
     <div class="inline-flex items-center gap-1">
       <UFieldGroup size="xs">
         <UButton
@@ -92,6 +57,30 @@
         {{ store.view.px_per_day }} px/day
       </UBadge>
     </div>
+    <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+      <UButton
+        size="xs"
+        variant="ghost"
+        color="neutral"
+        icon="i-heroicons-chevron-left-20-solid"
+        @click="shift(-1)"
+      />
+      <UButton
+        size="xs"
+        variant="ghost"
+        class="relative"
+        color="neutral"
+        label="Today"
+        @click="today"
+      />
+      <UButton
+        size="xs"
+        variant="ghost"
+        color="neutral"
+        icon="i-heroicons-chevron-right-20-solid"
+        @click="shift(1)"
+      />
+    </div>
   </div>
 </template>
 
@@ -104,15 +93,13 @@ const { view } = storeToRefs(store)
 const mode = computed(() => view.value.mode)
 
 const emit = defineEmits<{
-  'go-to-today': [todayISO: string]
+  'go-to-today': []
   'add-weeks': [{ direction: 'previous' | 'next', weeks: number }]
 }>()
 
 function setMode(m: 'person' | 'project') { store.switchMode(m) }
 function today() {
-  const d = new Date(); d.setUTCHours(0,0,0,0)
-  const todayISO = d.toISOString().slice(0,10)
-  emit('go-to-today', todayISO)
+  emit('go-to-today')
 }
 function zoom(delta: number) { 
   const currentZoom = view.value.px_per_day

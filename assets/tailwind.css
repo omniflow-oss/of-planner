@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 :root{
-  --today-color: #fffbeb; /* amber-50 */
+  --today-color: rgb(255, 251, 235); /* amber-50 */
   --grid-line-color: #cbd5e1; /* slate-300 */
   --grid-line-week-color: #94a3b8; /* slate-400 */
   --weekend-color: #f1f5f9; /* slate-100 */
@@ -10,7 +10,7 @@
 }
 .grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background-color: var(--grid-line-color); }
 .grid-v.week { background-color: var(--grid-line-week-color); width: 2px; }
-.timeline-bg { background-color: var(--background-color-muted); }
+/* .timeline-bg { background-color: rgba(var(--background-color-muted),.6); } */
 .pane-border { border-color: var(--border-color-muted); }
 .bar-shadow { box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 6px rgba(0,0,0,.06); }
 
@@ -21,6 +21,8 @@
 
 .header-day { background-color: transparent; }
 .header-day.today { background: var(--today-color); }
+.dark .day-bg.today,
+.dark .header-day.today { background: rgba(255, 251, 235, 0.2); }
 
 .header-day::before,
 .day-bg::before {
@@ -32,11 +34,19 @@
   width: 1px;
   background-color: var(--grid-line-color); 
 } 
+.dark .header-day::before,
+.dark .day-bg::before {
+  background-color: var(--border-color-muted); 
+}
 .header-day.week::before,
 .day-bg.week::before {
   background-color: var(--grid-line-week-color); width: 2px;
 }
 
+.dark .header-day.week::before,
+.dark .day-bg.week::before {
+  background-color: var(--border-color-muted); 
+}
 /* Today vertical line indicator */
 .empty-rows-filler .day-bg.today::after,
 .rows-group .day-bg.today::after{
