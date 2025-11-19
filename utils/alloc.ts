@@ -17,7 +17,18 @@ export function clampToWindow(startISO: string, endISO: string, days: string[]):
     return idx
   })()
   if (startIdx === -1 || endIdx === -1) return null
-  if (startISO > days[days.length - 1] || endISO < days[0]) return null
+  const lastDay = days[days.length - 1]
+  const firstDay = days[0]
+  if (!lastDay || !firstDay) return null
+  if (startISO > lastDay || endISO < firstDay) return null
   return [Math.max(0, startIdx), Math.max(0, Math.min(endIdx, days.length - 1))]
 }
 
+
+// Returns [startISO, endISO] of intersection with window [windowStart, windowEnd] or null
+export function clampToWindowDate(startISO: string, endISO: string, windowStart: string, windowEnd: string): [string, string] | null {
+  if (startISO > windowEnd || endISO < windowStart) return null
+  const s = startISO < windowStart ? windowStart : startISO
+  const e = endISO > windowEnd ? windowEnd : endISO
+  return [s, e]
+}

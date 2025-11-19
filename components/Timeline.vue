@@ -98,7 +98,7 @@
       <div
         v-if="!store.isReadOnly || (people.length === 0 && projects.length === 0)"
         ref="addButtons"
-        style="width: 240px; height:59px;"
+        style="width: 280px; height:59px;"
         :style="{ bottom: addButtonsBottomStyle }"
         class="border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
       >
@@ -129,7 +129,7 @@
       
       <div
         class="grid empty-rows-filler sticky bottom-0 z-1"
-        style="grid-template-columns: 240px 1fr; height: 100%; left:240px;"
+        style="grid-template-columns: 280px 1fr; height: 100%; left:280px;"
         :style="{ width: timelineWidth+'px' }"
       >    
         <div
@@ -147,7 +147,7 @@
       </div> 
       <div
         class="empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border"
-        style="width: 240px;bottom:25px;"
+        style="width: 280px;bottom:25px;"
       />     
     </div>
 

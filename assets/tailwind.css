@@ -1,18 +1,27 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 :root{
-  --today-color: #baa7cb14;
+  --today-color: #fffbeb; /* amber-50 */
+  --grid-line-color: #cbd5e1; /* slate-300 */
+  --grid-line-week-color: #94a3b8; /* slate-400 */
+  --weekend-color: #f1f5f9; /* slate-100 */
+  --today-indicator-color: #f59e0b; /* amber-500 */
   overscroll-behavior-x: none;
 }
-.grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background-color: var(--divide-color-muted); }
-.grid-v.week { background-color: var(--divide-color-accented); width: 2px; }
+.grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background-color: var(--grid-line-color); }
+.grid-v.week { background-color: var(--grid-line-week-color); width: 2px; }
 .timeline-bg { background-color: var(--background-color-muted); }
 .pane-border { border-color: var(--border-color-muted); }
 .bar-shadow { box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 6px rgba(0,0,0,.06); }
-/* Day background bands (can be used for weekend if needed) */
-.day-bg { position: absolute; top: 0; bottom: 0;  background: var(--today-color); }
-.day-bg.weekend { background-color: color-mix(in lab, var(--background-color-default) 92%, white); }
-.header-day {  background: var(--today-color);}
+
+/* Day background bands */
+.day-bg { position: absolute; top: 0; bottom: 0; }
+.day-bg.today { background: var(--today-color); }
+.day-bg.weekend { background-color: var(--weekend-color); }
+
+.header-day { background-color: transparent; }
+.header-day.today { background: var(--today-color); }
+
 .header-day::before,
 .day-bg::before {
   content: '';
@@ -21,34 +30,39 @@
   left: 0;
   bottom: 0;
   width: 1px;
-  background-color: var(--divide-color-muted); 
+  background-color: var(--grid-line-color); 
 } 
 .header-day.week::before,
 .day-bg.week::before {
-  background-color: var(--divide-color-accented); width: 2px;
+  background-color: var(--grid-line-week-color); width: 2px;
 }
+
+/* Today vertical line indicator */
 .empty-rows-filler .day-bg.today::after,
 .rows-group .day-bg.today::after{
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  background-color: var(--ring-color-inverted); 
+  background-color: var(--today-indicator-color); 
   width: 2px; 
-  bottom:-1px;
+  bottom: 0;
+  z-index: 10;
 }
 
+/* Today dot in header */
 .header-grid .today::after { 
   position: absolute;
   content: ''; 
   display: block; 
-  width: 9px;
-  height:9px;   
-  left:-3.5px;
-  background-color: var(--ring-color-inverted); 
-  z-index: 1;
-  bottom:-5px;
+  width: 8px;
+  height: 8px;   
+  left: -3px;
+  background-color: var(--today-indicator-color); 
+  z-index: 20;
+  bottom: -4px;
   border-radius: 50%;
+  box-shadow: 0 0 0 2px white;
 }
 
 body{  overflow-x: hidden; }

@@ -1,103 +1,85 @@
 <template>
-  <header class="sticky top-0 z-40 flex items-center justify-between px-3 py-2 border-b border-default bg-default/95 backdrop-blur">
-    <div class="flex items-center gap-4">
+  <header class="h-16 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md grid grid-cols-3 items-center px-6 sticky top-0 z-40 transition-all duration-200">
+    <!-- Left: Logo & Title -->
+    <div class="flex items-center justify-start gap-3">
       <div class="flex items-center gap-2">
-        <div class="font-semibold tracking-tight">
-          Capacity Planner
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-sm">
+          <UIcon name="i-lucide-calendar-days" class="w-5 h-5" />
         </div>
-        <UBadge
-          size="xs"
-          color="neutral"
-          variant="subtle"
-        >
-          PRD v2.9
-        </UBadge>
+        <h1 class="font-bold text-lg text-gray-900 dark:text-white tracking-tight hidden sm:block">
+          Capacity Planner
+        </h1>
       </div>
-      <DataManager @go-to-today="$emit('go-to-today', $event)" />
     </div>
-  <div class="flex items-center gap-2">
-      <!-- Insides Sidebar Toggle Button -->
+
+    <!-- Center: Navigation & View Controls -->
+    <div class="flex items-center justify-center gap-4">
+      <ViewSwitcher />
+      
+      <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+      
+      <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+        <UButton
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          icon="i-heroicons-chevron-left-20-solid"
+          @click="$emit('navigate', 'prev')"
+        />
+        <UButton
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          label="Today"
+          @click="$emit('navigate', 'today')"
+        />
+        <UButton
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          icon="i-heroicons-chevron-right-20-solid"
+          @click="$emit('navigate', 'next')"
+        />
+      </div>
+    </div>
+
+    <!-- Right: Actions & Settings -->
+    <div class="flex items-center justify-end gap-2">
       <UButton
-        size="xs"
-        variant="outline"
-        icon="i-lucide-bar-chart-2"
-        aria-label="Show workload insights"
-        @click="$emit('toggle-insides')"
-      >
-        Insights
-      </UButton>
-      <ViewSwitcher 
-        @go-to-today="$emit('go-to-today', $event)"
-        @add-weeks="$emit('add-weeks', $event)"
+        color="neutral"
+        variant="ghost"
+        icon="i-lucide-bar-chart-3"
+        :label="showInsights ? 'Hide Insights' : 'Insights'"
+        @click="$emit('toggle-insights')"
       />
       
-      <!-- Read-only mode toggle -->
-      <div class="flex items-center gap-2 px-2 py-1">
-        <USwitch v-model="isInteractiveMode" />
-        <span class="text-xs text-default font-medium whitespace-nowrap">
-          {{ store.isReadOnly ? 'Read-only' : 'Interactive' }}
-        </span>
-      </div>
-      
-      <!-- Lazy loading toggle -->
-      <div class="flex items-center gap-2">
-        <USwitch 
-          v-model="isLazyLoadEnabled" 
-          :loading="store.isLoadingFragments"
-          :disabled="store.isLoadingFragments"
-        />
-        <span class="text-xs text-gray-600 font-medium whitespace-nowrap">
-          {{ store.isLazyLoadEnabled ? 'Lazy Load' : 'Full Load' }}
-        </span>
-      </div>
+      <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+      <ColorModeButton />
       
       <UButton
-        size="xs"
-        variant="outline"
-        :icon="colorIcon"
-        aria-label="Toggle color mode"
-        @click="toggleColorMode"
+        color="neutral"
+        variant="ghost"
+        icon="i-lucide-settings-2"
+        aria-label="Settings"
+        @click="$emit('toggle-settings')"
       />
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import ViewSwitcher from '@/components/ViewSwitcher.vue'
-import DataManager from '@/components/DataManager.vue'
-import { usePlannerStore } from '@/stores/usePlannerStore'
+import ColorModeButton from './ColorModeButton.vue'
 
-defineEmits<{
-  'go-to-today': [todayISO: string]
-  'add-weeks': [{ direction: 'previous' | 'next', weeks: number }]
-  'toggle-insides': []
+defineProps<{
+  showInsights: boolean
 }>()
 
-const store = usePlannerStore()
-
-// Create a computed property with getter/setter for the switch
-const isInteractiveMode = computed({
-  get: () => !store.isReadOnly,
-  set: (value: boolean) => {
-    if (value === store.isReadOnly) {
-      store.toggleReadOnly()
-    }
-  }
-})
-
-// Create a computed property for lazy loading toggle
-const isLazyLoadEnabled = computed({
-  get: () => store.isLazyLoadEnabled,
-  set: async (value: boolean) => {
-    if (value !== store.isLazyLoadEnabled) {
-      await store.toggleLazyLoading()
-    }
-  }
-})
-
-const colorMode = useColorMode()
-const colorIcon = computed(() => colorMode.preference === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon')
-function toggleColorMode() {
-  colorMode.preference = colorMode.preference === 'dark' ? 'light' : 'dark'
-}
+defineEmits<{
+  'toggle-insights': []
+  'toggle-settings': []
+  'navigate': ['prev' | 'today' | 'next']
+}>()
 </script>

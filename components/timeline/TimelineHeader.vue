@@ -1,65 +1,98 @@
 <template>
-  <!-- eslint-disable vue/no-v-html -->
   <div
     class="header-grid grid sticky top-0 z-20"
-    style=" grid-template-columns: 240px 1fr;"
+    style="grid-template-columns: 280px 1fr;"
   >
     <!-- Left spacer with timeline controls -->
-    <div class="border-b-2 border-r-2 pane-border sticky left-0 z-30 bg-default shadow-bottom">
-      <div class="py-3 px-3 text-center h-full flex flex-col justify-center">
-        <div class="text-xs text-slate-500 tracking-tight flex flex-wrap items-center gap-2">          
-          <!-- Add Project Button (only show in project view) -->
-          <span>
-            {{ viewMode === 'person' ? 'People View' : 'Project View' }} 
-          </span>          
-          <!-- Expand/Collapse all toggle (only show when there's data) -->
-          <UButton
-            v-if="hasData"
-            size="xs"
-            variant="outline"
-            color="neutral"
-            class="ml-auto"
-            :leading-icon="expanded ? 'i-lucide-chevrons-up' : 'i-lucide-chevrons-down'"
-            :title="expanded ? 'Collapse all' : 'Expand all'"
-            @click="emit('toggleExpandAll')"
-          />
-        </div>          
+    <div class="border-b border-r pane-border sticky left-0 z-30 bg-default shadow-sm flex flex-col justify-end pb-2 px-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <UBadge 
+            size="xs" 
+            :color="viewMode === 'person' ? 'primary' : 'neutral'"
+            variant="subtle"
+            class="capitalize"
+          >
+            {{ viewMode }} View
+          </UBadge>
+        </div>
+
+        <!-- Expand/Collapse all toggle -->
+        <UButton
+          v-if="hasData"
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          :icon="expanded ? 'i-lucide-chevrons-up' : 'i-lucide-chevrons-down'"
+          :title="expanded ? 'Collapse all' : 'Expand all'"
+          @click="emit('toggleExpandAll')"
+        />
       </div>
     </div>
 
     <!-- Sticky timeline header with grid overlay -->
     <div
-      class="relative border-b top-0 z-25 bg-default/90 backdrop-blur supports-[backdrop-filter]:bg-default/75 flex flex-col justify-between"
+      class="relative border-b top-0 z-25 bg-default/95 backdrop-blur supports-[backdrop-filter]:bg-default/80 flex flex-col justify-end"
     >
-      <!-- Top: Month + Year -->
+      <!-- Week Numbers Row (Compressed) -->
       <div
-        class="grid text-[12px] text-highlighted select-none border-b-2 border-default bg-default "
-        :style="{ gridTemplateColumns: monthColumns }"
+        class="grid text-[9px] font-semibold text-slate-500 dark:text-slate-400 select-none border-b border-slate-200 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50"
+        :style="{ gridTemplateColumns: dayColumns, height: '18px' }"
       >
         <div
-          v-for="seg in monthSegments"
-          :key="seg.key"
-          class="text-center py-1 font-medium  border-accented month-year-header relative"
+          v-for="(day, i) in days"
+          :key="'w' + day"
+          class="text-center relative flex items-center justify-center"
+          :class="{ 
+            'border-l-2 border-slate-400 dark:border-slate-600': weekStarts.includes(i),
+            'bg-slate-50/80 dark:bg-slate-900/50': isWeekend(day)
+          }"
         >
-          {{ monthWithYear(seg) }}
+          <span v-if="weekStarts.includes(i) || i === 0" class="px-1">
+            W{{ getWeekNumber(day) }}
+          </span>
         </div>
       </div>
-      <!-- Bottom: Day (D MMM) -->
+
+      <!-- Day Row (Compressed Month + Day) -->
       <div
-        class="grid text-[11px] text-highlighted select-none"
+        class="grid text-[11px] text-default select-none"
         :style="{ gridTemplateColumns: dayColumns }"
       >
         <div
           v-for="(day, i) in days"
           :key="day"
-          class="text-center py-1.5 whitespace-nowrap header-day relative"
-          :class="[ weekStarts.includes(i)?'week':'', isToday(day)?'today':'']"
+          class="text-center py-1.5 whitespace-nowrap header-day relative flex flex-col items-center justify-center gap-0.5"
+          :class="[ 
+            weekStarts.includes(i) ? 'week border-l-2 border-slate-400 dark:border-slate-600' : '', 
+            isToday(day) ? 'today' : '',
+            isWeekend(day) ? 'bg-slate-100/70 dark:bg-slate-800/50' : ''
+          ]"
         >
-          <!-- eslint-disable-next-line vue/no-v-html -->
+          <!-- Month Label (only on first day of month or start of view) -->
+          <span 
+            v-if="isMonthStart(day) || i === 0" 
+            class="absolute top-0 left-1 text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider z-10"
+          >
+            {{ getMonthLabel(day) }}
+          </span>
+
+          <!-- Day Number -->
           <span
-            :class="['px-1.5 py-0.5 rounded-md inline-block', isToday(day) ? 'bg-inverted text-inverted' : '']"
-            v-html="dayShort(day)"
-          />
+            :class="[
+              'w-6 h-6 flex items-center justify-center rounded-full transition-all text-[11px]',
+              isToday(day) 
+                ? 'bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/50 ring-2 ring-amber-200 dark:ring-amber-800 scale-110' 
+                : 'text-slate-700 dark:text-slate-300 font-medium'
+            ]"
+          >
+            {{ getDayNumber(day) }}
+          </span>
+          
+          <!-- Day Name (Mon, Tue) -->
+          <span class="text-[8px] text-slate-500 dark:text-slate-400 uppercase font-medium">
+            {{ getDayName(day) }}
+          </span>
         </div>
       </div>
     </div>
@@ -67,22 +100,13 @@
 </template>
 
 <script setup lang="ts">
-const isWeekStart = (i: number) => {
-  return props.weekStarts.includes(i)
-}
-
 const props = defineProps<{
   days: string[]
   dayColumns: string
-  monthSegments: { key:string; label:string; span:number }[]
-  monthColumns: string
   todayISO: string
-  dayLabel: (iso: string) => string
-  // For shared GridOverlay alignment
   pxPerDay: number
   dayOffsets: number[]
   weekStarts: number[]
-  // View mode and button handlers
   viewMode: 'person' | 'project'
   expanded: boolean
   hasData: boolean
@@ -92,62 +116,45 @@ const emit = defineEmits<{
   toggleExpandAll: []
 }>()
 
-function monthWithYear(seg: { key:string; label:string }) {
-  // seg.key is YYYY-MM
-  const year = seg.key.slice(0,4)
-  return `${seg.label} ${year}`
-}
-
-function dayShort(iso: string) {
-  const d = new Date(iso)
-  const day = d.getUTCDate()
-  const mon = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
-  const monNumeric = d.toLocaleString('en-US', { month: 'numeric' })
-  return `<span class="font-medium">${day}</span> <span class="month-txt">${mon}</span> <span class="month-numeric">${monNumeric}</span>`
-}
-
 function isToday(day: string) {
-  // Only highlight today on client side to avoid hydration mismatch
   if (typeof window === 'undefined') return false
   return day === props.todayISO
 }
+
+function isWeekend(day: string) {
+  const d = new Date(day)
+  const dayOfWeek = d.getUTCDay()
+  return dayOfWeek === 0 || dayOfWeek === 6
+}
+
+function getWeekNumber(iso: string) {
+  const d = new Date(iso)
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return weekNo
+}
+
+function getDayNumber(iso: string) {
+  return new Date(iso).getUTCDate()
+}
+
+function getDayName(iso: string) {
+  return new Date(iso).toLocaleString('en-US', { weekday: 'short' })
+}
+
+function getMonthLabel(iso: string) {
+  return new Date(iso).toLocaleString('en-US', { month: 'short' }).toUpperCase()
+}
+
+function isMonthStart(iso: string) {
+  return new Date(iso).getUTCDate() === 1
+}
 </script>
-<style>
-.month-numeric {
-  display: none;
-}
-.month-numeric::before {
-  content: '';
-  display: block;
-  width: 15px;
-  height: 1px;
-  margin: auto;
-  background-color: currentColor;
-}
-.cell-small  .month-txt {
-  display: none;
-}
-.cell-small  .month-numeric {
-  display: block;
-}
-.month-year-header{
-  overflow: hidden;
-  height:26px;
-}
-.month-year-header::after {
-  height: 30px;
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  top:0;
-  width: 2px;
-  background-color: rgb(203 213 225); /* slate-300 */
-}
-.dark .month-year-header::after {
-  background-color: rgb(71 85 105 / 0.5); /* slate-600 */
-}
-.shadow-bottom {
-  box-shadow: -5px 0 0 4px var(--background-color-default);
+
+<style scoped>
+.header-day.today::after {
+  /* Override global style if needed, or rely on the span styling */
+  display: none; 
 }
 </style>
