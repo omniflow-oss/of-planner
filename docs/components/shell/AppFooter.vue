@@ -5,7 +5,7 @@
         Capacity Planner — prototype shell
       </div>
       <div class="opacity-70">
-        v0.1 • Footer placeholder
+        Footer placeholder
       </div>
     </div>
   </footer>
