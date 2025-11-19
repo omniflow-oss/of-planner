@@ -1,11 +1,11 @@
 <template>
   <div
     class="grid border-b pane-border drag-row"
-    style="grid-template-columns: 240px 1fr;"
+    style="grid-template-columns: 280px 1fr;"
   >
     <!-- Left: label -->
-    <div class=" border-r-2 pane-border sticky left-0 z-10 bg-default left-label">
-      <div class="flex items-center h-full px-3 pl-7 py-2 text-sm text-default">
+    <div class="border-r-2 pane-border sticky left-0 z-10 bg-default left-label subrow-container group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+      <div class="flex items-center h-full px-4 pl-10 py-1.5 text-sm text-default border-l-2 border-transparent group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
         <!-- Drag handle -->
         <div 
           v-if="!store.isReadOnly"
@@ -13,25 +13,33 @@
         >
           <UIcon
             name="i-lucide-grip-vertical"
-            class="drag-handle mr-2 size-3"
+            class="drag-handle mr-2 size-3.5"
             :class="subrow.isTimeOff 
               ? 'invisible cursor-not-allowed opacity-50'
-              : 'text-slate-400 cursor-grab hover:text-slate-600'"
+              : 'text-slate-300 cursor-grab hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400'"
           />
         </div>
-        <div class="my-auto">
-          <UIcon
-            :name="subrow.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
-            :class="subrow.isTimeOff ? 'mr-2 text-blue-600 size-3' : 'mr-2 text-slate-400 size-3'"
-          />
+        
+        <!-- Icon with background -->
+        <div class="my-auto mr-2.5 flex-shrink-0">
+          <div 
+            class="w-5 h-5 rounded flex items-center justify-center"
+            :class="subrow.isTimeOff ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-slate-100 dark:bg-slate-800'"
+          >
+            <UIcon
+              :name="subrow.isTimeOff ? 'i-lucide-calendar-x' : (groupType === 'person' ? 'i-lucide-briefcase' : 'i-lucide-user')"
+              :class="subrow.isTimeOff ? 'text-blue-600 dark:text-blue-400 size-3.5' : 'text-slate-500 dark:text-slate-400 size-3.5'"
+            />
+          </div>
         </div>
-        <div class="flex items-center gap-2 w-full">
+        
+        <div class="flex items-center gap-2 w-full min-w-0">
           <div
-            class="line-clamp-2"
+            class="line-clamp-2 flex-1 min-w-0"
             :class="[
               subrow.isTimeOff 
-                ? 'font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md' 
-                : 'font-medium text-slate-500 dark:text-gray-500',
+                ? 'font-semibold text-blue-600 dark:text-blue-400' 
+                : 'font-normal text-slate-600 dark:text-slate-400 text-xs',
               // Make project names clickable in person view (when we have a project_id and are showing project names)
               groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
                 ? 'cursor-pointer hover:text-blue-600 hover:underline transition-colors' 

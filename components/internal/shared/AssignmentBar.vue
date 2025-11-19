@@ -1,49 +1,51 @@
 <template>
   <div 
     :class="[
-      'absolute flex items-center overflow-hidden rounded-full bar-shadow border text-default assignment-bar',
+      'absolute flex items-center overflow-hidden rounded-md bar-shadow border text-default assignment-bar transition-all duration-200',
       isTimeOff 
-        ? 'border-gray-500 bg-gray-300 dark:bg-gray-600 dark:text-gray-100' 
-        : 'border-default bg-default dark:bg-gray-300 dark:text-gray-800',
+        ? 'border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800' 
+        : 'border-transparent',
       { 
         'dragging': isDragging,
-        'resizing': isResizing
+        'resizing': isResizing,
+        'hover:brightness-95 dark:hover:brightness-110': !store.isReadOnly
       }
     ]"
     :style="barStyle"
     @mousedown.self="onMouseDown"
     @contextmenu.prevent.stop="onRightClick"
   >
-    <div
-      v-if="!isTimeOff"
-      class="h-full w-1.5"
-      :style="{ background: color }"
-    />
-    <UTooltip :text="tooltipText">
+    <!-- Solid Color Bar Content -->
+    <UTooltip :text="tooltipText" :popper="{ placement: 'top' }">
       <div 
         :class="[
-          'flex items-center gap-2 px-3 text-[12px] w-full draggable-content',
+          'flex items-center gap-1.5 px-1.5 text-[10.5px] font-medium w-full h-full draggable-content truncate',
           { 'readonly': store.isReadOnly }
         ]"
+        :style="{ color: textColor }"
         @mousedown="onMouseDown"
       >
-        <span :class="isTimeOff ? 'text-gray-900 dark:text-gray-200' : 'dark:text-gray-700'">
-          {{ person?.name ?? assignment.person_id }}</span>
-        <span :class="[
-          'px-1.5 rounded-full border text-[11px]',
-          isTimeOff 
-            ? 'border-gray-600 bg-gray-400 dark:bg-gray-500 dark:text-gray-100 text-gray-900'
-            : 'border-default bg-elevated/80 dark:bg-gray-200 dark:border-gray-400 dark:text-gray-800'
-        ]">{{ allocBadge }}</span>
-        <span
-          :class="[
-            'ml-auto pl-2 text-[11px]',
-            isTimeOff ? 'text-gray-800 dark:text-gray-300' : 'text-muted dark:text-gray-700'
-          ]"
-          :title="mdTitle"
-        >{{ mdBadge }}</span>
+        <!-- Task Type Icon -->
+        <UIcon :name="taskIcon" class="flex-shrink-0 w-3.5 h-3.5 opacity-80" />
+        
+        <!-- Main Label -->
+        <span class="truncate leading-tight tracking-tight">
+          {{ mainLabel }}
+        </span>
+
+        <!-- Man-days Badge & Allocation -->
+        <div class="ml-auto flex items-center gap-1.5">
+          <span class="opacity-70 text-[10px] font-medium" title="Total man-days">
+            {{ totalManDays }}d
+          </span>
+          <span v-if="assignment.allocation < 1" class="opacity-70 text-[10px] font-bold">
+            {{ Math.round(assignment.allocation * 100) }}%
+          </span>
+        </div>
       </div>
     </UTooltip>
+
+    <!-- Resize Handles -->
     <div
       v-if="!store.isReadOnly"
       class="handle left"
@@ -63,9 +65,10 @@
 import { computed, ref, onUnmounted } from 'vue'
 import { inject } from 'vue'
 import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
-import { generateUserColor } from '@/utils/colors'
+import { getAllocationColor, getAllocationTextColor, enhanceProjectColor } from '@/utils/colors'
 import { roundToDecimalPlaces } from '@/composables/useProjectEstimation'
 import { usePlannerStore } from '@/stores/usePlannerStore'
+import { manDays } from '@/utils/alloc'
 import type { Assignment } from '@/types/planner'
 
 // --- Helper Functions ---
@@ -134,6 +137,16 @@ function getBarDatesForResize(props: any, resizing: any, deltaPx: number) {
   }
 }
 
+// Helper to determine best text color (black or white) based on background hex
+function getContrastColor(hexColor: string) {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return yiq >= 128 ? '#0f172a' : '#ffffff'; // slate-900 or white
+}
+
 const props = defineProps<{ assignment: Assignment; startISO: string; days?: string[]; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
 const emit = defineEmits(['update', 'edit', 'delete', 'resize'])
 const store = usePlannerStore()
@@ -143,11 +156,41 @@ const person = computed(() => props.peopleMap?.[props.assignment.person_id])
 // Check if this is a time off assignment
 const isTimeOff = computed(() => props.assignment.project_id === 'TIMEOFF')
 
-// Generate unique color per user based on their person_id
-const color = computed(() => generateUserColor(props.assignment.person_id))
-const allocBadge = computed(() => {
-  const a = props.assignment.allocation
-  return a === 1 ? '1' : a === 0.75 ? '¾' : a === 0.5 ? '½' : '¼'
+// Use semantic allocation colors
+const color = computed(() => {
+  if (isTimeOff.value) return undefined // Let CSS handle time off styling
+  return getAllocationColor(props.assignment.allocation)
+})
+
+const textColor = computed(() => {
+  if (isTimeOff.value) return '#b91c1c' // Red text for PTO
+  return getAllocationTextColor(props.assignment.allocation) // White for allocation bars
+})
+
+// Project color for accent (left border)
+const projectColor = computed(() => enhanceProjectColor(project.value?.color))
+
+// Task Type Icon Heuristic
+const taskIcon = computed(() => {
+  if (isTimeOff.value) return 'i-lucide-calendar-off'
+  
+  const name = (project.value?.name || '').toLowerCase()
+  if (name.includes('design') || name.includes('ux') || name.includes('ui')) return 'i-lucide-palette'
+  if (name.includes('test') || name.includes('qa')) return 'i-lucide-bug'
+  if (name.includes('meet') || name.includes('sync')) return 'i-lucide-users'
+  if (name.includes('doc')) return 'i-lucide-file-text'
+  return 'i-lucide-code-2' // Default to code/dev
+})
+
+const mainLabel = computed(() => {
+  if (isTimeOff.value) return 'PTO'
+  // Show project name if in person view, person name if in project view
+  // But since we don't explicitly know the view mode here without props, we can infer or just show what's most useful
+  // Typically: Person View -> Show Project Name
+  // Project View -> Show Person Name
+  // Let's use a simple heuristic: if person_id matches the row group (not passed here), it's person view.
+  // For now, let's show the "other" entity.
+  return project.value?.name ?? props.assignment.project_id
 })
 
 // Use first visible business day for offset calculation
@@ -158,20 +201,25 @@ const lengthDays = computed(() => Math.max(1, businessDaysBetweenInclusive(props
 const barStyle = computed(() => ({
   left: (startIndex.value * props.pxPerDay) + 'px',
   width: Math.max(1, lengthDays.value * props.pxPerDay) + 'px',
-  top: (props.top ?? 8) + 'px'
+  top: (props.top ?? 8) + 'px',
+  // Semantic allocation color
+  backgroundColor: isTimeOff.value ? undefined : color.value,
+  // Project color as left border accent (4px)
+  borderLeft: isTimeOff.value ? undefined : `4px solid ${projectColor.value}`,
+  // Subtle border for definition
+  borderColor: isTimeOff.value ? undefined : 'rgba(0,0,0,0.1)'
 }))
 
-// Man-days badge
-const md = computed(() => lengthDays.value * props.assignment.allocation)
-const mdBadge = computed(() => {
-  const val = md.value
-  return Number.isInteger(val) ? `${val}d` : `${roundToDecimalPlaces(val)}d`
-})
-const mdTitle = computed(() => `Total man-days for this assignment`)
 const tooltipText = computed(() => {
   const p = person.value?.name ?? props.assignment.person_id
   const proj = project.value?.name ?? props.assignment.project_id
-  return `${proj} • ${p} • ${allocBadge.value} • ${props.assignment.start} → ${props.assignment.end}`
+  const dur = lengthDays.value
+  return `${proj} • ${p} • ${Math.round(props.assignment.allocation * 100)}% • ${dur}d`
+})
+
+const totalManDays = computed(() => {
+  const md = manDays(props.assignment.start, props.assignment.end, props.assignment.allocation)
+  return Number.isInteger(md) ? md : md.toFixed(1)
 })
 
 // Dragging and resizing state
@@ -206,7 +254,7 @@ const autoScrollState = ref({
 // Auto-scroll configuration constants
 const DRAG_SCROLL_THRESHOLD = 80  // pixels from edge to trigger auto-scroll during drag
 const RESIZE_SCROLL_THRESHOLD = 100  // pixels from edge to trigger auto-scroll during resize
-const LEFT_SIDEBAR_WIDTH = 240  // width of the left sidebar in pixels
+const LEFT_SIDEBAR_WIDTH = 280  // width of the left sidebar in pixels
 
 // Centralized cleanup function for drag event listeners
 function cleanupDragListeners() {

@@ -2,25 +2,41 @@
   <UApp>
     <div class="h-screen flex flex-col bg-default text-default text-[13.5px] overflow-hidden">
       <AppHeader 
+        :show-insights="showInsights"
         @go-to-today="handleGoToToday"
         @add-weeks="handleAddWeeks"
-        @toggle-insides="showInsides = !showInsides"
+        @toggle-insights="showInsights = !showInsights"
+        @toggle-settings="showSettings = !showSettings"
       />
       <main class="flex-1 w-full flex flex-col overflow-hidden h-full">
         <NuxtPage />
-        <div v-if="showInsides" class="fixed top-0 right-0 h-full w-[420px] bg-white border-l border-slate-200 shadow-xl z-50 flex flex-col">
-          <div class="flex items-center justify-between px-4 py-2 border-b">
-            <h2 class="text-lg font-bold mb-2">Planner Insights</h2>
-            <button class="text-xs px-2 py-1" @click="showInsides = false">Close</button>
-          </div>
-          <div class="flex-1 overflow-auto p-4">
-            <PlannerInsights @person-click="handlePersonClick" />
-          </div>
-        </div>
       </main>
       <AppFooter />
     </div>
+    
+    <SlideOverPanel :is-open="showInsights" width="w-[420px]" @close="showInsights = false">
+      <div class="flex flex-col h-full bg-white dark:bg-gray-900">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">Planner Insights</h2>
+          <UButton
+            color="gray"
+            variant="ghost"
+            icon="i-lucide-x"
+            size="sm"
+            @click="showInsights = false"
+          />
+        </div>
+        <div class="flex-1 overflow-auto p-4">
+          <PlannerInsights v-if="showInsights" @person-click="handlePersonClick" />
+        </div>
+      </div>
+    </SlideOverPanel>
+
     <UToaster />
+    <SettingsPanel
+      v-model="showSettings"
+      @close="showSettings = false"
+    />
   </UApp>
 </template>
 
@@ -28,12 +44,15 @@
 import AppHeader from '@/components/shell/AppHeader.vue'
 import AppFooter from '@/components/shell/AppFooter.vue'
 import PlannerInsights from '@/components/insights/PlannerInsights.vue'
+import SettingsPanel from '@/components/shell/SettingsPanel.vue'
+import SlideOverPanel from '@/components/shell/SlideOverPanel.vue'
 import { ref, nextTick, provide } from 'vue'
 
 // Reactive refs for timeline events
 const goToTodayEvent = ref<string | null>(null)
 const addWeeksEvent = ref<{ direction: 'previous' | 'next', weeks: number } | null>(null)
-const showInsides = ref(false)
+const showInsights = ref(false)
+const showSettings = ref(false)
 
 // Provide timeline events to child components
 provide('timelineEvents', {
@@ -51,6 +70,8 @@ function handlePersonClick(personId: string) {
   nextTick(() => {
     personClickEvent.value = null
   })
+  // Close insights panel on selection to show the result
+  showInsights.value = false
 }
 
 // Handle events from ViewSwitcher using Vue emit functions

@@ -158,7 +158,7 @@ function dayWidth(i: number) {
 const store = usePlannerStore()
 const assignmentsOptions = computed(() => props.groupType === 'project' ? store.people : store.projects)
 const rowHeights = ref<Record<string, number>>({})
-const baseRowMin = 44
+const baseRowMin = 36
 const expanded = ref(true)
 const onResizeEvent = ref(false)
 
