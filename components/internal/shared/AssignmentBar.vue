@@ -1,7 +1,7 @@
 <template>
   <div 
     :class="[
-      'absolute flex items-center overflow-hidden rounded-md bar-shadow border text-default assignment-bar transition-all duration-200',
+      'absolute flex items-center overflow-hidden rounded-md bar-shadow border text-default assignment-bar',
       isTimeOff 
         ? 'border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800' 
         : 'border-transparent',

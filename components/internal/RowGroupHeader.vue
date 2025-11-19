@@ -1,6 +1,6 @@
 <template>
   <div
-    class="grid border-b pane-border header-row"
+    class="grid border-b-1 pane-border header-row"
     style="grid-template-columns: 280px 1fr;"
   >
     <!-- Group header row -->
@@ -68,19 +68,18 @@
 
       <!-- Actions Menu -->
       <div class="flex-shrink-0" v-if="!readonly">
-        <UDropdown 
+        <UDropdownMenu 
           :items="actionItems" 
           :ui="{ width: 'w-48' }"
           :popper="{ placement: 'bottom-start' }"
         >
           <UButton
-            color="gray"
             variant="ghost"
             icon="i-heroicons-ellipsis-vertical-20-solid"
             size="xs"
             class="opacity-0 group-hover:opacity-100 transition-opacity"
           />
-        </UDropdown>
+        </UDropdownMenu>
       </div>
       
       <!-- Hidden Popover for 'Add Assignment' logic (keeping existing logic for now) -->
@@ -119,15 +118,10 @@
       </div>
     </div>
     <div
-      class="relative border-r-2 pane-border timeline-bg disabled-rows min-h-full"
+      class="relative border-r-2 pane-border timeline-bg bg-default/10 disabled-rows min-h-full"
       :style="{ height: headerHeight + 'px' }"
     >
-      <GridOverlay
-        :days="days"
-        :px-per-day="pxPerDay"
-        :offsets="dayOffsets"
-        :week-starts="weekStarts"
-      />
+
       <!-- Per-day coverage overlays on header track -->
       <template
         v-for="(day, i) in days"
@@ -292,10 +286,12 @@ function handleDragHandleKeydown(e: KeyboardEvent) {
 <style scoped>
 .disabled-rows {
   pointer-events: none;
-  background-color: transparent;
 }
-
 .header-row {
-  background-color: var(--background-color-default);
+  /* background-color: var(--background-color-default); */
+  border-bottom-color: rgba(0,0,0,.1);
+}
+.dark .header-row {
+  border-bottom-color: rgba(255,255,255,.1);
 }
 </style>

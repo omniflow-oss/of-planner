@@ -44,7 +44,6 @@
           :key="'w' + day"
           class="text-center relative flex items-center justify-center"
           :class="{ 
-            'border-l-2 border-slate-400 dark:border-slate-600': weekStarts.includes(i),
             'bg-slate-50/80 dark:bg-slate-900/50': isWeekend(day)
           }"
         >
@@ -64,7 +63,7 @@
           :key="day"
           class="text-center py-1.5 whitespace-nowrap header-day relative flex flex-col items-center justify-center gap-0.5"
           :class="[ 
-            weekStarts.includes(i) ? 'week border-l-2 border-slate-400 dark:border-slate-600' : '', 
+            weekStarts.includes(i) ? 'week' : '', 
             isToday(day) ? 'today' : '',
             isWeekend(day) ? 'bg-slate-100/70 dark:bg-slate-800/50' : ''
           ]"
@@ -80,7 +79,7 @@
           <!-- Day Number -->
           <span
             :class="[
-              'w-6 h-6 flex items-center justify-center rounded-full transition-all text-[11px]',
+              'w-6 h-6 flex items-center justify-center rounded-full text-[11px]',
               isToday(day) 
                 ? 'bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/50 ring-2 ring-amber-200 dark:ring-amber-800 scale-110' 
                 : 'text-slate-700 dark:text-slate-300 font-medium'

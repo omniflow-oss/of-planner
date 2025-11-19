@@ -3,7 +3,7 @@
     <!-- Scrollable content with aligned rows -->
     <div
       ref="scrollArea"
-      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm "
+      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm relative"
       @scroll.passive="handleScroll"
     >
       <div
@@ -93,47 +93,14 @@
           </VueDraggableNext>
         </template>
       </div>
-
-      <!-- Empty rows filler -->
-      <div
-        v-if="!store.isReadOnly || (people.length === 0 && projects.length === 0)"
-        ref="addButtons"
-        style="width: 280px; height:59px;"
-        :style="{ bottom: addButtonsBottomStyle }"
-        class="border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
-      >
-        <UButton 
-          v-if="view.mode === 'project'"
-          size="sm"
-          color="primary"
-          variant="outline"
-          :leading-icon="'i-lucide-plus'"
-          title="Add a new project"
-          @click="modals.openNewProjectModal"
-        >
-          Add Project
-        </UButton>
-        
-        <UButton 
-          v-if="view.mode === 'person'"
-          size="sm"
-          color="primary"
-          variant="outline"
-          :leading-icon="'i-lucide-plus'"
-          title="Add a new person"
-          @click="modals.openNewPersonModal"
-        >
-          Add Person
-        </UButton>
-      </div>
       
       <div
-        class="grid empty-rows-filler sticky bottom-0 z-1"
-        style="grid-template-columns: 280px 1fr; height: 100%; left:280px;"
-        :style="{ width: timelineWidth+'px' }"
+        class="grid empty-rows-filler absolute top-0 z-0"
+        style="grid-template-columns: 280px 1fr; min-height: 100%; left:280px;"
+        :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
         <div
-          class="relative border-b border-r pane-border w-full h-full"
+          class="relative  border-r pane-border w-full h-full"
           style="min-height: 58px;"
           :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
         >
@@ -144,13 +111,44 @@
             :week-starts="weekStarts"
           />
         </div>
-      </div> 
-      <div
-        class="empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border"
-        style="width: 280px;bottom:25px;"
-      />     
+      </div>  
     </div>
-
+    <!-- Empty rows filler -->
+    <div
+      v-if="!store.isReadOnly || (people.length === 0 && projects.length === 0)"
+      ref="addButtons"
+      style="width: 280px; height:59px;"
+      :style="{ bottom: addButtonsBottomStyle }"
+      class="border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
+    >
+      <UButton 
+        v-if="view.mode === 'project'"
+        size="sm"
+        color="primary"
+        variant="outline"
+        :leading-icon="'i-lucide-plus'"
+        title="Add a new project"
+        @click="modals.openNewProjectModal"
+      >
+        Add Project
+      </UButton>
+      
+      <UButton 
+        v-if="view.mode === 'person'"
+        size="sm"
+        color="primary"
+        variant="outline"
+        :leading-icon="'i-lucide-plus'"
+        title="Add a new person"
+        @click="modals.openNewPersonModal"
+      >
+        Add Person
+      </UButton>
+    </div>
+    <div
+      class="empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border"
+      style="width: 280px;bottom:25px;"
+    ></div>    
     <!-- Modals -->
     <EditModal
       :open="modals.editOpen.value"
@@ -258,6 +256,7 @@ const subrows = useSubrows(assignments, people, projects)
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
 const timelineWidth = computed(() => days.value.length * view.value.px_per_day)
+const timelineHeight = ref('100%')
 
 const addButtons = ref<HTMLElement | null>(null)
 
@@ -268,7 +267,7 @@ function updateAddButtonsPosition() {
   if (scrollArea.value) {
     // Calculate scrollbar height (difference between offsetHeight and clientHeight)
     const scrollbarHeight = scrollArea.value.offsetHeight - scrollArea.value.clientHeight
-    addButtonsBottomStyle.value = `${scrollbarHeight}px`
+    addButtonsBottomStyle.value = `${scrollbarHeight-1}px`
   }
 }
 
@@ -354,6 +353,14 @@ const rowGroupControls = {
 }
 provide('rowGroupControls', rowGroupControls)
 
+async function setTimelineHeight() {
+  timelineHeight.value = '100%';
+  await nextTick()
+  if (scrollArea.value) {
+    timelineHeight.value = `${scrollArea.value.scrollHeight}px`
+  }
+}
+
 // Watch for view mode changes and apply the correct expand/collapse state
 watch(() => view.value.mode, (newMode) => {
   nextTick(() => {
@@ -364,7 +371,13 @@ watch(() => view.value.mode, (newMode) => {
       // Apply collapse state
       rowGroupControls.collapseAllToken.value = Date.now()
     }
+    setTimelineHeight();
   })
+})
+
+watch(() => [store.assignments.length, store.people.length, store.projects.length], () => {
+  console.log('Data changed, updating timeline height');
+  setTimelineHeight();
 })
 
 // Watch for go to today events
@@ -458,6 +471,8 @@ watch(assignments, async (_newAssignments) => {
   }
 }, { deep: true })
 
+let resizeObserver: ResizeObserver | null = null;
+
 onMounted(async () => { 
   // Initialize timeline considering existing assignments (includes extra buffer for drag operations)
   await initTimelineWithAssignments()
@@ -496,6 +511,7 @@ function toggleExpandAll() {
     rowGroupControls.expandAllToken.value = Date.now()
     expandState.value[view.value.mode] = true
   }
+  setTimelineHeight();
 }
 
 function getTodayWorkingDay() {

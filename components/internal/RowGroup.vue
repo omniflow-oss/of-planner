@@ -354,28 +354,30 @@ defineExpose({ rowHeights })
 } 
 
 .timeoff-hashed {
-  background-image: repeating-linear-gradient(
+  /* background-image: repeating-linear-gradient(
     45deg,
     rgba(156, 163, 175, 0.15) 0px,
     rgba(156, 163, 175, 0.15) 4px,
     transparent 4px,
     transparent 8px
-  );
+  ); */
 }
 
 .dark .timeoff-hashed {
-  background-image: repeating-linear-gradient(
+  /* background-image: repeating-linear-gradient(
     45deg,
     rgba(75, 85, 99, 0.4) 0px,
     rgba(75, 85, 99, 0.4) 4px,
     transparent 4px,
     transparent 8px
-  );
+  ); */
 }
 .header-row,
 .drag-row {
-  background-color: var(--background-color-default);
+  /* background-color: var(--background-color-default); */
 }
-
+.drag-group-row:last-child{
+  margin-bottom: 56px;
+}
 
 </style>

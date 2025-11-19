@@ -1,5 +1,5 @@
 <template>
-  <header class="h-16 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md grid grid-cols-3 items-center px-6 sticky top-0 z-40 transition-all duration-200">
+  <header class="h-16 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md grid grid-cols-3 items-center px-6 sticky top-0 z-40 ">
     <!-- Left: Logo & Title -->
     <div class="flex items-center justify-start gap-3">
       <div class="flex items-center gap-2">
