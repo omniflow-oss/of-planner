@@ -13,7 +13,7 @@
       <!-- Drag Handle -->
       <div       
         v-if="!readonly"
-        class="my-auto"   
+        class="my-auto -mr-2.5"   
       >
         <UIcon
           name="i-lucide-grip-vertical"
