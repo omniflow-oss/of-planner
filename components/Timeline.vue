@@ -98,7 +98,7 @@
       
       <div
         class="grid empty-rows-filler absolute top-0 z-0"
-        style="grid-template-columns: 280px 1fr; min-height: 100%; left:280px;"
+        style=" min-height: 100%; left:280px;"
         :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
         <div
@@ -471,8 +471,6 @@ watch(assignments, async (_newAssignments) => {
     // This was causing unwanted navigation during user exploration
   }
 }, { deep: true })
-
-let resizeObserver: ResizeObserver | null = null;
 
 onMounted(async () => { 
   // Initialize timeline considering existing assignments (includes extra buffer for drag operations)

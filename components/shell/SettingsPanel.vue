@@ -189,6 +189,7 @@ const handleFileSelect = async (event: Event) => {
     await processDataWithLazyLoading(data)    
     toast.add({ title: 'Data loaded', description: 'JSON file imported successfully', color: 'success' })
     emit('go-to-today')
+    emit('close')
   } catch (error) {
     console.error('Error loading JSON file:', error)
     toast.add({ title: 'Load failed', description: 'Invalid JSON file', color: 'error' })
@@ -211,6 +212,7 @@ const loadSampleData = async () => {
     await processDataWithLazyLoading(data)
     toast.add({ title: 'Sample loaded', description: 'Sample planner data loaded', color: 'success' })
     emit('go-to-today')
+    emit('close')
   } catch (error) {
     console.error('Error loading sample data:', error)
     toast.add({ title: 'Sample load failed', description: 'Could not load sample data', color: 'error' })
@@ -225,6 +227,7 @@ const clearAllData = () => {
     store.clearState()
     toast.add({ title: 'Data cleared', description: 'All data removed', color: 'error' })
     emit('go-to-today')
+    emit('close')
   }
 }
 </script>
