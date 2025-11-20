@@ -43,7 +43,7 @@
               </div>
               <USwitch
                 :model-value="store.isLazyLoadEnabled"
-                @update:model-value="store.toggleLazyLoading"
+                @update:model-value="value => store.isLazyLoadEnabled = value"
                 color="primary"
               />
             </div>
@@ -164,11 +164,11 @@ const triggerFileInput = () => {
 
 // Common function to handle data loading with lazy loading support
 const processDataWithLazyLoading = async (data: ExternalPlannerData) => {
-  if (store.isLazyLoadEnabled) {
-    await store.enableLazyLoading(data)
-  } else {
+  // if (store.isLazyLoadEnabled) {
+  //   await store.enableLazyLoading(data)
+  // } else {
     store.loadDataFromObject(data)
-  }
+  // }
 }
 
 const handleFileSelect = async (event: Event) => {

@@ -331,7 +331,7 @@ const filteredAssignments = computed(() => {
   // assignments.value contains all assignments in the store
   const start = visibleStartISO.value
   const end = visibleEndISO.value
-  if (!start || !end) return assignments.value
+  if (!start || !end || !store.isLazyLoadEnabled) return assignments.value
   return assignments.value.filter(a => !(a.end < start || a.start > end))
 })
 
@@ -487,16 +487,16 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
     }
     
     // If lazy loading is enabled, load assignments for the target date specifically
-    if (store.isLazyLoadEnabled) {
-      await store.loadAssignmentsForTargetDate(todayISO)
+    // if (store.isLazyLoadEnabled) {
+    //   await store.loadAssignmentsForTargetDate(todayISO)
       
-      // Give extra time for the DOM to update with the loaded assignments
-      await nextTick()
-      await new Promise(resolve => setTimeout(resolve, 50))
+    //   // Give extra time for the DOM to update with the loaded assignments
+    //   await nextTick()
+    //   await new Promise(resolve => setTimeout(resolve, 50))
       
-      // Re-check the index after lazy loading in case the timeline changed
-      todayIndex = days.value.findIndex(d => d === todayISO)
-    }
+    //   // Re-check the index after lazy loading in case the timeline changed
+    //   todayIndex = days.value.findIndex(d => d === todayISO)
+    // }
     
     // Ensure we have the scrollArea available and the timeline is ready
     await nextTick()
@@ -541,19 +541,19 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
 const { initTimelineWithAssignments, needsTimelineExpansion } = timelineInit
 
 // Lazy loading watcher - but WITHOUT timeline expansion
-watch(() => ({ start: view.value.start, days: view.value.days }), async (newView, oldView) => {
-  // Only trigger lazy loading if the view actually changed and lazy loading is enabled
-  if (store.isLazyLoadEnabled && 
-      (newView.start !== oldView?.start || newView.days !== oldView?.days)) {    
-    try {
-      // Load events for current viewport only - do NOT expand timeline
-      await store.loadAssignmentsForCurrentViewportOnly()  
+// watch(() => ({ start: view.value.start, days: view.value.days }), async (newView, oldView) => {
+//   // Only trigger lazy loading if the view actually changed and lazy loading is enabled
+//   if (store.isLazyLoadEnabled && 
+//       (newView.start !== oldView?.start || newView.days !== oldView?.days)) {    
+//     try {
+//       // Load events for current viewport only - do NOT expand timeline
+//       await store.loadAssignmentsForCurrentViewportOnly()  
 
-    } catch (error) {
-      console.error('Error during lazy loading of assignments:', error)
-    }
-  }
-}, { deep: true })
+//     } catch (error) {
+//       console.error('Error during lazy loading of assignments:', error)
+//     }
+//   }
+// }, { deep: true })
 
 // Watch for assignment changes and re-initialize timeline if needed
 watch(assignments, async (_newAssignments) => {
