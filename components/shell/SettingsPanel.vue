@@ -103,7 +103,7 @@
           variant="soft"
           icon="i-lucide-rotate-ccw"
           label="Reset Changes"
-          @click="store.resetToInitialData()"
+          @click="resetChanges"
         />
 
         <UButton
@@ -134,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import type { ExternalPlannerData } from '@/types/planner'
 import SlideOverPanel from '@/components/shell/SlideOverPanel.vue'
@@ -146,6 +146,7 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'update:modelValue', 'go-to-today'])
 
 const store = usePlannerStore()
+const globalSearch = inject('globalSearch') as Ref<string> | undefined
 const toast = useToast()
 const fileInput = ref<HTMLInputElement>()
 const loading = ref(false)
@@ -190,6 +191,7 @@ const handleFileSelect = async (event: Event) => {
     toast.add({ title: 'Data loaded', description: 'JSON file imported successfully', color: 'success' })
     emit('go-to-today')
     emit('close')
+      if (globalSearch) globalSearch.value = ''
   } catch (error) {
     console.error('Error loading JSON file:', error)
     toast.add({ title: 'Load failed', description: 'Invalid JSON file', color: 'error' })
@@ -213,6 +215,7 @@ const loadSampleData = async () => {
     toast.add({ title: 'Sample loaded', description: 'Sample planner data loaded', color: 'success' })
     emit('go-to-today')
     emit('close')
+      if (globalSearch) globalSearch.value = ''
   } catch (error) {
     console.error('Error loading sample data:', error)
     toast.add({ title: 'Sample load failed', description: 'Could not load sample data', color: 'error' })
@@ -228,6 +231,16 @@ const clearAllData = () => {
     toast.add({ title: 'Data cleared', description: 'All data removed', color: 'error' })
     emit('go-to-today')
     emit('close')
+    if (globalSearch) globalSearch.value = ''
+  }
+}
+
+const resetChanges = () => {
+  const confirmed = confirm('Reset all changes back to the initially loaded data?')
+  if (confirmed) {
+    store.resetToInitialData()
+    toast.add({ title: 'Reset complete', description: 'State restored to initial data', color: 'warning' })
+    if (globalSearch) globalSearch.value = ''
   }
 }
 </script>
