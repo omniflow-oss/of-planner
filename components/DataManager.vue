@@ -125,17 +125,17 @@ const triggerFileInput = () => {
 
 // Common function to handle data loading with lazy loading support
 const processDataWithLazyLoading = async (data: ExternalPlannerData) => {
-  if (store.isLazyLoadEnabled) {
-    // Use lazy loading system
-    await store.enableLazyLoading(data)
+  // if (store.isLazyLoadEnabled) {
+  //   // Use lazy loading system
+  //   await store.enableLazyLoading(data)
     
-    // Always navigate to today when loading JSON data (not to earliest assignment)
-    navigateToToday()
-  } else {
+  //   // Always navigate to today when loading JSON data (not to earliest assignment)
+  //   navigateToToday()
+  // } else {
     // Use regular loading method
     store.loadDataFromObject(data)
     navigateToToday()
-  }
+  // }
 }
 
 const handleFileSelect = async (event: Event) => {

@@ -13,7 +13,7 @@
         >
           <UIcon
             name="i-lucide-grip-vertical"
-            class="drag-handle mr-2 size-3.5 hover:text-slate-500 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+            class="drag-handle mr-2 size-3.5 hover:text-slate-500 focus:outline-none opacity-0 group-hover:opacity-100"
             :class="subrow.isTimeOff 
               ? 'invisible cursor-not-allowed opacity-50'
               : 'text-slate-300 cursor-grab hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400'"
@@ -42,11 +42,11 @@
                 : 'font-normal text-slate-600 dark:text-slate-400 text-xs',
               // Make project names clickable in person view (when we have a project_id and are showing project names)
               groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
-                ? 'cursor-pointer hover:text-blue-600 hover:underline transition-colors' 
+                ? 'cursor-pointer hover:text-blue-600 hover:underline' 
                 : '',
               // Make person names clickable in project view (when we have a person_id and are showing person names)
               groupType === 'project' && subrow.person_id && !subrow.isTimeOff 
-                ? 'cursor-pointer hover:text-green-600 hover:underline transition-colors' 
+                ? 'cursor-pointer hover:text-green-600 hover:underline' 
                 : ''
             ]"
             @click="handleLabelClick"
@@ -76,10 +76,10 @@
       :class="{'bg-violet-400/10 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg bg-neutral-300/20':!subrow.isTimeOff}"
       :style="{ height: (rowHeights[subrow.key] || baseRowMin) + 'px' }"
       :data-row-key="subrow.key"
-      @contextmenu="$emit('context-menu', $event, subrow)"
-      @mousedown="$emit('mouse-down', $event, subrow)"
+      
+      @mousedown="actionMouse = true; $emit('mouse-down', $event, subrow)"
       @mousemove="$emit('mouse-move', $event, subrow)"
-      @mouseup="$emit('mouse-up', $event, subrow)"
+      @mouseup="actionMouse = false; $emit('mouse-up', $event, subrow)"
       @dragstart="$emit('drag-start')"
     >
       <div v-for="value in peopleOffDays" 
@@ -131,7 +131,6 @@ const previewBarLeft = computed(() => {
 })
 import { computed } from 'vue'
 import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
-import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 import { computeLanes } from '@/utils/lanes'
 import { useProjectEstimation } from '@/composables/useProjectEstimation'
 import { usePlannerStore } from '@/stores/usePlannerStore'
@@ -143,7 +142,7 @@ interface SubrowItem {
   project_id: string | null
   isTimeOff?: boolean
 }
-
+const actionMouse = ref(false);
 interface DragState {
   active: boolean
   rowKey: string

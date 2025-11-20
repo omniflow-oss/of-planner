@@ -95,13 +95,13 @@
       </div>
       
       <div
-        class="grid empty-rows-filler absolute top-0 z-0 left-0"
+        class="grid empty-rows-filler absolute top-0 z-0 left-0 overflow-hidden"
         style=" min-height: 100%;"
         :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
         <div
           class="relative  border-r pane-border w-full h-full"
-          style="min-height: 58px;"
+          style="min-height: 58px;left: 280px;"
           :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
         >
           <GridOverlay
@@ -109,6 +109,8 @@
             :px-per-day="view.px_per_day"
             :offsets="dayOffsets"
             :week-starts="weekStarts"
+            :visible-start-idx="visibleStartIdx"
+            :visible-end-idx="visibleEndIdx"
           />
         </div>
       </div>  
@@ -314,7 +316,26 @@ const { personSubrows, projectSubrows } = subrows
 
 // Provide assignments ref to children (RowGroup) for lane computation
 const assignmentsKey = Symbol.for('assignmentsRef')
-provide(assignmentsKey, assignments)
+
+// Viewport-based assignment filtering: only provide assignments that overlap
+// the currently visible date range so offscreen AssignmentBar components
+// are not mounted.
+const sidebarWidth = 240 // left column width in px
+const visibleStartIdx = ref(0)
+const visibleEndIdx = ref(Math.max(0, days.value.length - 1))
+
+const visibleStartISO = computed(() => days.value[visibleStartIdx.value] ?? days.value[0])
+const visibleEndISO = computed(() => days.value[Math.min(visibleEndIdx.value, days.value.length - 1)] ?? days.value[days.value.length - 1])
+
+const filteredAssignments = computed(() => {
+  // assignments.value contains all assignments in the store
+  const start = visibleStartISO.value
+  const end = visibleEndISO.value
+  if (!start || !end || !store.isLazyLoadEnabled) return assignments.value
+  return assignments.value.filter(a => !(a.end < start || a.start > end))
+})
+
+provide(assignmentsKey, filteredAssignments)
 
 const scrollArea = ref<HTMLElement | null>(null)
 
@@ -355,6 +376,38 @@ function handleScroll() {
   modals.closeAllModals()
   
   onScroll()
+  updateVisibleRange()
+}
+
+// Compute visible day index range from scrollArea scrollLeft and clientWidth
+function updateVisibleRange() {
+  if (!scrollArea.value) return
+  const scrollLeft = scrollArea.value.scrollLeft
+  const containerWidth = scrollArea.value.clientWidth
+  const timelineLeft = sidebarWidth // left column width
+  const visibleLeft = Math.max(0, scrollLeft - timelineLeft) 
+  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft) + 300
+
+  // Convert pixels to day indices using dayOffsets (which maps day index to px offset)
+  // Find first visible index
+  let startIdx = 0
+  for (let i = 0; i < dayOffsets.value.length; i++) {
+    if ((dayOffsets.value[i] ?? i * view.value.px_per_day) + view.value.px_per_day > visibleLeft) {
+      startIdx = i
+      break
+    }
+  }
+
+  let endIdx = dayOffsets.value.length - 1
+  for (let i = startIdx; i < dayOffsets.value.length; i++) {
+    if ((dayOffsets.value[i] ?? i * view.value.px_per_day) >= visibleRight) {
+      endIdx = Math.max(0, i - 1)
+      break
+    }
+  }
+
+  visibleStartIdx.value = startIdx
+  visibleEndIdx.value = endIdx
 }
 
 // Inject timeline events from app.vue
@@ -378,7 +431,15 @@ if (personClickEvent) {
     }
   })
 }
-
+watch(() => searchQuery.value, () => {
+  // Update height
+  nextTick(() => {
+    setTimelineHeight()
+  })
+})
+watch(() => view.value.px_per_day, () => {
+  updateVisibleRange()
+})
 // Expand/Collapse all controls provided to RowGroup
 const rowGroupControls = {
   expandAllToken: ref<number>(0),
@@ -426,16 +487,16 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
     }
     
     // If lazy loading is enabled, load assignments for the target date specifically
-    if (store.isLazyLoadEnabled) {
-      await store.loadAssignmentsForTargetDate(todayISO)
+    // if (store.isLazyLoadEnabled) {
+    //   await store.loadAssignmentsForTargetDate(todayISO)
       
-      // Give extra time for the DOM to update with the loaded assignments
-      await nextTick()
-      await new Promise(resolve => setTimeout(resolve, 50))
+    //   // Give extra time for the DOM to update with the loaded assignments
+    //   await nextTick()
+    //   await new Promise(resolve => setTimeout(resolve, 50))
       
-      // Re-check the index after lazy loading in case the timeline changed
-      todayIndex = days.value.findIndex(d => d === todayISO)
-    }
+    //   // Re-check the index after lazy loading in case the timeline changed
+    //   todayIndex = days.value.findIndex(d => d === todayISO)
+    // }
     
     // Ensure we have the scrollArea available and the timeline is ready
     await nextTick()
@@ -480,19 +541,19 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
 const { initTimelineWithAssignments, needsTimelineExpansion } = timelineInit
 
 // Lazy loading watcher - but WITHOUT timeline expansion
-watch(() => ({ start: view.value.start, days: view.value.days }), async (newView, oldView) => {
-  // Only trigger lazy loading if the view actually changed and lazy loading is enabled
-  if (store.isLazyLoadEnabled && 
-      (newView.start !== oldView?.start || newView.days !== oldView?.days)) {    
-    try {
-      // Load events for current viewport only - do NOT expand timeline
-      await store.loadAssignmentsForCurrentViewportOnly()  
+// watch(() => ({ start: view.value.start, days: view.value.days }), async (newView, oldView) => {
+//   // Only trigger lazy loading if the view actually changed and lazy loading is enabled
+//   if (store.isLazyLoadEnabled && 
+//       (newView.start !== oldView?.start || newView.days !== oldView?.days)) {    
+//     try {
+//       // Load events for current viewport only - do NOT expand timeline
+//       await store.loadAssignmentsForCurrentViewportOnly()  
 
-    } catch (error) {
-      console.error('Error during lazy loading of assignments:', error)
-    }
-  }
-}, { deep: true })
+//     } catch (error) {
+//       console.error('Error during lazy loading of assignments:', error)
+//     }
+//   }
+// }, { deep: true })
 
 // Watch for assignment changes and re-initialize timeline if needed
 watch(assignments, async (_newAssignments) => {
@@ -510,6 +571,9 @@ onMounted(async () => {
   // Update addButtons position based on scrollbar height
   await nextTick()
   updateAddButtonsPosition()
+  // initialize visible range
+  await nextTick()
+  updateVisibleRange()
   
   // Auto-scroll to today on app initialization
   if (timelineEvents?.goToTodayEvent) {
@@ -521,6 +585,7 @@ onMounted(async () => {
     })
   }
 })
+
 
 // Expand/Collapse state and handlers (separate for each view)
 const expandState = ref({

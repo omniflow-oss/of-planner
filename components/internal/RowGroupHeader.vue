@@ -17,14 +17,14 @@
       >
         <UIcon
           name="i-lucide-grip-vertical"
-          class="align-middle group-drag-handle text-slate-300 size-4 cursor-grab hover:text-slate-500 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+          class="align-middle group-drag-handle text-slate-300 size-4 cursor-grab hover:text-slate-500 focus:outline-none opacity-0 group-hover:opacity-100 "
           title="Drag to reorder"
         />
       </div>
 
       <!-- Expand/Collapse Caret -->
       <button
-        class="flex items-center justify-center w-6 h-6 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none"
+        class="flex items-center justify-center w-6 h-6 rounded hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
         aria-label="Toggle"
         @click="$emit('toggle-expanded')"
       >
@@ -82,7 +82,7 @@
             variant="ghost"
             icon="i-heroicons-ellipsis-vertical-20-solid"
             size="xs"
-            class="opacity-0 group-hover:opacity-100 transition-opacity"
+            class="opacity-0 group-hover:opacity-100"
           />
         </UDropdownMenu>
         <UPopover v-model:open="popoverOpen">
@@ -146,7 +146,6 @@
 </template>
 
 <script setup lang="ts">
-import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
 
 const props = defineProps<{
   label: string
