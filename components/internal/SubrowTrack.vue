@@ -76,7 +76,7 @@
       :class="{'bg-violet-400/10 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg bg-neutral-300/20':!subrow.isTimeOff}"
       :style="{ height: (rowHeights[subrow.key] || baseRowMin) + 'px' }"
       :data-row-key="subrow.key"
-      @contextmenu="$emit('context-menu', $event, subrow)"
+      
       @mousedown="actionMouse = true; $emit('mouse-down', $event, subrow)"
       @mousemove="$emit('mouse-move', $event, subrow)"
       @mouseup="actionMouse = false; $emit('mouse-up', $event, subrow)"

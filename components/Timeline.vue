@@ -95,13 +95,13 @@
       </div>
       
       <div
-        class="grid empty-rows-filler absolute top-0 z-0 left-0"
+        class="grid empty-rows-filler absolute top-0 z-0 left-0 overflow-hidden"
         style=" min-height: 100%;"
         :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
         <div
           class="relative  border-r pane-border w-full h-full"
-          style="min-height: 58px;"
+          style="min-height: 58px;left: 280px;"
           :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
         >
           <GridOverlay
@@ -109,6 +109,8 @@
             :px-per-day="view.px_per_day"
             :offsets="dayOffsets"
             :week-starts="weekStarts"
+            :visible-start-idx="visibleStartIdx"
+            :visible-end-idx="visibleEndIdx"
           />
         </div>
       </div>  
@@ -434,6 +436,9 @@ watch(() => searchQuery.value, () => {
   nextTick(() => {
     setTimelineHeight()
   })
+})
+watch(() => view.value.px_per_day, () => {
+  updateVisibleRange()
 })
 // Expand/Collapse all controls provided to RowGroup
 const rowGroupControls = {
