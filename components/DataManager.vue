@@ -100,6 +100,7 @@ import { usePlannerStore } from '@/stores/usePlannerStore'
 import type { ExternalPlannerData } from '@/types/planner'
 
 const store = usePlannerStore()
+const globalSearch = inject('globalSearch') as Ref<string> | undefined
 const fileInput = ref<HTMLInputElement>()
 const loading = ref(false)
 const toast = useToast()
@@ -169,6 +170,8 @@ const handleFileSelect = async (event: Event) => {
     if (fileInput.value) {
       fileInput.value.value = ''
     }
+      // Clear global search when loading a new file
+      if (globalSearch) globalSearch.value = ''
   }
 }
 
@@ -193,6 +196,7 @@ const loadSampleData = async () => {
     toast.add({ title: 'Sample load failed', description: 'Could not load sample data', color: 'error' })
   } finally {
     loading.value = false
+    if (globalSearch) globalSearch.value = ''
   }
 }
 
@@ -201,6 +205,7 @@ const resetData = () => {
   if (confirmed) {
     store.resetToInitialData()
     toast.add({ title: 'Reset complete', description: 'State restored to initial data', color: 'warning' })
+    if (globalSearch) globalSearch.value = ''
   }
 }
 
@@ -212,6 +217,7 @@ const clearAllData = () => {
     // Navigate to today after clearing data
     navigateToToday()
     // No need to set hasData, it is a getter
+    if (globalSearch) globalSearch.value = ''
   }
 }
 
