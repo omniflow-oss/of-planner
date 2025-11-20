@@ -53,6 +53,8 @@ Place JSON files in the `/public` folder with this structure:
 3. Data will automatically load and refresh the planner
 4. Previous data is cleared when new data is loaded
 
+Note: The global search input is located in the top app header. Loading a new file, clearing data, or resetting to initial data will clear the search input automatically to avoid stale filters.
+
 ### Download Modified Data
 1. When data is modified (create/edit/delete assignments), an orange dot (●) appears
 2. A **Download** button becomes available in the Data Manager

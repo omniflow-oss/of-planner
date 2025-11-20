@@ -13,7 +13,6 @@
         <TimelineHeader
           :days="days"
           :day-columns="dayColumns"
-          :month-segments="monthSegments"
           :month-columns="monthColumns"
           :today-i-s-o="todayISO"
           :px-per-day="view.px_per_day"
@@ -96,8 +95,8 @@
       </div>
       
       <div
-        class="grid empty-rows-filler absolute top-0 z-0"
-        style=" min-height: 100%; left:280px;"
+        class="grid empty-rows-filler absolute top-0 z-0 left-0"
+        style=" min-height: 100%;"
         :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
         <div
@@ -248,7 +247,6 @@ const {
   days,
   dayOffsets,
   dayColumns,
-  monthSegments,
   monthColumns,
   weekStarts
 } = useTimeline(view)

@@ -199,6 +199,11 @@ Condensed design (slick & pro)
 
 ---
 
+### Search
+
+- **Location**: Global search input is located in the top app header and filters both People and Project views.
+- **Behavior**: Loading a new dataset, resetting changes, or clearing all data will clear the search input to prevent stale filters from hiding newly-loaded content.
+
 ## 8. 🔒 Business Rules
 
 | Rule                                          | Detail |

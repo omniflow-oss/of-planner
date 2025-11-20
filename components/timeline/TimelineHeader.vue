@@ -37,7 +37,7 @@
       <!-- Week Numbers Row (Compressed) -->
       <div
         class="grid text-[9px] font-semibold text-slate-500 dark:text-slate-400 select-none border-b border-slate-200 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50"
-        :style="{ gridTemplateColumns: dayColumns, height: '18px' }"
+        :style="{ gridTemplateColumns: `repeat( auto-fill , ${pxPerDay}px)`, height: '18px' }"
       >
         <div
           v-for="(day, i) in days"
@@ -56,7 +56,8 @@
       <!-- Day Row (Compressed Month + Day) -->
       <div
         class="grid text-[11px] text-default select-none"
-        :style="{ gridTemplateColumns: dayColumns }"
+        style="grid-template-rows: auto;  grid-auto-rows: 0;"
+        :style="{ gridTemplateColumns: `repeat( auto-fill, ${pxPerDay}px)` }"
       >
         <div
           v-for="(day, i) in days"
