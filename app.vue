@@ -3,6 +3,7 @@
     <div class="h-screen flex flex-col bg-default text-default text-[13.5px] overflow-hidden">
       <AppHeader 
         :show-insights="showInsights"
+        v-model:searchQuery="searchQuery"
         @go-to-today="handleGoToToday"
         @add-weeks="handleAddWeeks"
         @toggle-insights="showInsights = !showInsights"
@@ -54,6 +55,7 @@ const goToTodayEvent = ref<string | null>(null)
 const addWeeksEvent = ref<{ direction: 'previous' | 'next', weeks: number } | null>(null)
 const showInsights = ref(false)
 const showSettings = ref(false)
+const searchQuery = ref('')
 
 // Provide timeline events to child components
 provide('timelineEvents', {
@@ -65,6 +67,8 @@ provide('timelineEvents', {
 import { ref as vueRef } from 'vue'
 const personClickEvent = vueRef<string | null>(null)
 provide('personClickEvent', personClickEvent)
+// Provide global search ref to pages/components
+provide('globalSearch', searchQuery)
 
 function handlePersonClick(personId: string) {
   personClickEvent.value = personId

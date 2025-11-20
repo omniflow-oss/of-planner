@@ -16,7 +16,6 @@
           :month-segments="monthSegments"
           :month-columns="monthColumns"
           :today-i-s-o="todayISO"
-          :day-label="dayLabel"
           :px-per-day="view.px_per_day"
           :day-offsets="dayOffsets"
           :week-starts="weekStarts"      
@@ -28,14 +27,14 @@
       
         <template v-if="view.mode==='person'">
           <VueDraggableNext
-            :list="sortablePeople"
+            :list="filteredPeople"
             item-key="id"
             handle=".group-drag-handle"
             tag="div"
             @end="sorting.onPersonSortEnd"
           >
             <RowGroup
-              v-for="p in sortablePeople"
+              v-for="p in filteredPeople"
               :key="p.id"
               :label="p.name"
               :group-type="'person'"
@@ -62,14 +61,14 @@
         </template>
         <template v-else>
           <VueDraggableNext
-            :list="sortableProjects"
+            :list="filteredProjects"
             item-key="id"
             handle=".group-drag-handle"
             tag="div"
             @end="sorting.onProjectSortEnd"
           >
             <RowGroup
-              v-for="proj in sortableProjects"
+              v-for="proj in filteredProjects"
               :key="proj.id"
               :label="proj.name"
               :group-type="'project'"
@@ -148,9 +147,11 @@
       </UButton>
     </div>
     <div
-      class="empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border"
+      class="empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border p-4 flex flex-col items-center justify-center"
       style="width: 280px;bottom:25px;"
-    ></div>    
+    >
+      <div v-if="noResults" class="text-xs text-slate-500">No results found for "{{ searchQuery }}"</div>
+    </div>    
     <!-- Modals -->
     <EditModal
       :open="modals.editOpen.value"
@@ -204,6 +205,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, inject, watch, nextTick, onMounted, provide } from 'vue'
+import type { Ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import { useTimeline } from '@/composables/useTimeline'
@@ -245,7 +248,6 @@ const {
   days,
   dayOffsets,
   dayColumns,
-  dayLabel,
   monthSegments,
   monthColumns,
   weekStarts
@@ -259,6 +261,37 @@ const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p
 const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
 const timelineWidth = computed(() => days.value.length * view.value.px_per_day)
 const timelineHeight = ref('100%')
+// Search state - injected from AppHeader via app.vue
+const globalSearch = inject('globalSearch') as Ref<string> | undefined
+const searchQuery = globalSearch ?? ref('')
+
+const filteredPeople = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return sortablePeople.value
+  return sortablePeople.value.filter(p => {
+    const name = p.name.toLowerCase()
+    // also check subrows (projects assigned labels)
+    const subrowsFor = personSubrows(p.id) || []
+    const subMatch = subrowsFor.some(s => (s.label || '').toLowerCase().includes(q))
+    return name.includes(q) || subMatch
+  })
+})
+
+const filteredProjects = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return sortableProjects.value
+  return sortableProjects.value.filter(p => {
+    const name = p.name.toLowerCase()
+    const subrowsFor = projectSubrows(p.id) || []
+    const subMatch = subrowsFor.some(s => (s.label || '').toLowerCase().includes(q))
+    return name.includes(q) || subMatch
+  })
+})
+
+const noResults = computed(() => {
+  if (!searchQuery.value) return false
+  return view.value.mode === 'person' ? filteredPeople.value.length === 0 : filteredProjects.value.length === 0
+})
 
 const addButtons = ref<HTMLElement | null>(null)
 

@@ -23,6 +23,25 @@
 
     <!-- Right: Actions & Settings -->
     <div class="flex items-center justify-end gap-2">
+      <UInput 
+        v-model="searchLocal" 
+        placeholder="Search in projects or peoples" 
+        size="sm" 
+        class="w-64 mr-2" 
+        :ui="{ trailing: 'pe-1' }"
+      >
+        <template #trailing>
+          <UButton
+            color="neutral"
+            variant="link"
+            size="sm"
+            :icon="searchLocal ? 'i-lucide-x' : 'i-lucide-search'"
+            :aria-label="searchLocal ? 'Clear search' : 'Search'"
+            aria-controls="search"
+            @click="searchLocal = ''"
+          />
+        </template>
+      </UInput>
       <UButton
         color="neutral"
         variant="ghost"
@@ -47,18 +66,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import ViewSwitcher from '@/components/ViewSwitcher.vue'
 import ColorModeButton from './ColorModeButton.vue'
 
-defineProps<{
+const props = defineProps<{
   showInsights: boolean
+  searchQuery?: string | null
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   'toggle-insights': []
   'toggle-settings': []
   'go-to-today': []
   'add-weeks': [{ direction: 'previous' | 'next', weeks: number }]
+  'update:searchQuery': [string]
 }>()
+
+const searchLocal = ref(props.searchQuery ?? '')
+
+watch(searchLocal, (v) => {
+  emit('update:searchQuery', v)
+})
+
+watch(() => props.searchQuery, (v) => {
+  if (v !== searchLocal.value) searchLocal.value = v ?? ''
+})
 </script>
