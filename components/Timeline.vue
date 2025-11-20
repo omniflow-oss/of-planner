@@ -314,7 +314,26 @@ const { personSubrows, projectSubrows } = subrows
 
 // Provide assignments ref to children (RowGroup) for lane computation
 const assignmentsKey = Symbol.for('assignmentsRef')
-provide(assignmentsKey, assignments)
+
+// Viewport-based assignment filtering: only provide assignments that overlap
+// the currently visible date range so offscreen AssignmentBar components
+// are not mounted.
+const sidebarWidth = 240 // left column width in px
+const visibleStartIdx = ref(0)
+const visibleEndIdx = ref(Math.max(0, days.value.length - 1))
+
+const visibleStartISO = computed(() => days.value[visibleStartIdx.value] ?? days.value[0])
+const visibleEndISO = computed(() => days.value[Math.min(visibleEndIdx.value, days.value.length - 1)] ?? days.value[days.value.length - 1])
+
+const filteredAssignments = computed(() => {
+  // assignments.value contains all assignments in the store
+  const start = visibleStartISO.value
+  const end = visibleEndISO.value
+  if (!start || !end) return assignments.value
+  return assignments.value.filter(a => !(a.end < start || a.start > end))
+})
+
+provide(assignmentsKey, filteredAssignments)
 
 const scrollArea = ref<HTMLElement | null>(null)
 
@@ -355,6 +374,38 @@ function handleScroll() {
   modals.closeAllModals()
   
   onScroll()
+  updateVisibleRange()
+}
+
+// Compute visible day index range from scrollArea scrollLeft and clientWidth
+function updateVisibleRange() {
+  if (!scrollArea.value) return
+  const scrollLeft = scrollArea.value.scrollLeft
+  const containerWidth = scrollArea.value.clientWidth
+  const timelineLeft = sidebarWidth // left column width
+  const visibleLeft = Math.max(0, scrollLeft - timelineLeft) 
+  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft) + 300
+
+  // Convert pixels to day indices using dayOffsets (which maps day index to px offset)
+  // Find first visible index
+  let startIdx = 0
+  for (let i = 0; i < dayOffsets.value.length; i++) {
+    if ((dayOffsets.value[i] ?? i * view.value.px_per_day) + view.value.px_per_day > visibleLeft) {
+      startIdx = i
+      break
+    }
+  }
+
+  let endIdx = dayOffsets.value.length - 1
+  for (let i = startIdx; i < dayOffsets.value.length; i++) {
+    if ((dayOffsets.value[i] ?? i * view.value.px_per_day) >= visibleRight) {
+      endIdx = Math.max(0, i - 1)
+      break
+    }
+  }
+
+  visibleStartIdx.value = startIdx
+  visibleEndIdx.value = endIdx
 }
 
 // Inject timeline events from app.vue
@@ -378,7 +429,12 @@ if (personClickEvent) {
     }
   })
 }
-
+watch(() => searchQuery.value, () => {
+  // Update height
+  nextTick(() => {
+    setTimelineHeight()
+  })
+})
 // Expand/Collapse all controls provided to RowGroup
 const rowGroupControls = {
   expandAllToken: ref<number>(0),
@@ -510,6 +566,9 @@ onMounted(async () => {
   // Update addButtons position based on scrollbar height
   await nextTick()
   updateAddButtonsPosition()
+  // initialize visible range
+  await nextTick()
+  updateVisibleRange()
   
   // Auto-scroll to today on app initialization
   if (timelineEvents?.goToTodayEvent) {
@@ -521,6 +580,7 @@ onMounted(async () => {
     })
   }
 })
+
 
 // Expand/Collapse state and handlers (separate for each view)
 const expandState = ref({

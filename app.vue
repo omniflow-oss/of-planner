@@ -20,7 +20,6 @@
         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
           <h2 class="text-lg font-bold text-gray-900 dark:text-white">Planner Insights</h2>
           <UButton
-            color="gray"
             variant="ghost"
             icon="i-lucide-x"
             size="sm"
