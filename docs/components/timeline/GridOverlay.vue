@@ -3,7 +3,7 @@
     <!-- Day/Week grid lines -->
     <div
       class="grid h-full"
-      :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }"
+      :style="{ gridTemplateColumns: `repeat(${days.length}, ${pxPerDay}px)`, transform: `translateX(-${scrollLeft}px)` }"
     >
       <div
         v-for="(iso, idx) in days"
@@ -18,7 +18,7 @@
     <div
       v-if="todayIndex >= 0"
       class="grid h-full pointer-events-none"
-      :style="{ gridTemplateColumns: dayColumns, transform: `translateX(-${scrollLeft}px)` }"
+      :style="{ gridTemplateColumns: `repeat(${days.length}, ${pxPerDay}px)`, transform: `translateX(-${scrollLeft}px)` }"
     >
       <div
         v-for="(iso, idx) in days"
@@ -37,7 +37,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   days: string[]
-  dayColumns: string
+  pxPerDay: number
   scrollLeft: number
   dayBorderClass?: string
   weekBorderClass?: string

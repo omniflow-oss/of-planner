@@ -13,7 +13,6 @@
         <TimelineHeader
           :days="days"
           :day-columns="dayColumns"
-          :month-segments="monthSegments"
           :month-columns="monthColumns"
           :today-i-s-o="todayISO"
           :px-per-day="view.px_per_day"
@@ -248,7 +247,6 @@ const {
   days,
   dayOffsets,
   dayColumns,
-  monthSegments,
   monthColumns,
   weekStarts
 } = useTimeline(view)

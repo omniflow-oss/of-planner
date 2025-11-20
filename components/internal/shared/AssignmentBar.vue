@@ -16,7 +16,7 @@
     @contextmenu.prevent.stop="onRightClick"
   >
     <!-- Solid Color Bar Content -->
-    <UTooltip :text="tooltipText" :popper="{ placement: 'top' }">
+    <UTooltip :text="tooltipText">
       <div 
         :class="[
           'flex items-center gap-1.5 px-1.5 text-[10.5px] font-medium w-full h-full draggable-content truncate',
