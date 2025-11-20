@@ -59,11 +59,18 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     
     updateScrollPosition(el, newScrollLeft)
   }
+  let lastScrollLeft:number = 0;
+  onMounted(() => {
+    lastScrollLeft = scrollArea.value?.scrollTop || 0;
+  })
 
   function onScroll() {
-    const el = scrollArea.value
+    const el:any = scrollArea.value
+    if(el.scrollTop !== lastScrollLeft){
+      lastScrollLeft = el.scrollTop;
+      return;
+    }
     if (!el || extending.value) return
-    
     const left = el.scrollLeft
     const right = left + el.clientWidth
     const threshold = getScrollThreshold()

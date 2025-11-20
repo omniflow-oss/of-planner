@@ -4,7 +4,7 @@
     style="grid-template-columns: 280px 1fr;"
   >
     <!-- Left spacer with timeline controls -->
-    <div class="border-b border-r pane-border sticky left-0 z-30 bg-default shadow-sm flex flex-col justify-end pb-2 px-3">
+    <div class="border-b border-r pane-border sticky left-0 z-30 bg-default flex flex-col justify-end pb-2 px-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UBadge 

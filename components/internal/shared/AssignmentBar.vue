@@ -63,10 +63,8 @@
 
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from 'vue'
-import { inject } from 'vue'
 import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO } from '@/composables/useDate'
 import { getAllocationColor, getAllocationTextColor, enhanceProjectColor } from '@/utils/colors'
-import { roundToDecimalPlaces } from '@/composables/useProjectEstimation'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import { manDays } from '@/utils/alloc'
 import type { Assignment } from '@/types/planner'
