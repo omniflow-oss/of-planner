@@ -1,4 +1,4 @@
-import { nextTick, type Ref, ref } from 'vue'
+import { nextTick, type Ref, ref, onMounted } from 'vue'
 import { addDaysISO, calendarSpanForWeekdays } from '@/composables/useDate'
 
 // Business-day aware infinite scroll for the timeline
