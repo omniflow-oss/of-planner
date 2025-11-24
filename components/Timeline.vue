@@ -384,8 +384,8 @@ function updateVisibleRange() {
   const scrollLeft = scrollArea.value.scrollLeft
   const containerWidth = scrollArea.value.clientWidth
   const timelineLeft = sidebarWidth // left column width
-  const visibleLeft = Math.max(0, scrollLeft - timelineLeft) - 300
-  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft) + 300
+  const visibleLeft = Math.max(0, scrollLeft - timelineLeft) - 100
+  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft) + 100
 
   // Convert pixels to day indices using dayOffsets (which maps day index to px offset)
   // Find first visible index
@@ -529,8 +529,6 @@ const { initTimelineWithAssignments, needsTimelineExpansion } = timelineInit
 watch(assignments, async (_newAssignments) => {
   if (needsTimelineExpansion.value) {
     await initTimelineWithAssignments()
-    // Don't auto-scroll to today when assignments change during scrolling/lazy loading
-    // This was causing unwanted navigation during user exploration
   }
 }, { deep: true })
 
@@ -555,7 +553,6 @@ onMounted(async () => {
     })
   }
 })
-
 
 // Expand/Collapse state and handlers (separate for each view)
 const expandState = ref({
