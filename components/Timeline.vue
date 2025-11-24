@@ -384,7 +384,7 @@ function updateVisibleRange() {
   const scrollLeft = scrollArea.value.scrollLeft
   const containerWidth = scrollArea.value.clientWidth
   const timelineLeft = sidebarWidth // left column width
-  const visibleLeft = Math.max(0, scrollLeft - timelineLeft) 
+  const visibleLeft = Math.max(0, scrollLeft - timelineLeft) - 300
   const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft) + 300
 
   // Convert pixels to day indices using dayOffsets (which maps day index to px offset)
@@ -495,7 +495,7 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
       const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
       
       scrollArea.value.scrollTo({
-        left: Math.max(0, scrollPosition)
+        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition + sidebarWidth / 2)
       })
     } else {
       console.warn('Could not find target date in timeline:', todayISO, 'Available days:', days.value.length)
