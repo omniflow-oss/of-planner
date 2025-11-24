@@ -103,7 +103,6 @@
 <script setup lang="ts">
 const props = defineProps<{
   days: string[]
-  dayColumns: string
   todayISO: string
   pxPerDay: number
   dayOffsets: number[]

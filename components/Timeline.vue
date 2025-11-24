@@ -12,7 +12,6 @@
       >
         <TimelineHeader
           :days="days"
-          :day-columns="dayColumns"
           :today-i-s-o="todayISO"
           :px-per-day="view.px_per_day"
           :day-offsets="dayOffsets"
@@ -247,8 +246,6 @@ const {
   todayISO,
   days,
   dayOffsets,
-  dayColumns,
-  monthColumns,
   weekStarts
 } = useTimeline(view)
 
@@ -384,8 +381,8 @@ function updateVisibleRange() {
   const scrollLeft = scrollArea.value.scrollLeft
   const containerWidth = scrollArea.value.clientWidth
   const timelineLeft = sidebarWidth // left column width
-  const visibleLeft = Math.max(0, scrollLeft - timelineLeft) - 100
-  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft) + 100
+  const visibleLeft = Math.max(0, scrollLeft - timelineLeft)
+  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft) + 300
 
   // Convert pixels to day indices using dayOffsets (which maps day index to px offset)
   // Find first visible index
@@ -495,7 +492,7 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
       const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
       
       scrollArea.value.scrollTo({
-        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition + sidebarWidth / 2)
+        left: Math.max(0, scrollPosition)
       })
     } else {
       console.warn('Could not find target date in timeline:', todayISO, 'Available days:', days.value.length)
