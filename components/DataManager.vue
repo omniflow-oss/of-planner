@@ -123,19 +123,10 @@ const triggerFileInput = () => {
   fileInput.value?.click()
 }
 
-// Common function to handle data loading with lazy loading support
-const processDataWithLazyLoading = async (data: ExternalPlannerData) => {
-  // if (store.isLazyLoadEnabled) {
-  //   // Use lazy loading system
-  //   await store.enableLazyLoading(data)
-    
-  //   // Always navigate to today when loading JSON data (not to earliest assignment)
-  //   navigateToToday()
-  // } else {
-    // Use regular loading method
-    store.loadDataFromObject(data)
-    navigateToToday()
-  // }
+// Common function to handle data loading
+const processData = async (data: ExternalPlannerData) => {
+  store.loadDataFromObject(data)
+  navigateToToday()
 }
 
 const handleFileSelect = async (event: Event) => {
@@ -157,8 +148,8 @@ const handleFileSelect = async (event: Event) => {
     const text = await file.text()
     const data: ExternalPlannerData = JSON.parse(text)
     
-    // Process data with lazy loading support
-    await processDataWithLazyLoading(data)    
+    // Process data 
+    await processData(data)    
     toast.add({ title: 'Data loaded', description: 'JSON file imported successfully', color: 'success' })
     
   } catch (error) {
@@ -187,8 +178,8 @@ const loadSampleData = async () => {
   try {
     const data = await store.loadDataFromJSON('planner-data.json')
     
-    // Process data with lazy loading support
-    await processDataWithLazyLoading(data)
+    // Process data
+    await processData(data)
     
     toast.add({ title: 'Sample loaded', description: 'Sample planner data loaded', color: 'success' })
   } catch (error) {

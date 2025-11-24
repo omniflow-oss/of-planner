@@ -121,7 +121,7 @@
       ref="addButtons"
       style="width: 280px; height:59px;"
       :style="{ bottom: addButtonsBottomStyle }"
-      class="border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex flex-col items-center justify-center gap-3 p-4"
+      class="hidden md:flex border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex-col items-center justify-center gap-3 p-4"
     >
       <UButton 
         v-if="view.mode === 'project'"
@@ -148,7 +148,7 @@
       </UButton>
     </div>
     <div
-      class="empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border p-4 flex flex-col items-center justify-center"
+      class="hidden md:flex empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border p-4 flex-col items-center justify-center"
       style="width: 280px;bottom:25px;"
     >
       <div v-if="noResults" class="text-xs text-slate-500">No results found for "{{ searchQuery }}"</div>
@@ -229,7 +229,7 @@ import NewPersonModal from '@/components/timeline/NewPersonModal.vue'
 import EditProjectModal from '@/components/timeline/EditProjectModal.vue'
 import EditPersonModal from '@/components/timeline/EditPersonModal.vue'
 import { VueDraggableNext } from 'vue-draggable-next'
-import { addDaysISO, isWeekendISO } from '@/composables/useDate'
+import { getTodayWorkingDay } from '@/composables/useDate'
 
 const store = usePlannerStore()
 const { people, projects, view, assignments } = storeToRefs(store)
@@ -485,20 +485,6 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
       await nextTick()
       todayIndex = days.value.findIndex(d => d === todayISO)
     }
-    
-    // If lazy loading is enabled, load assignments for the target date specifically
-    // if (store.isLazyLoadEnabled) {
-    //   await store.loadAssignmentsForTargetDate(todayISO)
-      
-    //   // Give extra time for the DOM to update with the loaded assignments
-    //   await nextTick()
-    //   await new Promise(resolve => setTimeout(resolve, 50))
-      
-    //   // Re-check the index after lazy loading in case the timeline changed
-    //   todayIndex = days.value.findIndex(d => d === todayISO)
-    // }
-    
-    // Ensure we have the scrollArea available and the timeline is ready
     await nextTick()
     
     if (todayIndex >= 0 && scrollArea.value) {
@@ -539,21 +525,6 @@ watch(() => timelineEvents?.addWeeksEvent.value, (data) => {
 
 // Timeline initialization functions from composable
 const { initTimelineWithAssignments, needsTimelineExpansion } = timelineInit
-
-// Lazy loading watcher - but WITHOUT timeline expansion
-// watch(() => ({ start: view.value.start, days: view.value.days }), async (newView, oldView) => {
-//   // Only trigger lazy loading if the view actually changed and lazy loading is enabled
-//   if (store.isLazyLoadEnabled && 
-//       (newView.start !== oldView?.start || newView.days !== oldView?.days)) {    
-//     try {
-//       // Load events for current viewport only - do NOT expand timeline
-//       await store.loadAssignmentsForCurrentViewportOnly()  
-
-//     } catch (error) {
-//       console.error('Error during lazy loading of assignments:', error)
-//     }
-//   }
-// }, { deep: true })
 
 // Watch for assignment changes and re-initialize timeline if needed
 watch(assignments, async (_newAssignments) => {
@@ -607,13 +578,5 @@ function toggleExpandAll() {
     expandState.value[view.value.mode] = true
   }
   setTimelineHeight();
-}
-
-function getTodayWorkingDay() {
-  let todayISO = new Date().toISOString().slice(0, 10)
-  while (isWeekendISO(todayISO)) {
-    todayISO = addDaysISO(todayISO, 1)
-  }
-  return todayISO
 }
 </script>

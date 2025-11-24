@@ -12,22 +12,24 @@
         size="sm"
         :variant="mode==='person' ? 'solid' : 'outline'"
         color="primary"
-        class="font-medium px-4"
+        class="font-medium px-2 md:px-4"
         @click="setMode('person')"
       >
-        People
+        <UIcon name="i-lucide-user" class="md:hidden size-3.5" />
+        <span class="hidden md:inline ">People</span>
       </UButton>
       <UButton
         size="sm"
         :variant="mode==='project' ? 'solid' : 'outline'"
         color="primary"
-        class="font-medium px-4"
+        class="font-medium px-2 md:px-4"
         @click="setMode('project')"
       >
-        Projects
+        <UIcon name="i-lucide-briefcase" class="md:hidden size-3.5" />
+        <span class="hidden md:inline ">Projects</span>
       </UButton>
     </UFieldGroup>
-    <div class="inline-flex items-center gap-1">
+    <div class="hidden md:inline-flex items-center gap-1">
       <UFieldGroup size="xs">
         <UButton
           size="xs"

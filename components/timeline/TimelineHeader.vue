@@ -4,7 +4,7 @@
     style="grid-template-columns: 280px 1fr;"
   >
     <!-- Left spacer with timeline controls -->
-    <div class="border-b border-r pane-border sticky left-0 z-30 bg-default flex flex-col justify-end pb-2 px-3">
+    <div class="invisible md:visible border-b border-r pane-border sticky left-0 z-30 bg-default flex flex-col justify-end pb-2 px-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UBadge 
@@ -37,6 +37,7 @@
       <!-- Week Numbers Row (Compressed) -->
       <div
         class="grid text-[9px] font-semibold text-slate-500 dark:text-slate-400 select-none border-b border-slate-200 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50 overflow-hidden"
+        style="grid-template-rows: auto;  grid-auto-rows: 0;  grid-auto-flow: column; "
         :style="{ gridTemplateColumns: `repeat( auto-fill , ${pxPerDay}px)`, height: '18px' }"
       >
         <div
@@ -56,7 +57,7 @@
       <!-- Day Row (Compressed Month + Day) -->
       <div
         class="grid text-[11px] text-default select-none overflow-hidden"
-        style="grid-template-rows: auto;  grid-auto-rows: 0;"
+        style="grid-template-rows: auto;  grid-auto-rows: 0;  grid-auto-flow: column; "
         :style="{ gridTemplateColumns: `repeat( auto-fill, ${pxPerDay}px)` }"
       >
         <div
@@ -72,7 +73,7 @@
           <!-- Month Label (only on first day of month or start of view) -->
           <span 
             v-if="isMonthStart(day) || i === 0" 
-            class="absolute top-0 left-1 text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider z-10"
+            class="absolute top-0 left-0 right-0 text-[9px] font-medium text-white dark:text-slate-400 uppercase tracking-wider z-10"
           >
             {{ getMonthLabel(day) }} {{ getYearLabel(day) }}
           </span>
@@ -159,5 +160,11 @@ function getYearLabel(iso: string) {
 .header-day.today::after {
   /* Override global style if needed, or rely on the span styling */
   display: none; 
+}
+.tracking-wider {
+  background-color: var(--grid-line-week-color);
+}
+.dark .tracking-wider {
+  background-color: var(--border-color-muted);
 }
 </style>

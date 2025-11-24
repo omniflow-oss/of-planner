@@ -4,12 +4,12 @@
     style="grid-template-columns: 280px 1fr;"
   >
     <!-- Left: label -->
-    <div class="border-r-2 pane-border sticky left-0 z-10 bg-default left-label subrow-container group">
-      <div class="flex items-center h-full px-4 pl-10 py-1.5 text-sm text-default border-l-2 border-transparent">
+    <div class="md:border-r-2 pane-border sticky left-0 z-10 md:bg-default left-label subrow-container group max-w-[30vw] md:max-w-none">
+      <div class="inline-flex md:flex items-center h-full pl-3 pr-2 md:pr-4 md:pl-10 py-1.5 text-sm text-default border-l-2 border-transparent">
         <!-- Drag handle -->
         <div 
           v-if="!store.isReadOnly"
-          class="my-auto"
+          class="my-auto hidden md:block"
         >
           <UIcon
             name="i-lucide-grip-vertical"
@@ -21,7 +21,7 @@
         </div>
         
         <!-- Icon with background -->
-        <div class="my-auto mr-2.5 flex-shrink-0">
+        <div class="my-auto mr-2.5 flex-shrink-0 hidden md:block">
           <div 
             class="w-5 h-5 rounded flex items-center justify-center"
             :class="subrow.isTimeOff ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-slate-100 dark:bg-slate-800'"
@@ -33,13 +33,13 @@
           </div>
         </div>
         
-        <div class="flex items-center gap-2 w-full min-w-0">
+        <div class="flex items-center gap-2 w-full min-w-0 bg-slate-300 dark:bg-default-100 rounded-full px-2 py-1 shadow-md shadow-gray-500/50 md:rounded-none md:bg-transparent md:shadow-none md:px-0 md:py-0">
           <div
-            class="line-clamp-2 flex-1 min-w-0"
+            class="line-clamp-1 md:line-clamp-2 flex-1 min-w-0"
             :class="[
               subrow.isTimeOff 
-                ? 'font-semibold text-blue-600 dark:text-blue-400' 
-                : 'font-normal text-slate-600 dark:text-slate-400 text-xs',
+                ? 'font-semibold text-blue-600 dark:text-blue-700 text-xs md:text-sm' 
+                : 'font-normal text-slate-600 dark:text-slate-900 text-xs',
               // Make project names clickable in person view (when we have a project_id and are showing project names)
               groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
                 ? 'cursor-pointer hover:text-blue-600 hover:underline' 
