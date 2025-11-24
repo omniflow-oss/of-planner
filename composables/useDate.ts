@@ -106,3 +106,12 @@ export function addBusinessDaysISO(startISO: string, businessDays: number) {
   
   return toISO(d)
 }
+
+// Get the next working day from today (skipping weekends)
+export function getTodayWorkingDay() {
+  let todayISO = new Date().toISOString().slice(0, 10)
+  while (isWeekendISO(todayISO)) {
+    todayISO = addDaysISO(todayISO, 1)
+  }
+  return todayISO
+}

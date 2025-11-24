@@ -88,7 +88,9 @@ body{  overflow-x: hidden; }
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
-.left-label {
-  margin-bottom:-.8px;
-  border-bottom-width:1.2px;
+.left-label {  
+  @media (width >= 48rem) {
+    margin-bottom:-.8px;
+    border-bottom-width:1.2px;
+  }
 }

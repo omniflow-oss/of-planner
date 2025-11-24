@@ -13,7 +13,7 @@
     ]"
     :style="barStyle"
     @mousedown.self="onMouseDown"
-    @contextmenu.prevent.stop="onRightClick"
+    @contextmenu="handleContextMenu"
   >
     <!-- Solid Color Bar Content -->
     <UTooltip :text="tooltipText">
@@ -133,16 +133,6 @@ function getBarDatesForResize(props: any, resizing: any, deltaPx: number) {
     let newEnd = moveBusinessDays(resizing.startEnd, deltaDays);
     return { newEnd };
   }
-}
-
-// Helper to determine best text color (black or white) based on background hex
-function getContrastColor(hexColor: string) {
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-  return yiq >= 128 ? '#0f172a' : '#ffffff'; // slate-900 or white
 }
 
 const props = defineProps<{ assignment: Assignment; startISO: string; days?: string[]; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
@@ -490,6 +480,16 @@ function onRightClick(e: MouseEvent) {
     x: e.clientX, 
     y: e.clientY 
   })
+}
+
+function handleContextMenu(e: Event) {
+  // If device supports touch, ignore the contextmenu (allow default long-press behavior)
+  if (isTouchDevice()) return
+  // Desktop: prevent default menu, stop propagation and forward to onRightClick
+  e.preventDefault()
+  e.stopPropagation()
+  // cast to MouseEvent for onRightClick
+  onRightClick(e as MouseEvent)
 }
 
 // Component cleanup to prevent memory leaks

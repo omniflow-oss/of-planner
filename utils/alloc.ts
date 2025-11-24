@@ -32,3 +32,27 @@ export function clampToWindowDate(startISO: string, endISO: string, windowStart:
   const e = endISO > windowEnd ? windowEnd : endISO
   return [s, e]
 }
+
+// Only handle context menu on non-touch / desktop devices
+export function isTouchDevice() {
+  try {
+    if (typeof window === 'undefined') return false
+    if ('ontouchstart' in window) return true
+    if ((navigator as any)?.maxTouchPoints > 0) return true
+    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true
+  } catch (err) {
+    return false
+  }
+  return false
+}
+
+
+// Helper to determine best text color (black or white) based on background hex
+export function getContrastColor(hexColor: string) {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return yiq >= 128 ? '#0f172a' : '#ffffff'; // slate-900 or white
+}

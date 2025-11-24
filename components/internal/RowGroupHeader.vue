@@ -6,14 +6,14 @@
     <!-- Group header row -->
     <!-- Group header row -->
     <div
-      class="px-2 py-2 border-r-2 pane-border flex items-center gap-3 sticky left-0 z-10 bg-default left-label group border-b-2 border-slate-200 dark:border-slate-700"
+      class="px-1 inline-block md:flex md:px-2 py-2 md:py-1 md:border-r-2 pane-border items-center gap-3 sticky left-0 z-10 md:bg-default left-label group md:border-b-2 border-slate-200 dark:border-slate-700 max-w-[30vw] md:max-w-none"
       draggable="false"
       style="-webkit-user-select: none; user-select: none;"
     >
       <!-- Drag Handle -->
       <div       
         v-if="!readonly"
-        class="my-auto -mr-2.5"   
+        class="my-auto -mr-2.5 hidden md:block"   
       >
         <UIcon
           name="i-lucide-grip-vertical"
@@ -24,7 +24,7 @@
 
       <!-- Expand/Collapse Caret -->
       <button
-        class="flex items-center justify-center w-6 h-6 rounded hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
+        class="hidden md:flex items-center justify-center w-6 h-6 rounded hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
         aria-label="Toggle"
         @click="$emit('toggle-expanded')"
       >
@@ -35,25 +35,26 @@
       </button>
 
       <!-- Avatar & Info -->
-      <div class="flex items-center gap-2 flex-1 min-w-0">
+      <div class="inline-flex md:flex items-center gap-2 flex-1 min-w-0 rounded-full bg-violet-300 pl-1 pr-2 md:pl-0 md:pr-0 py-1 shadow-md shadow-gray-500/50 md:rounded-none md:bg-transparent md:shadow-none md-py-0">
         <!-- Custom Avatar with Initials -->
         <div 
           :class="[
-            'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0',
+            'w-5 h-5 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0',
             avatarBgColor,
             'text-white'
           ]"
           :title="label"
+          @click="$emit('toggle-expanded')"
         >
           {{ avatarInitials }}
         </div>
         
         <!-- Name & Role/Team -->
         <div class="flex flex-col truncate flex-1">
-          <span class="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate leading-tight">
+          <span class="font-semibold text-sm text-slate-900 md:dark:text-slate-100 truncate leading-tight">
             {{ label }}
           </span>
-          <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight font-medium">
+          <span class="hidden md:inline text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight font-medium">
             {{ roleLabel }}
           </span>
         </div>
@@ -61,7 +62,7 @@
 
       <!-- Capacity Badge -->
       <UBadge
-        class="float-right"
+        class="float-right hidden md:inline-block"
         size="sm"
         :color="badgeColor"
         variant="soft"
@@ -72,7 +73,7 @@
 
 
       <!-- Actions Menu -->
-      <div class="flex-shrink-0" v-if="!readonly">
+      <div class="flex-shrink-0 hidden md:block" v-if="!readonly">
         <UDropdownMenu 
           :items="actionItems" 
           :ui="{ width: 'w-48' }"
