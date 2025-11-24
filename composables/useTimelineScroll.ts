@@ -23,50 +23,67 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
   async function prependWeekdays(w: number, nextPrev: boolean = false) {
     const el = scrollArea.value
     if (!el) return
-    
-    const half = el.clientWidth / 2
-    const anchor = el.scrollLeft + half
+
+    const oldScrollLeft = el.scrollLeft
+    const oldScrollWidth = el.scrollWidth
+
     let cal = calendarSpanForWeekdays(view.value.start, w, -1)
     // Guard: clamp cal to reasonable bounds
     if (cal <= 0) return
     if (cal > CHUNK_WEEKDAYS * 10) cal = CHUNK_WEEKDAYS * 10
     view.value.start = addDaysISO(view.value.start, -cal)
     view.value.days = view.value.days + cal
-    
+
     await nextTick()
-    
-    const scrollDistance = getScrollDistance(w)
-    const newScrollLeft = nextPrev 
-      ? el.scrollLeft - scrollDistance
-      : anchor + scrollDistance - half
-    
-    updateScrollPosition(el, newScrollLeft)
+
+      const deltaWidth = el.scrollWidth - oldScrollWidth
+      if (deltaWidth > 0) {
+        // Maintain the visual content by offsetting scrollLeft by the increase in scrollWidth
+        const newScrollLeft = Math.max(0, oldScrollLeft + deltaWidth)
+        updateScrollPosition(el, newScrollLeft)
+      } else {
+        // Fallback to anchor math (used by tests / deterministic behavior)
+        const half = el.clientWidth / 2
+        const anchor = el.scrollLeft + half
+        const scrollDistance = getScrollDistance(w)
+        const newScrollLeft = nextPrev ? el.scrollLeft - scrollDistance : anchor + scrollDistance - half
+        updateScrollPosition(el, Math.max(0, newScrollLeft))
+      }
   }
 
   async function appendWeekdays(w: number, nextPrev: boolean = false) {
     const el = scrollArea.value
     if (!el) return
     
-    const half = el.clientWidth / 2
-    const anchor = el.scrollLeft + half
+    const oldScrollLeft = el.scrollLeft
+    const oldScrollWidth = el.scrollWidth
     const endISO = addDaysISO(view.value.start, view.value.days - 1)
     let cal = calendarSpanForWeekdays(endISO, w, +1)
     if (cal <= 0) return
     if (cal > CHUNK_WEEKDAYS * 10) cal = CHUNK_WEEKDAYS * 10
     view.value.days = view.value.days + cal
-    
+
     await nextTick()
 
-    const scrollDistance = getScrollDistance(w)
-    const newScrollLeft = nextPrev 
-      ? el.scrollLeft + scrollDistance
-      : anchor - half
-    
-    updateScrollPosition(el, newScrollLeft)
+      const deltaWidth = el.scrollWidth - oldScrollWidth
+      if (deltaWidth > 0) {
+        // Keep left offset stable so content does not jump
+        const newScrollLeft = Math.max(0, oldScrollLeft)
+        updateScrollPosition(el, newScrollLeft)
+      } else {
+        // Fallback to anchor math for deterministic tests
+        const half = el.clientWidth / 2
+        const anchor = el.scrollLeft + half
+        const scrollDistance = getScrollDistance(w)
+        const newScrollLeft = nextPrev ? el.scrollLeft + scrollDistance : anchor - half
+        updateScrollPosition(el, Math.max(0, newScrollLeft))
+      }
   }
-  let lastScrollLeft:number = 0;
+  let lastScrollLeft:number = 0
+  let lastScrollTop:number = 0
   onMounted(() => {
-    lastScrollLeft = scrollArea.value?.scrollTop || 0;
+    lastScrollLeft = scrollArea.value?.scrollLeft || 0
+    lastScrollTop = scrollArea.value?.scrollTop || 0
   })
 
   // Simple debounce to avoid repeated append/prepend triggered by touch momentum
@@ -75,17 +92,31 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
 
   function onScroll() {
     const el:any = scrollArea.value
-    if(el.scrollTop !== lastScrollLeft){
-      lastScrollLeft = el.scrollTop;
-      return;
+    if (!el || extending.value) {
+      // update last positions to avoid stale diffs
+      lastScrollLeft = el?.scrollLeft ?? lastScrollLeft
+      lastScrollTop = el?.scrollTop ?? lastScrollTop
+      return
     }
-    if (!el || extending.value) return
-    const left = el.scrollLeft
+
+    const curLeft = el.scrollLeft
+    const curTop = el.scrollTop
+    const dLeft = Math.abs(curLeft - lastScrollLeft)
+    const dTop = Math.abs(curTop - lastScrollTop)
+
+    // Update last positions immediately for next event
+    lastScrollLeft = curLeft
+    lastScrollTop = curTop
+
+    // Ignore mostly-vertical scrolls (user is scrolling page vertically)
+    if (dLeft <= dTop || dLeft < 2) return
+
+    const left = curLeft
     const right = left + el.clientWidth
     const threshold = getScrollThreshold()
     const nearLeft = left < threshold
     const nearRight = right > el.scrollWidth - threshold
-    
+
     if (nearLeft || nearRight) {
       const now = Date.now()
       if (now - lastExtendAt < EXTEND_DEBOUNCE_MS) return
