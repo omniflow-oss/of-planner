@@ -41,15 +41,15 @@
         :style="{ gridTemplateColumns: `repeat( auto-fill , ${pxPerDay}px)`, height: '18px' }"
       >
         <div
-          v-for="i in visibleIndices"
-          :key="'w' + (days[i] ?? '')"
+          v-for="(day, i) in days"
+          :key="'w' + day"
           class="text-center relative flex items-center justify-center"
           :class="{ 
-            'bg-slate-50/80 dark:bg-slate-900/50': isWeekend(days[i] ?? '')
+            'bg-slate-50/80 dark:bg-slate-900/50': isWeekend(day)
           }"
         >
           <span v-if="weekStarts.includes(i) || i === 0" class="px-1">
-            W{{ getWeekNumber(days[i] ?? '') }}
+            W{{ getWeekNumber(day) }}
           </span>
         </div>
       </div>
@@ -61,38 +61,38 @@
         :style="{ gridTemplateColumns: `repeat( auto-fill, ${pxPerDay}px)` }"
       >
         <div
-          v-for="i in visibleIndices"
-          :key="(days[i] ?? '')"
+          v-for="(day, i) in days"
+          :key="day"
           class="text-center py-1.5 whitespace-nowrap header-day relative flex flex-col items-center justify-center gap-0.5"
           :class="[ 
             weekStarts.includes(i) ? 'week' : '', 
-            isToday(days[i] ?? '') ? 'today' : '',
-            isWeekend(days[i] ?? '') ? 'bg-slate-100/70 dark:bg-slate-800/50' : ''
+            isToday(day) ? 'today' : '',
+            isWeekend(day) ? 'bg-slate-100/70 dark:bg-slate-800/50' : ''
           ]"
         >
           <!-- Month Label (only on first day of month or start of view) -->
           <span 
-            v-if="isMonthStart(days[i] ?? '') || i === 0" 
+            v-if="isMonthStart(day) || i === 0" 
             class="absolute top-0 left-0 right-0 text-[9px] font-medium text-white dark:text-slate-400 uppercase tracking-wider z-10"
           >
-            {{ getMonthLabel(days[i] ?? '') }} {{ getYearLabel(days[i] ?? '') }}
+            {{ getMonthLabel(day) }} {{ getYearLabel(day) }}
           </span>
 
           <!-- Day Number -->
           <span
             :class="[
               'w-6 h-6 flex items-center justify-center rounded-full text-[11px]',
-              isToday(days[i] ?? '') 
+              isToday(day) 
                 ? 'bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/50 ring-2 ring-amber-200 dark:ring-amber-800 scale-110' 
                 : 'text-slate-700 dark:text-slate-300 font-medium'
             ]"
           >
-            {{ getDayNumber(days[i] ?? '') }}
+            {{ getDayNumber(day) }}
           </span>
           
           <!-- Day Name (Mon, Tue) -->
           <span class="text-[8px] text-slate-500 dark:text-slate-400 uppercase font-medium">
-            {{ getDayName(days[i] ?? '') }}
+            {{ getDayName(day) }}
           </span>
         </div>
       </div>
@@ -111,8 +111,6 @@ const props = defineProps<{
   viewMode: 'person' | 'project'
   expanded: boolean
   hasData: boolean
-  visibleStartIdx?: number
-  visibleEndIdx?: number
 }>()
 
 const emit = defineEmits<{
@@ -156,17 +154,6 @@ function isMonthStart(iso: string) {
 function getYearLabel(iso: string) {
   return new Date(iso).getUTCFullYear()
 }
-
-// Compute a clamped visible index range to avoid rendering the entire days array
-import { computed } from 'vue'
-const BUFFER = 2
-const visibleStart = computed(() => Math.max(0, Math.min(props.days.length - 1, Number(props.visibleStartIdx ?? 0) - BUFFER)))
-const visibleEnd = computed(() => Math.max(0, Math.min(props.days.length - 1, Number(props.visibleEndIdx ?? (props.days.length - 1)) + BUFFER)))
-const visibleIndices = computed(() => {
-  const out: number[] = []
-  for (let i = visibleStart.value; i <= visibleEnd.value; i++) out.push(i)
-  return out
-})
 </script>
 
 <style scoped>
