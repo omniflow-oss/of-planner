@@ -26,7 +26,10 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     
     const half = el.clientWidth / 2
     const anchor = el.scrollLeft + half
-    const cal = calendarSpanForWeekdays(view.value.start, w, -1)
+    let cal = calendarSpanForWeekdays(view.value.start, w, -1)
+    // Guard: clamp cal to reasonable bounds
+    if (cal <= 0) return
+    if (cal > CHUNK_WEEKDAYS * 10) cal = CHUNK_WEEKDAYS * 10
     view.value.start = addDaysISO(view.value.start, -cal)
     view.value.days = view.value.days + cal
     
@@ -47,7 +50,9 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     const half = el.clientWidth / 2
     const anchor = el.scrollLeft + half
     const endISO = addDaysISO(view.value.start, view.value.days - 1)
-    const cal = calendarSpanForWeekdays(endISO, w, +1)
+    let cal = calendarSpanForWeekdays(endISO, w, +1)
+    if (cal <= 0) return
+    if (cal > CHUNK_WEEKDAYS * 10) cal = CHUNK_WEEKDAYS * 10
     view.value.days = view.value.days + cal
     
     await nextTick()
@@ -64,6 +69,10 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     lastScrollLeft = scrollArea.value?.scrollTop || 0;
   })
 
+  // Simple debounce to avoid repeated append/prepend triggered by touch momentum
+  let lastExtendAt = 0
+  const EXTEND_DEBOUNCE_MS = 250
+
   function onScroll() {
     const el:any = scrollArea.value
     if(el.scrollTop !== lastScrollLeft){
@@ -78,6 +87,9 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     const nearRight = right > el.scrollWidth - threshold
     
     if (nearLeft || nearRight) {
+      const now = Date.now()
+      if (now - lastExtendAt < EXTEND_DEBOUNCE_MS) return
+      lastExtendAt = now
       extending.value = true
       const operation = nearLeft ? prependWeekdays : appendWeekdays
       operation(CHUNK_WEEKDAYS).finally(() => { extending.value = false })

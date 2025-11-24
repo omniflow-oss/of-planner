@@ -76,18 +76,31 @@ export function businessOffset(baseISO: string, dateISO: string) {
 // starting from a base date (exclusive), moving forward (dir=+1) or backward (dir=-1).
 export function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 1|-1) {
   if (weekdays <= 0) return 0
-  
+  if (!baseISO) return 0
+
+  const baseDate = parseISO(baseISO)
+  if (isNaN(baseDate.getTime())) return 0
+
   let span = 0
   let counted = 0
-  
-  while (counted < weekdays) {
+
+  // Safety cap to avoid infinite loops in pathological cases
+  const MAX_ITER = Math.max(365, weekdays * 7 + 14)
+
+  while (counted < weekdays && span < MAX_ITER) {
     span += 1
     const d = parseISO(baseISO)
     d.setUTCDate(d.getUTCDate() + dir * span)
     const wd = d.getUTCDay()
     if (wd !== 0 && wd !== 6) counted += 1
   }
-  
+
+  if (counted < weekdays) {
+    // Could not find the requested number of weekdays within MAX_ITER days
+    // Return the span we computed so far to avoid runaway behavior.
+    console.warn(`calendarSpanForWeekdays: reached MAX_ITER while computing span from ${baseISO} for ${weekdays} weekdays`) // eslint-disable-line no-console
+  }
+
   return span
 }
 
