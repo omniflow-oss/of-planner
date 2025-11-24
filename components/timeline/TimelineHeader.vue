@@ -70,6 +70,7 @@
             isToday(day) ? 'today' : '',
             isWeekend(day) ? 'bg-slate-100/70 dark:bg-slate-800/50' : ''
           ]"
+          :style="{minWidth : `${pxPerDay}px` }"
         >
           <!-- Month Label (only on first day of month or start of view) -->
           <span 
