@@ -47,6 +47,7 @@
           :class="{ 
             'bg-slate-50/80 dark:bg-slate-900/50': isWeekend(day)
           }"
+          :style="{minWidth : `${pxPerDay}px` }"
         >
           <span v-if="weekStarts.includes(i) || i === 0" class="px-1">
             W{{ getWeekNumber(day) }}

@@ -93,7 +93,7 @@
       </div>
       
       <div
-        class="grid empty-rows-filler absolute top-0 z-0 left-0 overflow-hidden"
+        class="grid empty-rows-filler absolute top-0 z-0 left-0"
         style=" min-height: 100%;"
         :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
@@ -492,7 +492,7 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
       const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
       
       scrollArea.value.scrollTo({
-        left: Math.max(0, scrollPosition)
+        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition + sidebarWidth  / 2)
       })
     } else {
       console.warn('Could not find target date in timeline:', todayISO, 'Available days:', days.value.length)
