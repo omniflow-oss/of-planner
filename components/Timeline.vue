@@ -13,7 +13,6 @@
         <TimelineHeader
           :days="days"
           :day-columns="dayColumns"
-          :month-columns="monthColumns"
           :today-i-s-o="todayISO"
           :px-per-day="view.px_per_day"
           :day-offsets="dayOffsets"
