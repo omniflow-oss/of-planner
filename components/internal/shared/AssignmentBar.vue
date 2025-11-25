@@ -535,14 +535,14 @@ onUnmounted(() => {
 .dragging {
   opacity: 0.9;
   box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: 9;
   transform: scale(1.02);
   filter: brightness(1.05);
 }
 
 .resizing {
   box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: 9;
 }
 
 .resizing .handle {
