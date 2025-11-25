@@ -40,7 +40,7 @@
             :class="[
               subrow.isTimeOff 
                 ? 'font-semibold text-blue-600 dark:text-blue-700 text-xs md:text-sm' 
-                : 'font-normal text-slate-600 dark:text-slate-900 text-xs',
+                : 'font-normal text-slate-600 dark:text-slate-900 md:dark:text-slate-400 text-xs',
               // Make project names clickable in person view (when we have a project_id and are showing project names)
               groupType === 'person' && subrow.project_id && !subrow.isTimeOff 
                 ? 'cursor-pointer hover:text-blue-600 hover:underline' 
