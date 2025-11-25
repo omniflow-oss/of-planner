@@ -43,7 +43,7 @@
         :style="{ gridTemplateColumns: `repeat( auto-fill, ${pxPerDay}px)` }"
       >
         
-        <template v-for="(day, i) in days">
+        <template v-for="(day, i) in days" :key="'day'+i">
           <div class="calendar-cell fex flex-col">
             <!-- Week Numbers Row (Compressed) -->
             <div 
