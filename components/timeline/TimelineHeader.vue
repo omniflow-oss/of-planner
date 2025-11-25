@@ -1,10 +1,11 @@
 <template>
   <div
-    class="header-grid grid sticky top-0 z-20"
-    style="grid-template-columns: 280px 1fr;"
+    :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
+    :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
+    class="header-grid isolate md:grid sticky left-0 top-0 z-20 border-b bg-default/95 md:backdrop-blur md:supports-[backdrop-filter]:bg-default/80"
   >
     <!-- Left spacer with timeline controls -->
-    <div class="invisible md:visible border-b border-r pane-border sticky left-0 z-30 bg-default flex flex-col justify-end pb-2 px-3">
+    <div class="hidden md:flex border-r pane-border sticky left-0 z-30 bg-default flex-col justify-end pb-2 px-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UBadge 
@@ -32,71 +33,64 @@
 
     <!-- Sticky timeline header with grid overlay -->
     <div
-      class="relative border-b top-0 z-25 bg-default/95 backdrop-blur supports-[backdrop-filter]:bg-default/80 flex flex-col justify-end"
+      class="stiky-header relative top-0 z-25 flex flex-col justify-end md:translate-x-0"
+      :class="`translate-x-[${LEFT_SIDEBAR_WIDTH}px]`"
     >
-      <!-- Week Numbers Row (Compressed) -->
-      <div
-        class="grid text-[9px] font-semibold text-slate-500 dark:text-slate-400 select-none border-b border-slate-200 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50"
-        style="grid-template-rows: auto;  grid-auto-rows: 0;  grid-auto-flow: column; "
-        :style="{ gridTemplateColumns: `repeat( auto-fill , ${pxPerDay}px)`, height: '18px' }"
-      >
-        <div
-          v-for="(day, i) in days"
-          :key="'w' + day"
-          class="text-center relative flex items-center justify-center"
-          :class="{ 
-            'bg-slate-50/80 dark:bg-slate-900/50': isWeekend(day)
-          }"
-          :style="{minWidth : `${pxPerDay}px` }"
-        >
-          <span v-if="weekStarts.includes(i) || i === 0" class="px-1">
-            W{{ getWeekNumber(day) }}
-          </span>
-        </div>
-      </div>
-
       <!-- Day Row (Compressed Month + Day) -->
       <div
         class="grid text-[11px] text-default select-none"
         style="grid-template-rows: auto;  grid-auto-rows: 0;  grid-auto-flow: column; "
         :style="{ gridTemplateColumns: `repeat( auto-fill, ${pxPerDay}px)` }"
       >
-        <div
-          v-for="(day, i) in days"
-          :key="day"
-          class="text-center py-1.5 whitespace-nowrap header-day relative flex flex-col items-center justify-center gap-0.5"
-          :class="[ 
-            weekStarts.includes(i) ? 'week' : '', 
-            isToday(day) ? 'today' : '',
-            isWeekend(day) ? 'bg-slate-100/70 dark:bg-slate-800/50' : ''
-          ]"
-          :style="{minWidth : `${pxPerDay}px` }"
-        >
-          <!-- Month Label (only on first day of month or start of view) -->
-          <span 
-            v-if="isMonthStart(day) || i === 0" 
-            class="absolute top-0 left-0 right-0 text-[9px] font-medium text-white dark:text-slate-400 uppercase tracking-wider z-10"
-          >
-            {{ getMonthLabel(day) }} {{ getYearLabel(day) }}
-          </span>
+        
+        <template v-for="(day, i) in days">
+          <div class="calendar-cell fex flex-col">
+            <!-- Week Numbers Row (Compressed) -->
+            <div 
+              class="text-center relative flex items-center justify-center font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50"
+               :class="{ 
+                 'bg-slate-50/80 dark:bg-slate-900/50': isWeekend(day)
+               }"
+            >
+              <span class="px-1 py-0.5 text-[9px]">
+                {{ weekStarts.includes(i) || i === 0 ? 'W' + getWeekNumber(day) : '\u00A0' }}
+              </span>
+            </div>
+            <div
+              class="text-center pb-1.5 pt-3 whitespace-nowrap header-day relative flex flex-col items-center justify-center gap-0.5"
+              :class="[ 
+                weekStarts.includes(i) ? 'week' : '', 
+                isToday(day) ? 'today' : '',
+                isWeekend(day) ? 'bg-slate-100/70 dark:bg-slate-800/50' : ''
+              ]"
+            >
+              <!-- Month Label (only on first day of month or start of view) -->
+              <span 
+                v-if="isMonthStart(day) || i === 0" 
+                class="absolute top-0 left-0 right-0 text-[9px] font-medium text-white dark:text-slate-400 uppercase tracking-wider z-10"
+              >
+                {{ getMonthLabel(day) }} {{ getYearLabel(day) }}
+              </span>
 
-          <!-- Day Number -->
-          <span
-            :class="[
-              'w-6 h-6 flex items-center justify-center rounded-full text-[11px]',
-              isToday(day) 
-                ? 'bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/50 ring-2 ring-amber-200 dark:ring-amber-800 scale-110' 
-                : 'text-slate-700 dark:text-slate-300 font-medium'
-            ]"
-          >
-            {{ getDayNumber(day) }}
-          </span>
-          
-          <!-- Day Name (Mon, Tue) -->
-          <span class="text-[8px] text-slate-500 dark:text-slate-400 uppercase font-medium">
-            {{ getDayName(day) }}
-          </span>
-        </div>
+              <!-- Day Number -->
+              <span
+                :class="[
+                  'w-6 h-6 flex items-center justify-center rounded-full text-[11px]',
+                  isToday(day) 
+                    ? 'bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/50 ring-2 ring-amber-200 dark:ring-amber-800 scale-110' 
+                    : 'text-slate-700 dark:text-slate-300 font-medium'
+                ]"
+              >
+                {{ getDayNumber(day) }}
+              </span>
+              
+              <!-- Day Name (Mon, Tue) -->
+              <span class="text-[8px] text-slate-500 dark:text-slate-400 uppercase font-medium">
+                {{ getDayName(day) }}
+              </span> 
+            </div>
+          </div>
+        </template>        
       </div>
     </div>
   </div>
@@ -117,7 +111,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggleExpandAll: []
 }>()
-
+const leftside = computed(() => LEFT_SIDEBAR_WIDTH+ 'px')
+const cellWidth = computed(() => props.pxPerDay+'px')
 function isToday(day: string) {
   if (typeof window === 'undefined') return false
   return day === props.todayISO
@@ -158,6 +153,12 @@ function getYearLabel(iso: string) {
 </script>
 
 <style scoped>
+@media (max-width: 768px) {
+  .stiky-header {
+    transform: translateX(v-bind(leftside));
+  }
+  
+}
 .header-day.today::after {
   /* Override global style if needed, or rely on the span styling */
   display: none; 
@@ -167,5 +168,8 @@ function getYearLabel(iso: string) {
 }
 .dark .tracking-wider {
   background-color: var(--border-color-muted);
+}
+.calendar-cell {
+  min-width: v-bind(cellWidth);
 }
 </style>

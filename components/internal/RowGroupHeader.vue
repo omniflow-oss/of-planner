@@ -1,7 +1,8 @@
 <template>
   <div
     class="grid border-b-1 pane-border header-row"
-    style="grid-template-columns: 280px 1fr;"
+    :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
+    :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
   >
     <!-- Group header row -->
     <!-- Group header row -->

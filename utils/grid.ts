@@ -1,5 +1,7 @@
 import { businessDaysBetweenInclusive, businessOffset } from '@/composables/useDate'
 
+export const LEFT_SIDEBAR_WIDTH = 280  // width of the left sidebar in pixels
+
 // Map an x offset within a row to the nearest day index using offsets if provided.
 export function indexFromX(x: number, offsets: number[] | undefined | null, pxPerDay: number, daysLength: number): number {
   if (offsets && offsets.length === daysLength) {

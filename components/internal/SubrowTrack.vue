@@ -1,7 +1,8 @@
 <template>
   <div
     class="grid border-b-1 pane-border drag-row"
-    style="grid-template-columns: 280px 1fr;"
+    :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
+    :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
   >
     <!-- Left: label -->
     <div class="md:border-r-2 pane-border sticky left-0 z-10 md:bg-default left-label subrow-container group max-w-[30vw] md:max-w-none">

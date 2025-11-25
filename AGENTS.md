@@ -28,7 +28,7 @@ Notes: Node 18+ recommended; use npm (this repo tracks `package-lock.json`).
   - App header is `sticky top-0` with subtle `backdrop-blur` and `border-slate-200/70`.
   - Left column (row labels/actions) in the timeline is `sticky left-0 z-10 bg-white`.
  - Timeline layout constants:
-   - Left column width: `240px`.
+   - Left column width: `280px`.
    - Row min height: `44px`; lane height: `30px`; assignment bar height: `28px`.
    - Day header chips are compact and use `text-[11px]`.
    - Default zoom: `56 px/day`.

@@ -93,14 +93,13 @@
       </div>
       
       <div
-        class="grid empty-rows-filler absolute top-0 z-0 left-0"
-        style=" min-height: 100%;"
+        class="grid empty-rows-filler absolute top-0 z-0 left-0 min-w-full"
         :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
         <div
-          class="relative  border-r pane-border w-full h-full"
-          style="min-height: 58px;left: 280px;"
-          :class="{ 'data-empty': people.length === 0 && projects.length === 0 }"
+          class="relative border-r pane-border w-full h-full min-h-[58px]"
+          :class="[people.length === 0 && projects.length === 0 ? 'data-empty' : '', `translate-[${LEFT_SIDEBAR_WIDTH}px]`]"
+          :style="`transform: translateX(${LEFT_SIDEBAR_WIDTH}px)`"
         >
           <GridOverlay
             :days="days"
@@ -117,9 +116,8 @@
     <div
       v-if="!store.isReadOnly || (people.length === 0 && projects.length === 0)"
       ref="addButtons"
-      style="width: 280px; height:59px;"
-      :style="{ bottom: addButtonsBottomStyle }"
-      class="hidden md:flex border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex-col items-center justify-center gap-3 p-4"
+      :style="{ bottom: addButtonsBottomStyle, width: LEFT_SIDEBAR_WIDTH + 'px' }"
+      class="hidden h-[59px] md:flex border-t-2 pane-border absolute left-0 border-r-2 border-b-2 z-10 bg-default flex-col items-center justify-center gap-3 p-4"
     >
       <UButton 
         v-if="view.mode === 'project'"
@@ -146,8 +144,9 @@
       </UButton>
     </div>
     <div
-      class="hidden md:flex empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border p-4 flex-col items-center justify-center"
-      style="width: 280px;bottom:25px;"
+      class="hidden md:flex b-[25px] empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border p-4 flex-col items-center justify-center"
+      :class="`w-[${LEFT_SIDEBAR_WIDTH}px]`"
+      :style="{width:`${LEFT_SIDEBAR_WIDTH}px`, bottom:`25px`}"
     >
       <div v-if="noResults" class="text-xs text-slate-500">No results found for "{{ searchQuery }}"</div>
     </div>    
@@ -316,7 +315,7 @@ const assignmentsKey = Symbol.for('assignmentsRef')
 // Viewport-based assignment filtering: only provide assignments that overlap
 // the currently visible date range so offscreen AssignmentBar components
 // are not mounted.
-const sidebarWidth = 240 // left column width in px
+const sidebarWidth = LEFT_SIDEBAR_WIDTH  // left column width in px
 const visibleStartIdx = ref(0)
 const visibleEndIdx = ref(Math.max(0, days.value.length - 1))
 
@@ -487,12 +486,11 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
       // Calculate scroll position to center today on screen
       const todayPosition = todayIndex * view.value.px_per_day
       const containerWidth = scrollArea.value.clientWidth
-      const sidebarWidth = 240 // Left column width for labels
+      const sidebarWidth = LEFT_SIDEBAR_WIDTH  // Left column width for labels
       const timelineVisibleWidth = containerWidth - sidebarWidth
       const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
-      
       scrollArea.value.scrollTo({
-        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition + sidebarWidth  / 2)
+        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition + ( sidebarWidth / 2 ) )
       })
     } else {
       console.warn('Could not find target date in timeline:', todayISO, 'Available days:', days.value.length)
