@@ -242,7 +242,6 @@ const autoScrollState = ref({
 // Auto-scroll configuration constants
 const DRAG_SCROLL_THRESHOLD = 80  // pixels from edge to trigger auto-scroll during drag
 const RESIZE_SCROLL_THRESHOLD = 100  // pixels from edge to trigger auto-scroll during resize
-const LEFT_SIDEBAR_WIDTH = 280  // width of the left sidebar in pixels
 
 // Centralized cleanup function for drag event listeners
 function cleanupDragListeners() {

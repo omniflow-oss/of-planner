@@ -47,7 +47,7 @@ A lightweight, single‑page capacity planner to schedule people on projects day
 - `AGENTS.md` — Repo guidelines for contributors/agents
 
 ## UI Conventions (condensed look)
-- Left column width: 240px; sticky on the left
+- Left column width: 280px; sticky on the left
 - Row minimum height: 44px; lane height: 30px; bar height: 28px
 - Compact typography (base ~13.5px; controls `text-xs`/`[11px]`)
 - Subtle grid: day `slate-100`, week `slate-200`; today `amber-500/90`
@@ -66,7 +66,7 @@ Nuxt dev server runs with HMR; open the printed localhost URL.
 
 ## Common Dev Tasks
 - Change zoom (px/day): use the +/– control in the header or update in store via `store.setPxPerDay()`.
-- Adjust timeline sizing constants: see `AGENTS.md` and components using 240px/44px/30px/28px.
+- Adjust timeline sizing constants: see `AGENTS.md` and components using 280px/44px/30px/28px.
 - Change default zoom: `stores/usePlannerStore.ts` → `view.px_per_day`
 - Tune initial window: `composables/useTimelineScroll.ts` (init to 7 weeks)
 - Add initial data: edit `stores/usePlannerStore.ts` arrays for `people`, `projects`, `assignments`.

@@ -1,28 +1,17 @@
 
 <template>
   <div class="pointer-events-none">
-    <!-- <div
+    <div
       v-for="day in filteredDays"
       :key="'bg'+day.index"
+      class="day-cell"
       :class="[
         'day-bg',
         weekStarts && weekStarts.includes(day.index) ? 'week' : '', 
         day.day === toISO(new Date()) ? 'today' : '',
         isWeekend(day.day) ? 'weekend-bg' : ''
       ]"
-      :style="{ left: left(day.index)+'px', width: width(day.index)+'px' }"
-    />
-  </div> -->
-  <div
-      v-for="(day, i) in days"
-      :key="'bg'+i"
-      :class="[
-        'day-bg',
-        weekStarts && weekStarts.includes(i) ? 'week' : '', 
-        day === toISO(new Date()) ? 'today' : '',
-        isWeekend(day) ? 'weekend-bg' : ''
-      ]"
-      :style="{ left: left(i)+'px', width: width(i)+'px' }"
+      :style="{ left: left(day.index)+'px'}"
     />
   </div>
 </template>
@@ -33,12 +22,15 @@ import { toISO, isWeekendISO } from '@/composables/useDate'
 const px = computed(() => props.pxPerDay)
 const offsets = computed(() => props.offsets ?? props.days.map((_,i)=> i*px.value))
 function left(i:number){ return offsets.value[i] ?? i*px.value }
-function width(i:number){ const next = offsets.value[i+1] ?? (left(i)+px.value); return Math.max(0, next - left(i)) }
+const widthCell = computed(() => {
+  return props.pxPerDay + 'px'
+})
+
 function isWeekend(day: string) { return isWeekendISO(day) }
 const filteredDays = computed(() => {
   const list = props.days.map((d, i) => ({day: d, index: i})).filter((d:any) => {
   //  if(props.hasUserTimeoffOnDay(props.subrow.person_id, d.day) && props.groupType === 'project') {
-    if(d.index < props.visibleEndIdx + 7 &&  d.index > props.visibleStartIdx) {
+    if(d.index < props.visibleEndIdx + 7 &&  d.index > props.visibleStartIdx - 7) {
      return {day: d.day, index: d.index}
    }else {
      return null
@@ -64,5 +56,8 @@ const filteredDays = computed(() => {
 
 .dark .weekend-bg {
   background-color: rgba(30, 41, 59, 0.4);
+}
+.widthCell {
+  width: v-bind(widthCell);
 }
 </style>

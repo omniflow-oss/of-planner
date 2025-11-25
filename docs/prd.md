@@ -169,7 +169,7 @@ createAssignment({ person_id, project_id, start, end, allocation });
 | **Last sub-row**            | "➕ Add …" visible, light gray background, ➕ icon on left.                       |
 | **Quick creation popover**  | Arrow anchored to cell, compact form, focus on duration.                        |
 | **Stacking**                | Overlapped lanes with slight vertical offset.                                   |
-| **Left sticky column**      | Label/action column (240px) is `sticky left-0` during scroll.                   |
+| **Left sticky column**      | Label/action column (280px) is `sticky left-0` during scroll.                   |
 | **Sticky header**           | App header bar `sticky top-0` with subtle blur.                                 |
 
 Condensed design (slick & pro)
@@ -294,7 +294,7 @@ Condensed design (slick & pro)
 | 8 | No console errors.                                                            |
 | 9 | Left sticky column visible during horizontal scroll.                          |
 | 10 | Sticky headers (app + timeline) synchronized with horizontal scroll.          |
-| 11 | Condensed style applied (column width 240px, bars 28px, lanes 30px, zoom 56 px/day). |
+| 11 | Condensed style applied (column width 280px, bars 28px, lanes 30px, zoom 56 px/day). |
 | 12 | On load: week-2 → current week → next 4 weeks visible.                       |
 
 ---

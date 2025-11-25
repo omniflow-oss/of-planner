@@ -11,7 +11,7 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
   const CHUNK_WEEKDAYS = CHUNK_WEEKS * 5 // 20 weekdays
   
   // Helper functions
-  const getScrollThreshold = () => view.value.px_per_day * CHUNK_WEEKDAYS
+  const getScrollThreshold = () => view.value.px_per_day * SCROLL_THRESHOLD_WEEKS
   const getScrollDistance = (weeks: number) => weeks * view.value.px_per_day
   
   const updateScrollPosition = (el: HTMLElement, scrollLeft: number) => {
@@ -74,7 +74,7 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     const left = el.scrollLeft
     const right = left + el.clientWidth
     const threshold = getScrollThreshold()
-    const nearLeft = left < threshold
+    const nearLeft = left < threshold + 200
     const nearRight = right > el.scrollWidth - threshold
     
     if (nearLeft || nearRight) {
