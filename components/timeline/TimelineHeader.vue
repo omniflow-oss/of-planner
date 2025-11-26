@@ -2,7 +2,7 @@
   <div
     :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
     :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
-    class="header-grid isolate md:grid sticky left-0 top-0 z-20 border-b bg-default/90"
+    class="header-grid isolate md:grid sticky left-0 top-0 z-20 border-b bg-default/90 overflow-hidden md:overflow-visible"
   >
     <!-- Left spacer with timeline controls -->
     <div class="hidden md:flex border-r pane-border sticky left-0 z-30 bg-default flex-col justify-end pb-2 px-3">
@@ -99,7 +99,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   days: string[]
-  todayISO: string
+  todayIso: string
   pxPerDay: number
   dayOffsets: number[]
   weekStarts: number[]
@@ -115,7 +115,7 @@ const leftside = computed(() => LEFT_SIDEBAR_WIDTH+ 'px')
 const cellWidth = computed(() => props.pxPerDay+'px')
 function isToday(day: string) {
   if (typeof window === 'undefined') return false
-  return day === props.todayISO
+  return day === props.todayIso
 }
 
 function isWeekend(day: string) {

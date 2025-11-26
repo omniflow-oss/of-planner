@@ -8,7 +8,7 @@ import type { Assignment, ViewState } from '@/types/planner'
 export const useTimelineInit = (
   assignments: Ref<Assignment[]>,
   view: Ref<ViewState>,
-  todayISO: string
+  todayIso: string
 ) => {
   // Function to calculate the date range needed to show all assignments
   function calculateAssignmentDateRange() {
@@ -32,7 +32,7 @@ export const useTimelineInit = (
     const assignmentRange = calculateAssignmentDateRange()
 
     // Always start 20 days before today to ensure buffer space for drag operations
-    const today = new Date(todayISO)
+    const today = new Date(todayIso)
     const timelineStart = new Date(today)
     timelineStart.setUTCDate(timelineStart.getUTCDate() - 20)
 

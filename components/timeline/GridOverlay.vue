@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ days: string[]; pxPerDay: number; offsets?: number[]; weekStarts?: number[]; todayISO?: string, visibleStartIdx?: number , visibleEndIdx?: number }>()
+const props = defineProps<{ days: string[]; pxPerDay: number; offsets?: number[]; weekStarts?: number[]; todayIso?: string, visibleStartIdx?: number , visibleEndIdx?: number }>()
 import { toISO, isWeekendISO } from '@/composables/useDate'
 const px = computed(() => props.pxPerDay)
 const offsets = computed(() => props.offsets ?? props.days.map((_,i)=> i*px.value))

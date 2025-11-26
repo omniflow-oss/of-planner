@@ -114,7 +114,7 @@ const emit = defineEmits<{
 const navigateToToday = () => {
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
-  const todayISO = today.toISOString().slice(0, 10)
+  const todayIso = today.toISOString().slice(0, 10)
   
   emit('go-to-today')
 }

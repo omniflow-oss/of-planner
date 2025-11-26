@@ -62,7 +62,7 @@ Notes: Node 18+ recommended; use npm (this repo tracks `package-lock.json`).
 - `components/timeline/TimelineHeader.vue`
   - Two-line header. Top: `Month Year`. Bottom: `D MMM` labels.
   - Uses `timeline/GridOverlay.vue` for lines/today marker. Sticky at `top-0`.
-  - Props: `days`, `dayColumns`, `monthSegments`, `monthColumns`, `todayISO`, `pxPerDay`, `dayOffsets`, `weekStarts`, `scrollLeft?`.
+  - Props: `days`, `dayColumns`, `monthSegments`, `monthColumns`, `todayIso`, `pxPerDay`, `dayOffsets`, `weekStarts`, `scrollLeft?`.
 
 - `components/internal/RowGroup.vue`
   - Group header lane + subrows. Left sticky column uses `internal/LeftPaneCell.vue`.
@@ -86,7 +86,7 @@ Notes: Node 18+ recommended; use npm (this repo tracks `package-lock.json`).
 
 - `composables/useTimelineScroll.ts`
   - Default initial window: week-2, week-1, current week, next 4 weeks (7×5 weekdays).
-  - `init(todayISO)`: sets `view.start`, `view.days`, and aligns `scrollLeft`.
+  - `init(todayIso)`: sets `view.start`, `view.days`, and aligns `scrollLeft`.
   - `onScroll()`: appends/prepends weekdays when near edges.
 
 - `composables/useDate.ts`

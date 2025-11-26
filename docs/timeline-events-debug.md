@@ -26,8 +26,8 @@ provide('timelineEvents', {
 })
 
 // Handle events and update reactive refs
-function handleGoToToday(todayISO: string) {
-  goToTodayEvent.value = todayISO
+function handleGoToToday(todayIso: string) {
+  goToTodayEvent.value = todayIso
   // Auto-reset to allow re-triggering same event
   nextTick(() => {
     goToTodayEvent.value = null
@@ -44,8 +44,8 @@ const timelineEvents = inject<{
 }>('timelineEvents')
 
 // Watch for events using Vue watchers
-watch(() => timelineEvents?.goToTodayEvent.value, (todayISO) => {
-  if (todayISO) {
+watch(() => timelineEvents?.goToTodayEvent.value, (todayIso) => {
+  if (todayIso) {
     // Handle go to today logic
   }
 })
