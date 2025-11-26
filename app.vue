@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import AppHeader from '@/components/shell/AppHeader.vue'
 import AppFooter from '@/components/shell/AppFooter.vue'
-import PlannerInsights from '@/components/insights/PlannerInsights.vue'
+import PlannerInsights from '@/components/shell/PlannerInsights.vue'
 import SettingsPanel from '@/components/shell/SettingsPanel.vue'
 import SlideOverPanel from '@/components/shell/SlideOverPanel.vue'
 import { ref, nextTick, provide } from 'vue'

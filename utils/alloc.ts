@@ -1,14 +1,14 @@
 import { businessDaysBetweenInclusive } from '@/composables/useDate'
 
-export function manDays(startISO: string, endISO: string, allocation: number) {
-  const days = Math.max(0, businessDaysBetweenInclusive(startISO, endISO))
+export function manDays(startIso: string, endISO: string, allocation: number) {
+  const days = Math.max(0, businessDaysBetweenInclusive(startIso, endISO))
   return days * allocation
 }
 
 // Returns [startIdx, endIdx] of intersection with days[] or null if none
-export function clampToWindow(startISO: string, endISO: string, days: string[]): [number, number] | null {
+export function clampToWindow(startIso: string, endISO: string, days: string[]): [number, number] | null {
   if (!days.length) return null
-  const startIdx = days.findIndex(d => d >= startISO)
+  const startIdx = days.findIndex(d => d >= startIso)
   const endIdx = (() => {
     let idx = -1
     for (let i = days.length - 1; i >= 0; i--) {
@@ -20,15 +20,15 @@ export function clampToWindow(startISO: string, endISO: string, days: string[]):
   const lastDay = days[days.length - 1]
   const firstDay = days[0]
   if (!lastDay || !firstDay) return null
-  if (startISO > lastDay || endISO < firstDay) return null
+  if (startIso > lastDay || endISO < firstDay) return null
   return [Math.max(0, startIdx), Math.max(0, Math.min(endIdx, days.length - 1))]
 }
 
 
-// Returns [startISO, endISO] of intersection with window [windowStart, windowEnd] or null
-export function clampToWindowDate(startISO: string, endISO: string, windowStart: string, windowEnd: string): [string, string] | null {
-  if (startISO > windowEnd || endISO < windowStart) return null
-  const s = startISO < windowStart ? windowStart : startISO
+// Returns [startIso, endISO] of intersection with window [windowStart, windowEnd] or null
+export function clampToWindowDate(startIso: string, endISO: string, windowStart: string, windowEnd: string): [string, string] | null {
+  if (startIso > windowEnd || endISO < windowStart) return null
+  const s = startIso < windowStart ? windowStart : startIso
   const e = endISO > windowEnd ? windowEnd : endISO
   return [s, e]
 }

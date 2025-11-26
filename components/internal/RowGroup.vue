@@ -21,10 +21,10 @@
       :badge-color="badgeColor"
       :line-left="lineLeft"
       :day-width="dayWidth"
-      :readonly="store.isReadOnly"
+      :readonly="readonly"
       :coverage-class="coverageClass"
       :assignments-options="assignmentsOptions"
-      :assignments="store.assignments"      
+      :assignments="assignments"      
       @toggle-expanded="()=> { expanded = !expanded, $emit('collapse-toggle-row') }"
       @add-click="(payload) => handleAddClick(payload?.selectedId)"
       @create-popover="(p) => { 
@@ -36,7 +36,7 @@
     <!-- Subrows Container -->
     <div class="draggable-container">
       <VueDraggableNext
-        v-if="expanded && !store.isReadOnly"
+        v-if="expanded"
         :list="sorting.sortableSubrows.value"
         item-key="key"
         handle=".drag-handle"
@@ -48,11 +48,12 @@
           :key="sr.key"
           :subrow="sr"
           :group-type="groupType"
+          :readonly="readonly"
           :days="days"
           :px-per-day="pxPerDay"
           :day-offsets="dayOffsets"
           :week-starts="weekStarts"
-          :start-i-s-o="startISO"
+          :start-iso="startIso"
           :projects-map="projectsMap"
           :people-map="peopleMap"
           :assignments="assignmentsRef"
@@ -75,39 +76,6 @@
           @person-click="(personId: string) => emit('person-click', personId)"
         />
       </VueDraggableNext>
-      <div v-else-if="expanded && store.isReadOnly">
-        <SubrowTrack
-          v-for="sr in sorting.sortableSubrows.value"
-          :key="sr.key"
-          :subrow="sr"
-          :group-type="groupType"
-          :days="days"
-          :px-per-day="pxPerDay"
-          :day-offsets="dayOffsets"
-          :week-starts="weekStarts"
-          :start-i-s-o="startISO"
-          :projects-map="projectsMap"
-          :people-map="peopleMap"
-          :assignments="assignmentsRef"
-          :row-heights="rowHeights"
-          :base-row-min="baseRowMin"
-          :drag-state="dragToCreate.dragState.value"
-          :line-left="lineLeft"
-          :day-width="dayWidth"
-          :has-user-timeoff-on-day="hasUserTimeoffOnDay"
-          @context-menu="handleContextMenu"
-          @mouse-down="handleMouseDown"
-          @mouse-move="handleMouseMove"
-          @mouse-up="handleMouseUp"
-          @drag-start="dragToCreate.cancelDragCreate"
-          @update="onUpdate"
-          @edit="onEdit"
-          @resize="(e: any) => onResizeEvent = e"
-          @height-updated="updateRowHeight"
-          @project-click="(projectId: string) => emit('project-click', projectId)"
-          @person-click="(personId: string) => emit('person-click', personId)"
-        />
-      </div>
     </div>
   </div>
 </template>
@@ -121,20 +89,23 @@ import { useCapacity } from '@/composables/useCapacity'
 import { useRowSorting } from '@/composables/useRowSorting'
 import { useDragToCreate } from '@/composables/useDragToCreate'
 import { useProjectEstimation, roundToDecimalPlaces } from '@/composables/useProjectEstimation'
-import { usePlannerStore } from '@/stores/usePlannerStore'
 import RowGroupHeader from '@/components/internal/RowGroupHeader.vue'
 import SubrowTrack from '@/components/internal/SubrowTrack.vue'
+import type { Person, Project, Assignment } from '@/types/planner'
 
 const props = defineProps<{
   label: string
   groupType: 'person' | 'project'
   groupId: string
   subrows: { key: string; label: string; person_id: string | null; project_id: string | null; isTimeOff?: boolean }[]
-  startISO: string
+  startIso: string
   days: string[]
   pxPerDay: number
-  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }>
-  peopleMap?: Record<string, { id: string; name: string }>
+  projectsMap: Record<string, Project>
+  peopleMap: Record<string, Person>
+  readonly: boolean,
+  assignments: Assignment[] 
+  assignmentsOptions: Array<Project | Person>
 }>()
 
 const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'createPopover', 'edit-project', 'edit-person', 'project-click', 'person-click', 'open-new-project', 'open-new-person', 'collapse-toggle-row'])
@@ -142,7 +113,7 @@ const emit = defineEmits(['create', 'update', 'createFromSidebar', 'edit', 'crea
 // Reactive references
 const pxPerDay = computed(() => props.pxPerDay)
 const days = computed(() => props.days)
-const startISO = computed(() => props.startISO)
+const startIso = computed(() => props.startIso)
 const groupId = computed(() => props.groupId)
 const subrows = computed(() => props.subrows)
 
@@ -154,9 +125,6 @@ function dayWidth(i: number) {
   return Math.max(0, next - lineLeft(i)) 
 }
 
-// Component state
-const store = usePlannerStore()
-const assignmentsOptions = computed(() => props.groupType === 'project' ? store.people : store.projects)
 const rowHeights = ref<Record<string, number>>({})
 const baseRowMin = 36
 const expanded = ref(true)
@@ -166,7 +134,7 @@ const onResizeEvent = ref(false)
 const sorting = useRowSorting(groupId, subrows)
 
 // Drag-to-create composable
-const dragToCreate = useDragToCreate(days, pxPerDay, dayOffsets, startISO, sorting.filteredSubrows, onResizeEvent)
+const dragToCreate = useDragToCreate(days, pxPerDay, dayOffsets, startIso, sorting.filteredSubrows, onResizeEvent)
 
 // Event handlers
 function onUpdate(payload: { id: string; start?: string; end?: string }) { 
@@ -183,7 +151,7 @@ function updateRowHeight(key: string, height: number) {
 
 // Handle the + button click in the header
 function handleAddClick(selectedId?: string | null) {
-  if (store.isReadOnly) return
+  if (props.readonly) return
 
   const addRowData: any = {
     key: `${props.groupId}:__add__`,
@@ -211,12 +179,12 @@ function handleEditPerson() {
 
 // Mouse event handlers - delegate to composable
 function handleMouseDown(e: MouseEvent, sr: any) {
-  if (store.isReadOnly) return
+  if (props.readonly) return
   dragToCreate.handleMouseDown(e, sr)
 }
 
 function handleMouseUp(e: MouseEvent, sr: any) {
-  if (store.isReadOnly) return
+  if (props.readonly) return
   const result = dragToCreate.handleMouseUp(e, sr)
   if ('success' in result && result.success && result.assignment) {
     emit('create', result.assignment)
@@ -224,12 +192,12 @@ function handleMouseUp(e: MouseEvent, sr: any) {
 }
 
 function handleMouseMove(e: MouseEvent, sr: any) {
-  if (store.isReadOnly) return
+  if (props.readonly) return
   dragToCreate.updateDragCreate(e, sr)
 }
 
 function handleContextMenu(e: MouseEvent, sr: any) {
-  if (store.isReadOnly) return
+  if (props.readonly) return
   const shouldShowPopover = dragToCreate.handleContextMenu(e)
   if (shouldShowPopover) {
     onEmptyClick(e, sr)
@@ -238,7 +206,7 @@ function handleContextMenu(e: MouseEvent, sr: any) {
 
 // Empty click to show create popover (now handled by Timeline.vue)
 function onEmptyClick(e: MouseEvent, sr: any) {
-  if (onResizeEvent.value || store.isReadOnly) {
+  if (onResizeEvent.value || props.readonly) {
     return
   }
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()

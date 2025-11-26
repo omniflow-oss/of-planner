@@ -3,7 +3,7 @@
     <!-- Scrollable content with aligned rows -->
     <div
       ref="scrollArea"
-      class="overflow-auto h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm relative"
+      class="overflow-auto overscroll-none h-full flex flex-col flex-1 border-y border-default rounded-md shadow-sm relative"
       @scroll.passive="handleScroll"
     >
       <div
@@ -39,9 +39,12 @@
               :subrows="personSubrows(p.id)"
               :days="days"
               :px-per-day="view.px_per_day"
-              :start-i-s-o="view.start"
+              :start-iso="view.start"
               :projects-map="projectsMap"
               :people-map="peopleMap"
+              :readonly="store.isReadOnly"
+              :assignments-options="projects"
+              :assignments="store.assignments"
               @collapse-toggle-row="setTimelineHeight"
               @create="actions.onCreate"
               @update="actions.onUpdate"
@@ -73,9 +76,12 @@
               :subrows="projectSubrows(proj.id)"
               :days="days"
               :px-per-day="view.px_per_day"
-              :start-i-s-o="view.start"
+              :start-iso="view.start"
               :projects-map="projectsMap"
               :people-map="peopleMap"
+              :readonly="store.isReadOnly"
+              :assignments-options="people"
+              :assignments="store.assignments"
               @collapse-toggle-row="setTimelineHeight"
               @create="actions.onCreate"
               @update="actions.onUpdate"
@@ -218,7 +224,7 @@ import { useSubrows } from '@/composables/useSubrows'
 import { useTimelineHandlers } from '@/composables/useTimelineHandlers'
 import TimelineHeader from '@/components/timeline/TimelineHeader.vue'
 import RowGroup from '@/components/internal/RowGroup.vue'
-import GridOverlay from '@/components/internal/shared/GridOverlay.vue'
+import GridOverlay from '~/components/timeline/GridOverlay.vue'
 import EditModal from '@/components/timeline/EditModal.vue'
 import CreateModal from '@/components/timeline/CreateModal.vue'
 import NewProjectModal from '@/components/timeline/NewProjectModal.vue'

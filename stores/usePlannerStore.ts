@@ -61,8 +61,8 @@ export const usePlannerStore = defineStore('planner', {
   },
   actions: {
     switchMode(mode: ViewMode) { this.view.mode = mode },
-    async setStart(startISO: string) { 
-      this.view.start = startISO 
+    async setStart(startIso: string) { 
+      this.view.start = startIso 
     },
     async setDays(days: number) { 
       this.view.days = Math.max(7, Math.min(90, days)) 

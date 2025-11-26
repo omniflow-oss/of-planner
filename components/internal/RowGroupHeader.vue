@@ -1,10 +1,9 @@
 <template>
   <div
-    class="grid border-b-1 pane-border header-row"
+    class="isolate grid border-b-1 pane-border header-row isolate"
     :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
     :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
   >
-    <!-- Group header row -->
     <!-- Group header row -->
     <div
       class="px-1 inline-block md:flex md:px-2 py-2 md:py-1 md:border-r-2 pane-border items-center gap-3 sticky left-0 z-10 md:bg-default left-label group md:border-b-2 border-slate-200 dark:border-slate-700 max-w-[30vw] md:max-w-none"

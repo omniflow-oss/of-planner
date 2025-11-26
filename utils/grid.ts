@@ -19,8 +19,8 @@ export function indexFromX(x: number, offsets: number[] | undefined | null, pxPe
 }
 
 // Compute left/width for a business-day segment, matching AssignmentBar visual math.
-export function businessSegment(startISO: string, startDayISO: string, endDayISO: string, pxPerDay: number) {
-  const startIndex = Math.max(0, businessOffset(startISO, startDayISO))
+export function businessSegment(startIso: string, startDayISO: string, endDayISO: string, pxPerDay: number) {
+  const startIndex = Math.max(0, businessOffset(startIso, startDayISO))
   const dayCount = Math.max(1, businessDaysBetweenInclusive(startDayISO, endDayISO))
   return {
     left: startIndex * pxPerDay,
