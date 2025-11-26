@@ -67,7 +67,6 @@
           @mouse-down="handleMouseDown"
           @mouse-move="handleMouseMove"
           @mouse-up="handleMouseUp"
-          @drag-start="dragToCreate.cancelDragCreate"
           @update="onUpdate"
           @edit="onEdit"
           @resize="(e: any) => onResizeEvent = e"

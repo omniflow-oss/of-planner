@@ -99,13 +99,14 @@
       </div>
       
       <div
-        class="grid empty-rows-filler absolute top-0 z-0 left-0 min-w-full"
+        class="grid empty-rows-filler absolute top-0 z-0 left-0 min-w-full overflow-hidden"
         :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
         <div
           class="relative border-r pane-border w-full h-full min-h-[58px]"
           :class="[people.length === 0 && projects.length === 0 ? 'data-empty' : '', `translate-[${LEFT_SIDEBAR_WIDTH}px]`]"
           :style="`transform: translateX(${LEFT_SIDEBAR_WIDTH}px)`"
+          style="min-height: 58px;"
         >
           <GridOverlay
             :days="days"

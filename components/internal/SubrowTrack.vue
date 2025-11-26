@@ -81,7 +81,6 @@
       @mousedown="actionMouse = true; $emit('mouse-down', $event, subrow)"
       @mousemove="$emit('mouse-move', $event, subrow)"
       @mouseup="actionMouse = false; $emit('mouse-up', $event, subrow)"
-      @dragstart="$emit('drag-start')"
     >
       <div v-for="value in peopleOffDays" 
         :key="value.index"
@@ -176,7 +175,6 @@ const emit = defineEmits<{
   'mouse-down': [event: MouseEvent, subrow: SubrowItem]
   'mouse-move': [event: MouseEvent, subrow: SubrowItem]
   'mouse-up': [event: MouseEvent, subrow: SubrowItem]
-  'drag-start': []
   'update': [payload: any]
   'edit': [payload: any]
   'resize': [event: any]
