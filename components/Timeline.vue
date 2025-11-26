@@ -261,7 +261,7 @@ const subrows = useSubrows(assignments, people, projects)
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
-const timelineWidth = computed(() => days.value.length * view.value.px_per_day)
+const timelineWidth = computed(() => days.value.length * view.value.px_per_day + LEFT_SIDEBAR_WIDTH)
 const timelineHeight = ref('100%')
 // Search state - injected from AppHeader via app.vue
 const globalSearch = inject('globalSearch') as Ref<string> | undefined
