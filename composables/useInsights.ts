@@ -131,13 +131,13 @@ export function useInsights() {
     const whosFreeNext2Weeks = computed(() => {
         const people = store.people
         const assignments = store.assignments
-        const todayISO = new Date().toISOString().slice(0, 10)
-        const endISO = addDaysISO(todayISO, 13) // 14 days including today
+        const todayIso = new Date().toISOString().slice(0, 10)
+        const endISO = addDaysISO(todayIso, 13) // 14 days including today
         // For each person, check if they have any allocation in the next 2 weeks
         const allocationMap: Record<string, boolean> = {}
         for (const a of assignments) {
             // If assignment overlaps with any day in the next 2 weeks
-            if (a.end >= todayISO && a.start <= endISO) {
+            if (a.end >= todayIso && a.start <= endISO) {
                 allocationMap[a.person_id] = true
             }
         }

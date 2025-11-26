@@ -84,13 +84,13 @@ export function useTimelineScroll(view: Ref<{ start:string; days:number; px_per_
     }
   }
 
-  async function init(todayISO: string) {
+  async function init(todayIso: string) {
     await nextTick()
     const el = scrollArea.value
     if (!el) return
 
     // Compute Monday of the current week (UTC), then go back 2 weeks to get week-2 Monday
-    const today = new Date(todayISO)
+    const today = new Date(todayIso)
     const dow = today.getUTCDay() // 0..6 (Sun..Sat)
     const daysFromMonday = (dow + 6) % 7 // 0 if Mon, 6 if Sun
     const thisMonday = new Date(today)

@@ -76,7 +76,7 @@ To verify the implementation works correctly:
 - Dead code / unused imports & vars
   - composables/useTimelineScroll.ts — unused import: vitest reporter type; Boolean vs boolean typing.
   - components/Timeline.vue — unused imports: addDaysISO, calendarSpanForWeekdays; unused destructured values: isWeekend, yearSegments, yearColumns; unused ref: gridEl.
-  - components/internal/RowGroup.vue — unused todayISO/todayIndex; headerAssignments computed not rendered (only laneCount side effect).
+  - components/internal/RowGroup.vue — unused todayIso/todayIndex; headerAssignments computed not rendered (only laneCount side effect).
   - components/internal/AssignmentBar.vue — unused imports: daysBetweenInclusive, parseISO, toISO; unused touch handlers state.
 
 - Unclean code
@@ -90,7 +90,7 @@ Phase 1 — Low risk hygiene (keep behavior)
 - Remove unused imports/vars and debug logs:
   - useTimelineScroll.ts: drop vitest type; use boolean.
   - Timeline.vue: prune unused imports/destructuring; drop gridEl.
-  - RowGroup.vue: remove console.log; remove todayISO/todayIndex; compute headerLaneCount without creating headerAssignments list just for side effects.
+  - RowGroup.vue: remove console.log; remove todayIso/todayIndex; compute headerLaneCount without creating headerAssignments list just for side effects.
   - AssignmentBar.vue: remove unused imports and touch placeholders.
 
 Phase 2 — Prune dead code

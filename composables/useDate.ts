@@ -109,9 +109,9 @@ export function addBusinessDaysISO(startIso: string, businessDays: number) {
 
 // Get the next working day from today (skipping weekends)
 export function getTodayWorkingDay() {
-  let todayISO = new Date().toISOString().slice(0, 10)
-  while (isWeekendISO(todayISO)) {
-    todayISO = addDaysISO(todayISO, 1)
+  let todayIso = new Date().toISOString().slice(0, 10)
+  while (isWeekendISO(todayIso)) {
+    todayIso = addDaysISO(todayIso, 1)
   }
-  return todayISO
+  return todayIso
 }

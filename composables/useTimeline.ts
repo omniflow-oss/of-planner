@@ -2,7 +2,7 @@ import { computed, type Ref } from 'vue'
 import { eachDay, isWeekendISO } from '@/composables/useDate'
 
 export function useTimeline(view: Ref<{ start:string; days:number; px_per_day:number }>) {
-  const todayISO = (() => { const d = new Date(); d.setUTCHours(0,0,0,0); return d.toISOString().slice(0,10) })()
+  const todayIso = (() => { const d = new Date(); d.setUTCHours(0,0,0,0); return d.toISOString().slice(0,10) })()
 
   const allDays = computed(() => eachDay(view.value.start, view.value.days))
   const days = computed(() => allDays.value.filter(d => !isWeekendISO(d)))
@@ -48,7 +48,7 @@ export function useTimeline(view: Ref<{ start:string; days:number; px_per_day:nu
   const weekStarts = computed(() => days.value.map((d,i)=> ({i, wd: new Date(d).getUTCDay()})).filter(e=>e.wd===1).map(e=>e.i))
 
   return {
-    todayISO,
+    todayIso,
     days,
     dayOffsets,
     dayColumns,

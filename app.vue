@@ -10,7 +10,7 @@
         @toggle-settings="showSettings = !showSettings"
       />
       <main class="flex-1 w-full flex flex-col overflow-hidden h-full">
-        <NuxtPage />
+        <NuxtPage @go-to-today="handleGoToToday"/>
       </main>
       <AppFooter />
     </div>
@@ -81,8 +81,8 @@ function handlePersonClick(personId: string) {
 // Handle events from ViewSwitcher using Vue emit functions
 function handleGoToToday() {
   const d = new Date(); d.setUTCHours(0,0,0,0)
-  const todayISO = d.toISOString().slice(0,10)
-  goToTodayEvent.value = todayISO
+  const todayIso = d.toISOString().slice(0,10)
+  goToTodayEvent.value = todayIso
   // Auto-reset to allow re-triggering same event
   nextTick(() => {
     goToTodayEvent.value = null

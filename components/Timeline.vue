@@ -12,7 +12,7 @@
       >
         <TimelineHeader
           :days="days"
-          :today-i-s-o="todayISO"
+          :today-iso="todayIso"
           :px-per-day="view.px_per_day"
           :day-offsets="dayOffsets"
           :week-starts="weekStarts"      
@@ -48,7 +48,7 @@
               @collapse-toggle-row="setTimelineHeight"
               @create="actions.onCreate"
               @update="actions.onUpdate"
-              @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, getTodayWorkingDay())"
+              @create-from-sidebar="(sr: any) => { actions.onAddFromSidebar(sr, getTodayWorkingDay()); useGoToday()}"
               @open-new-project="modals.openNewProjectModal"
               @open-new-person="modals.openNewPersonModal"
               @edit="handleEdit"
@@ -85,7 +85,7 @@
               @collapse-toggle-row="setTimelineHeight"
               @create="actions.onCreate"
               @update="actions.onUpdate"
-              @create-from-sidebar="(sr: any) => actions.onAddFromSidebar(sr, getTodayWorkingDay())"
+              @create-from-sidebar="(sr: any) => { actions.onAddFromSidebar(sr, getTodayWorkingDay()); useGoToday()}"
               @open-new-project="modals.openNewProjectModal"
               @open-new-person="modals.openNewPersonModal"
               @edit="handleEdit"
@@ -249,14 +249,14 @@ const sortablePeople = computed(() => sorting.sortablePeople.value)
 const sortableProjects = computed(() => sorting.sortableProjects.value)
 
 const {
-  todayISO,
+  todayIso,
   days,
   dayOffsets,
   weekStarts
 } = useTimeline(view)
 
-// Initialize timeline and subrow composables after todayISO is available
-const timelineInit = useTimelineInit(assignments, view, todayISO)
+// Initialize timeline and subrow composables after todayIso is available
+const timelineInit = useTimelineInit(assignments, view, todayIso)
 const subrows = useSubrows(assignments, people, projects)
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
@@ -418,6 +418,10 @@ const timelineEvents = inject<{
   addWeeksEvent: Ref<{ direction: 'previous' | 'next', weeks: number } | null>
 }>('timelineEvents')
 
+const emit = defineEmits<{
+  'go-to-today': []
+}>()
+
 // Inject personClickEvent from index.vue
 const personClickEvent = inject<Ref<string | null> | null>('personClickEvent', null)
 
@@ -474,18 +478,20 @@ watch(() => view.value.mode, (newMode) => {
 watch(() => [store.assignments.length, store.people.length, store.projects.length], () => {
   setTimelineHeight();
 })
-
+const useGoToday = () => {
+  emit('go-to-today')
+}
 // Watch for go to today events
-watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
-  if (todayISO) {
+watch(() => timelineEvents?.goToTodayEvent.value, async (todayIso) => {
+  if (todayIso) {
     // Find today's index in the current days array
-    let todayIndex = days.value.findIndex(d => d === todayISO)
+    let todayIndex = days.value.findIndex(d => d === todayIso)
     
     // If today is not found in the current timeline, we need to ensure it's included
     if (todayIndex < 0) {
       await initTimelineWithAssignments()
       await nextTick()
-      todayIndex = days.value.findIndex(d => d === todayISO)
+      todayIndex = days.value.findIndex(d => d === todayIso)
     }
     await nextTick()
     
@@ -500,7 +506,7 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayISO) => {
         left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition + ( sidebarWidth / 2 ) )
       })
     } else {
-      console.warn('Could not find target date in timeline:', todayISO, 'Available days:', days.value.length)
+      console.warn('Could not find target date in timeline:', todayIso, 'Available days:', days.value.length)
     }
   }
 })
@@ -546,14 +552,7 @@ onMounted(async () => {
   updateVisibleRange()
   
   // Auto-scroll to today on app initialization
-  if (timelineEvents?.goToTodayEvent) {
-    timelineEvents.goToTodayEvent.value = todayISO
-    nextTick(() => {
-      if (timelineEvents?.goToTodayEvent) {
-        timelineEvents.goToTodayEvent.value = null
-      }
-    })
-  }
+  emit('go-to-today')
 })
 
 // Expand/Collapse state and handlers (separate for each view)

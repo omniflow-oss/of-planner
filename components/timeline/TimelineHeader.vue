@@ -99,7 +99,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   days: string[]
-  todayISO: string
+  todayIso: string
   pxPerDay: number
   dayOffsets: number[]
   weekStarts: number[]
@@ -115,7 +115,7 @@ const leftside = computed(() => LEFT_SIDEBAR_WIDTH+ 'px')
 const cellWidth = computed(() => props.pxPerDay+'px')
 function isToday(day: string) {
   if (typeof window === 'undefined') return false
-  return day === props.todayISO
+  return day === props.todayIso
 }
 
 function isWeekend(day: string) {
