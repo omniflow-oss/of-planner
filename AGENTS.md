@@ -61,21 +61,21 @@ Notes: Node 18+ recommended; use npm (this repo tracks `package-lock.json`).
 
 - `components/timeline/TimelineHeader.vue`
   - Two-line header. Top: `Month Year`. Bottom: `D MMM` labels.
-  - Uses `internal/shared/GridOverlay.vue` for lines/today marker. Sticky at `top-0`.
+  - Uses `timeline/GridOverlay.vue` for lines/today marker. Sticky at `top-0`.
   - Props: `days`, `dayColumns`, `monthSegments`, `monthColumns`, `todayISO`, `pxPerDay`, `dayOffsets`, `weekStarts`, `scrollLeft?`.
 
 - `components/internal/RowGroup.vue`
   - Group header lane + subrows. Left sticky column uses `internal/LeftPaneCell.vue`.
-  - Right track: `internal/shared/GridOverlay.vue` + `AssignmentBar.vue`; lanes computed via `utils/lanes.ts`.
+  - Right track: `timeline/GridOverlay.vue` + `AssignmentBar.vue`; lanes computed via `utils/lanes.ts`.
 
 - `components/internal/LeftPaneCell.vue`
   - Minimal left pane cell for labels and “Add …”. Props: `title`, `subtitle?`, `isAdd?`. Emits `click`.
 
-- `components/internal/shared/GridOverlay.vue`
+- `components/timeline/GridOverlay.vue`
   - Renders day/weekly vertical grid and today marker using `days`, `pxPerDay`, and optional `offsets`, `weekStarts`.
 
-- `components/internal/shared/AssignmentBar.vue`
-  - Draggable/resizable bars; receives `assignment`, `startISO`, `pxPerDay`, `projectsMap`, and `top` (lane y).
+- `components/internal/AssignmentBar.vue`
+  - Draggable/resizable bars; receives `assignment`, `startIso`, `pxPerDay`, `projectsMap`, and `top` (lane y).
 
 - `components/shell/AppHeader.vue` / `components/shell/AppFooter.vue`
   - Shell chrome; keep header sticky and minimal.

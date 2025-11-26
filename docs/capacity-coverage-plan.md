@@ -41,8 +41,8 @@ Architecture
     - returns: { daily: number[], totalMD: number, formattedDaily: string[] }
   - Visible-window clamping: intersect assignment ranges with days[] indices; treat only weekdays (days[] already weekdays).
 - Minor utils: utils/alloc.ts
-  - clampToWindow(startISO, endISO, days[]): returns [startIdx, endIdx] within window or null.
-  - manDays(startISO, endISO, allocation): number (business days × allocation).
+  - clampToWindow(startIso, endISO, days[]): returns [startIdx, endIdx] within window or null.
+  - manDays(startIso, endISO, allocation): number (business days × allocation).
 - Expand/Collapse all
   - Provide in app or Timeline: provide('rowGroupControls', { expandAllToken, collapseAllToken }).
   - RowGroup listens to tokens via watch() and sets local expanded = true/false.

@@ -2,7 +2,7 @@
   <div
     :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
     :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
-    class="header-grid isolate md:grid sticky left-0 top-0 z-20 border-b bg-default/95 md:backdrop-blur md:supports-[backdrop-filter]:bg-default/80"
+    class="header-grid isolate md:grid sticky left-0 top-0 z-20 border-b bg-default/90"
   >
     <!-- Left spacer with timeline controls -->
     <div class="hidden md:flex border-r pane-border sticky left-0 z-30 bg-default flex-col justify-end pb-2 px-3">

@@ -32,8 +32,8 @@ A lightweight, single‑page capacity planner to schedule people on projects day
   - `ViewSwitcher.vue` — mode, date and zoom controls
   - `internal/RowGroup.vue` — group header + subrows (left labels + right track)
   - `internal/RowTracks.vue` — track renderer (deprecated; archived/removed)
-  - `internal/shared/AssignmentBar.vue` — draggable/resizable bar
-  - `internal/shared/GridOverlay.vue` — vertical grid + today marker (shared with header)
+  - `internal/AssignmentBar.vue` — draggable/resizable bar
+  - `timeline/GridOverlay.vue` — vertical grid + today marker (shared with header)
   - `internal/LeftPaneCell.vue` — left pane cell for labels and “Add …” row
   - `shell/AppHeader.vue`, `shell/AppFooter.vue` — app chrome
 - `stores/usePlannerStore.ts` — Pinia store (people, projects, assignments, view)
@@ -95,8 +95,8 @@ This prototype keeps state in memory (Pinia). Add your own persistence later (AP
 - `timeline/TimelineHeader.vue` — 2‑row header; accepts `scrollLeft` and uses shared `GridOverlay`.
 - `internal/RowGroup.vue` — Group header + subrows; left pane via `LeftPaneCell`; right track with `GridOverlay` and bars.
 - `internal/LeftPaneCell.vue` — Label cell and “Add …”; emits `click`.
-- `internal/shared/GridOverlay.vue` — Day/week grid and today marker using offsets/pxPerDay.
-- `internal/shared/AssignmentBar.vue` — Drag/resize interactions; reads `pxPerDay`.
+- `timeline/GridOverlay.vue` — Day/week grid and today marker using offsets/pxPerDay.
+- `internal/AssignmentBar.vue` — Drag/resize interactions; reads `pxPerDay`.
 - `useTimeline.ts` — Derives `days` (weekdays), columns, segments and `weekStarts`.
 - `useTimelineScroll.ts` — Initial 7‑week window + infinite scroll near edges.
 - `useDate.ts` — Date math helpers and weekday spans.

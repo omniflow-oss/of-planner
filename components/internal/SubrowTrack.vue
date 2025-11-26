@@ -5,11 +5,11 @@
     :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
   >
     <!-- Left: label -->
-    <div class="md:border-r-2 pane-border sticky left-0 z-10 md:bg-default left-label subrow-container group max-w-[30vw] md:max-w-none">
+    <div class="isolate md:border-r-2 pane-border sticky left-0 z-10 md:bg-default left-label subrow-container group max-w-[30vw] md:max-w-none">
       <div class="inline-flex md:flex items-center h-full pl-3 pr-2 md:pr-4 md:pl-10 py-1.5 text-sm text-default border-l-2 border-transparent">
         <!-- Drag handle -->
         <div 
-          v-if="!store.isReadOnly"
+          v-if="!readonly"
           class="my-auto hidden md:block"
         >
           <UIcon
@@ -74,14 +74,13 @@
     <!-- Right: timeline track -->
     <div
       class="relative min-h-full"
-      :class="{'bg-violet-400/10 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg bg-neutral-300/20':!subrow.isTimeOff}"
+      :class="{'bg-violet-400/10 dark:bg-violet-50/10': subrow.isTimeOff,'timeline-bg bg-neutral-300/20':!subrow.isTimeOff, 'cursor-cell': !readonly}"
       :style="{ height: (rowHeights[subrow.key] || baseRowMin) + 'px' }"
       :data-row-key="subrow.key"
       
       @mousedown="actionMouse = true; $emit('mouse-down', $event, subrow)"
       @mousemove="$emit('mouse-move', $event, subrow)"
       @mouseup="actionMouse = false; $emit('mouse-up', $event, subrow)"
-      @dragstart="$emit('drag-start')"
     >
       <div v-for="value in peopleOffDays" 
         :key="value.index"
@@ -93,7 +92,7 @@
         v-for="a in subAssignments"
         :key="a.id"
         :assignment="a"
-        :start-i-s-o="startISO"
+        :start-iso="startIso"
         :days="days"
         :px-per-day="pxPerDay"
         :projects-map="projectsMap"
@@ -125,16 +124,16 @@ const previewBarLeft = computed(() => {
   // props.dragState.previewLeft is relative to timeline start, but we want to align to first business day
   if (props.days && props.days.length > 0 && typeof props.days[0] === 'string') {
     // If timeline start is not the first visible business day, adjust
-    const offset = props.days[0] === props.startISO ? 0 : 0 // can add offset logic if needed
+    const offset = props.days[0] === props.startIso ? 0 : 0 // can add offset logic if needed
     return props.dragState.previewLeft + offset
   }
   return props.dragState.previewLeft
 })
 import { computed } from 'vue'
-import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
+import AssignmentBar from '~/components/internal/AssignmentBar.vue'
 import { computeLanes } from '@/utils/lanes'
 import { useProjectEstimation } from '@/composables/useProjectEstimation'
-import { usePlannerStore } from '@/stores/usePlannerStore'
+import type { Person, Project, Assignment } from '@/types/planner'
 
 interface SubrowItem {
   key: string
@@ -153,15 +152,16 @@ interface DragState {
 
 const props = defineProps<{
   subrow: SubrowItem
+  readonly?: boolean
   groupType: 'person' | 'project'
   days: string[]
   pxPerDay: number
   dayOffsets: number[]
   weekStarts: number[]
-  startISO: string
-  projectsMap: Record<string, { id: string; name: string; color?: string | null; emoji?: string | null; estimatedDays?: number | null }>
-  peopleMap?: Record<string, { id: string; name: string }>
-  assignments: any[]
+  startIso: string
+  projectsMap: Record<string, Project>
+  peopleMap?: Record<string, Person>
+  assignments: Assignment[]
   rowHeights: Record<string, number>
   baseRowMin: number
   dragState: DragState
@@ -175,7 +175,6 @@ const emit = defineEmits<{
   'mouse-down': [event: MouseEvent, subrow: SubrowItem]
   'mouse-move': [event: MouseEvent, subrow: SubrowItem]
   'mouse-up': [event: MouseEvent, subrow: SubrowItem]
-  'drag-start': []
   'update': [payload: any]
   'edit': [payload: any]
   'resize': [event: any]
@@ -184,7 +183,6 @@ const emit = defineEmits<{
   'person-click': [personId: string]
 }>()
 
-const store = usePlannerStore()
 const peopleOffDays = computed(() => {
   const list = props.days.map((d, i) => ({day: d, index: i})).filter((d:any) => {
    if(props.hasUserTimeoffOnDay(props.subrow.person_id, d.day) && props.groupType === 'project') {
@@ -201,7 +199,7 @@ const subAssignments = computed(() => {
     a.person_id === props.subrow.person_id && a.project_id === props.subrow.project_id
   )
   
-  const { items, laneCount } = computeLanes(props.startISO, list)
+  const { items, laneCount } = computeLanes(props.startIso, list)
   const laneHeight = 30
   const padding = 10
   const totalH = padding * 2 + laneCount * laneHeight
@@ -224,8 +222,7 @@ const projectEstimation = useProjectEstimation(assignmentsRef, projectsMapRef)
 const notificationStatus = computed(() => {
   if (props.groupType !== 'person' || !props.subrow.project_id || props.subrow.isTimeOff) {
     return null
-  }
-  
+  }  
   return projectEstimation.getProjectNotificationStatus(props.subrow.project_id)
 })
 

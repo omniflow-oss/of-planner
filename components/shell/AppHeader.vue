@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import ViewSwitcher from '@/components/ViewSwitcher.vue'
+import ViewSwitcher from '@/components/shell/ViewSwitcher.vue'
 import ColorModeButton from './ColorModeButton.vue'
 
 const props = defineProps<{

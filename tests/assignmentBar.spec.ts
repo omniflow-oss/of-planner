@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
-import AssignmentBar from '@/components/internal/shared/AssignmentBar.vue'
+import AssignmentBar from '~/components/internal/AssignmentBar.vue'
 import { addDaysISO } from '@/composables/useDate'
 
 describe('AssignmentBar interactions', () => {
-  const startISO = '2025-01-01'
+  const startIso = '2025-01-01'
   const assignment = {
-    id: 'a_test', person_id: 'p1', project_id: 'j1', start: startISO, end: addDaysISO(startISO, 4), allocation: 1
+    id: 'a_test', person_id: 'p1', project_id: 'j1', start: startIso, end: addDaysISO(startIso, 4), allocation: 1
   }
   const projectsMap = { j1: { id: 'j1', name: 'Aurora', color: '#6bc6ff', emoji: '🟦' } }
 
@@ -15,7 +15,7 @@ describe('AssignmentBar interactions', () => {
     const pxPerDay = 40
     const pinia = createPinia()
     const wrapper = mount(AssignmentBar as any, {
-      props: { assignment, startISO, pxPerDay, projectsMap },
+      props: { assignment, startIso, pxPerDay, projectsMap },
       global: {
         plugins: [pinia],
         stubs: {
@@ -49,6 +49,6 @@ describe('AssignmentBar interactions', () => {
     expect(emitted && emitted.length).toBeGreaterThan(0)
     const last = emitted?.[emitted.length - 1]?.[0] as any
     expect(last.id).toBe('a_test')
-    expect(last.start).toBe(addDaysISO(startISO, 1))
+    expect(last.start).toBe(addDaysISO(startIso, 1))
   })
 })

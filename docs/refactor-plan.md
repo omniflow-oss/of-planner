@@ -77,7 +77,7 @@ To verify the implementation works correctly:
   - composables/useTimelineScroll.ts — unused import: vitest reporter type; Boolean vs boolean typing.
   - components/Timeline.vue — unused imports: addDaysISO, calendarSpanForWeekdays; unused destructured values: isWeekend, yearSegments, yearColumns; unused ref: gridEl.
   - components/internal/RowGroup.vue — unused todayISO/todayIndex; headerAssignments computed not rendered (only laneCount side effect).
-  - components/internal/shared/AssignmentBar.vue — unused imports: daysBetweenInclusive, parseISO, toISO; unused touch handlers state.
+  - components/internal/AssignmentBar.vue — unused imports: daysBetweenInclusive, parseISO, toISO; unused touch handlers state.
 
 - Unclean code
   - Console logs in RowGroup drag/create flow.
@@ -101,7 +101,7 @@ Phase 2 — Prune dead code
 Phase 3 — Extract small shared helpers
 - Add utils/grid.ts:
   - indexFromX(x: number, offsets: number[] | null, pxPerDay: number, daysLength: number): number
-  - businessSegment(startISO: string, startDayISO: string, endDayISO: string, pxPerDay: number): { left: number; width: number }
+  - businessSegment(startIso: string, startDayISO: string, endDayISO: string, pxPerDay: number): { left: number; width: number }
 - Update RowGroup.vue to use grid helpers for preview and empty‑click mapping; ensure weekend logic uses useDate.ts.
 
 Phase 4 — UX (optional, still non‑breaking)
@@ -143,7 +143,7 @@ Phase 5 — Tests + lint
   - 🔄 Remove logs and unused today computations
   - 🔄 Use utils/grid.ts for index/preview; compute header lane count explicitly
 
-- **components/internal/shared/AssignmentBar.vue**
+- **components/internal/AssignmentBar.vue**
   - 🔄 Prune unused imports/state
 
 - **composables/useTimelineScroll.ts**

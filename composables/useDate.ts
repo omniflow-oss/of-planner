@@ -14,21 +14,21 @@ export function addDaysISO(s: string, days: number) {
   return toISO(d)
 }
 
-export function daysBetweenInclusive(startISO: string, endISO: string) {
-  const s = parseISO(startISO)
+export function daysBetweenInclusive(startIso: string, endISO: string) {
+  const s = parseISO(startIso)
   const e = parseISO(endISO)
   return Math.round((e.getTime() - s.getTime()) / 86400000) + 1
 }
 
-export function eachDay(startISO: string, count: number) {
+export function eachDay(startIso: string, count: number) {
   if (count <= 0) {
     return []
   }
-  return Array.from({ length: count }, (_, i) => addDaysISO(startISO, i))
+  return Array.from({ length: count }, (_, i) => addDaysISO(startIso, i))
 }
 
-export function clampDateRange(startISO: string, endISO: string) {
-  const s = parseISO(startISO)
+export function clampDateRange(startIso: string, endISO: string) {
+  const s = parseISO(startIso)
   const e = parseISO(endISO)
   if (e < s) return { start: toISO(e), end: toISO(s) }
   return { start: toISO(s), end: toISO(e) }
@@ -92,10 +92,10 @@ export function calendarSpanForWeekdays(baseISO: string, weekdays: number, dir: 
 }
 
 // Add business days to a date (skipping weekends)
-export function addBusinessDaysISO(startISO: string, businessDays: number) {
-  if (businessDays <= 0) return startISO
+export function addBusinessDaysISO(startIso: string, businessDays: number) {
+  if (businessDays <= 0) return startIso
   
-  const d = parseISO(startISO)
+  const d = parseISO(startIso)
   let added = 0
   
   while (added < businessDays) {

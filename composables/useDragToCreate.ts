@@ -12,7 +12,7 @@ export function useDragToCreate(
   days: Ref<string[]>,
   pxPerDay: Ref<number>,
   dayOffsets: Ref<number[]>,
-  startISO: Ref<string>,
+  startIso: Ref<string>,
   filteredSubrows: Ref<any[]>,
   onResizeEvent: Ref<boolean>
 ) {
@@ -58,9 +58,9 @@ export function useDragToCreate(
     const startDay = days.value[startIndex]
     const endDay = days.value[endIndex]
     // Use first visible business day as base
-    let baseISO: string = startISO.value
+    let baseISO: string = startIso.value
     if (days.value.length > 0 && typeof days.value[0] === 'string') {
-      baseISO = days.value[0] || startISO.value
+      baseISO = days.value[0] || startIso.value
     }
     if (startDay && endDay) {
       const seg = businessSegment(baseISO, startDay, endDay, pxPerDay.value)
@@ -168,9 +168,9 @@ export function useDragToCreate(
     const startIndex = dragState.value.startDayIndex
     if (startIndex >= 0 && startIndex < days.value.length) {
       const startDay = days.value[startIndex]
-      let baseISO: string = startISO.value
+      let baseISO: string = startIso.value
       if (days.value.length > 0 && typeof days.value[0] === 'string') {
-        baseISO = days.value[0] || startISO.value
+        baseISO = days.value[0] || startIso.value
       }
       if (startDay) {
         const seg = businessSegment(baseISO, startDay, startDay, pxPerDay.value)

@@ -67,7 +67,7 @@ import { addDaysISO, businessDaysBetweenInclusive, businessOffset, isWeekendISO 
 import { getAllocationColor, getAllocationTextColor, enhanceProjectColor } from '@/utils/colors'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 import { manDays } from '@/utils/alloc'
-import type { Assignment } from '@/types/planner'
+import type { Assignment, Project, Person } from '@/types/planner'
 
 // --- Helper Functions ---
 function getFirstBusinessDay(days?: string[], fallbackISO?: string) {
@@ -79,8 +79,8 @@ function getFirstBusinessDay(days?: string[], fallbackISO?: string) {
   return firstBusinessDay || days[0] || fallbackISO || '';
 }
 
-function moveBusinessDays(startISO: string, offset: number) {
-  let result = startISO;
+function moveBusinessDays(startIso: string, offset: number) {
+  let result = startIso;
   let businessDaysToAdd = offset;
   while (businessDaysToAdd !== 0) {
     if (businessDaysToAdd > 0) {
@@ -95,7 +95,7 @@ function moveBusinessDays(startISO: string, offset: number) {
 }
 
 function getBaseISO(props: any) {
-  return getFirstBusinessDay(props.days, props.startISO);
+  return getFirstBusinessDay(props.days, props.startIso);
 }
 
 function getStartIndex(props: any) {
@@ -135,7 +135,7 @@ function getBarDatesForResize(props: any, resizing: any, deltaPx: number) {
   }
 }
 
-const props = defineProps<{ assignment: Assignment; startISO: string; days?: string[]; pxPerDay: number; projectsMap: Record<string, { id:string; name:string; color?:string|null; emoji?:string|null }>; peopleMap?: Record<string, { id: string; name: string }>; top?: number }>()
+const props = defineProps<{ assignment: Assignment; startIso: string; days?: string[]; pxPerDay: number; projectsMap: Record<string, Project>; peopleMap?: Record<string, Person>; top?: number }>()
 const emit = defineEmits(['update', 'edit', 'delete', 'resize'])
 const store = usePlannerStore()
 const project = computed(() => props.projectsMap[props.assignment.project_id])
