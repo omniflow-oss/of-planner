@@ -111,7 +111,7 @@
           left: previewBarLeft + 'px',
           top: '10px',
           width: dragState.previewWidth + 'px',
-          height: '28px'
+          bottom: '10px'
         }"
       />
     </div>
