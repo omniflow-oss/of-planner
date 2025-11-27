@@ -1,8 +1,6 @@
 <template>
   <div
     class="grid border-b-1 pane-border drag-row"
-    :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
-    :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
   >
     <!-- Left: label -->
     <div class="isolate md:border-r-2 pane-border sticky left-0 z-10 md:bg-default left-label subrow-container group max-w-[30vw] md:max-w-none">
@@ -36,7 +34,7 @@
         
         <div class="flex items-center gap-2 w-full min-w-0 bg-slate-300 dark:bg-default-100 rounded-full px-2 py-1 shadow-md shadow-gray-500/50 md:rounded-none md:bg-transparent md:shadow-none md:px-0 md:py-0">
           <div
-            class="line-clamp-1 md:line-clamp-2 flex-1 min-w-0"
+            class="line-clamp-1 md:line-clamp-2 flex-1 min-w-0 truncate md:whitespace-normal max-w-[30vw] md:max-w-none"
             :class="[
               subrow.isTimeOff 
                 ? 'font-semibold text-blue-600 dark:text-blue-700 text-xs md:text-sm' 
@@ -170,6 +168,10 @@ const props = defineProps<{
   hasUserTimeoffOnDay: (personId: string | null, dayISO: string) => boolean
 }>()
 
+const leftside = computed(() => {
+  return LEFT_SIDEBAR_WIDTH + 'px'
+})
+
 const emit = defineEmits<{
   'context-menu': [event: MouseEvent, subrow: SubrowItem]
   'mouse-down': [event: MouseEvent, subrow: SubrowItem]
@@ -269,6 +271,12 @@ function handleLabelClick() {
 .drag-row {
   /* background-color: var(--background-color-default); */
   border-bottom-color: rgba(0,0,0,.1);
+  grid-template-columns: 0 1fr;
+}
+@media (min-width: 768px) {
+  .drag-row {
+    grid-template-columns: v-bind(leftside) 1fr
+  }
 }
 .dark .drag-row {
   border-bottom-color: rgba(255,255,255,.25);

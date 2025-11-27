@@ -103,9 +103,8 @@
         :style="{ width: timelineWidth+'px', height: timelineHeight }"
       >    
         <div
-          class="relative border-r pane-border w-full h-full min-h-[58px]"
-          :class="[people.length === 0 && projects.length === 0 ? 'data-empty' : '', `translate-[${LEFT_SIDEBAR_WIDTH}px]`]"
-          :style="`transform: translateX(${LEFT_SIDEBAR_WIDTH}px)`"
+          class="relative empty-rows-filler-container border-r pane-border w-full h-full min-h-[58px]"
+          :class="[people.length === 0 && projects.length === 0 ? 'data-empty' : '']"
           style="min-height: 58px;"
         >
           <GridOverlay
@@ -152,7 +151,6 @@
     </div>
     <div
       class="hidden md:flex b-[25px] empty-sidebar absolute z-1 top-0 bg-default border-r-2 pane-border p-4 flex-col items-center justify-center"
-      :class="`w-[${LEFT_SIDEBAR_WIDTH}px]`"
       :style="{width:`${LEFT_SIDEBAR_WIDTH}px`, bottom:`25px`}"
     >
       <div v-if="noResults" class="text-xs text-slate-500">No results found for "{{ searchQuery }}"</div>
@@ -261,7 +259,7 @@ const subrows = useSubrows(assignments, people, projects)
 
 const projectsMap = computed(() => Object.fromEntries(projects.value.map(p => [p.id, p])))
 const peopleMap = computed(() => Object.fromEntries(people.value.map(p => [p.id, p])))
-const timelineWidth = computed(() => days.value.length * view.value.px_per_day + LEFT_SIDEBAR_WIDTH)
+const timelineWidth = computed(() => days.value.length * view.value.px_per_day + (window.innerWidth > 768 ? LEFT_SIDEBAR_WIDTH : 0))
 const timelineHeight = ref('100%')
 // Search state - injected from AppHeader via app.vue
 const globalSearch = inject('globalSearch') as Ref<string> | undefined
@@ -322,7 +320,7 @@ const assignmentsKey = Symbol.for('assignmentsRef')
 // Viewport-based assignment filtering: only provide assignments that overlap
 // the currently visible date range so offscreen AssignmentBar components
 // are not mounted.
-const sidebarWidth = LEFT_SIDEBAR_WIDTH  // left column width in px
+const sidebarWidth = window.innerWidth > 768 ?  LEFT_SIDEBAR_WIDTH : 0  // left column width in px
 const visibleStartIdx = ref(0)
 const visibleEndIdx = ref(Math.max(0, days.value.length - 1))
 
@@ -384,7 +382,7 @@ function handleScroll() {
 // Compute visible day index range from scrollArea scrollLeft and clientWidth
 function updateVisibleRange() {
   if (!scrollArea.value) return
-  const scrollLeft = scrollArea.value.scrollLeft
+  const scrollLeft = scrollArea.value.scrollLeft - 300
   const containerWidth = scrollArea.value.clientWidth
   const timelineLeft = sidebarWidth // left column width
   const visibleLeft = Math.max(0, scrollLeft - timelineLeft)
@@ -499,11 +497,11 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayIso) => {
       // Calculate scroll position to center today on screen
       const todayPosition = todayIndex * view.value.px_per_day
       const containerWidth = scrollArea.value.clientWidth
-      const sidebarWidth = LEFT_SIDEBAR_WIDTH  // Left column width for labels
+      const sidebarWidth = window.innerWidth > 768 ?  LEFT_SIDEBAR_WIDTH : 0  // Left column width for labels
       const timelineVisibleWidth = containerWidth - sidebarWidth
       const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
       scrollArea.value.scrollTo({
-        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition + ( sidebarWidth / 2 ) )
+        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition - ( sidebarWidth / 2 ) )
       })
     } else {
       console.warn('Could not find target date in timeline:', todayIso, 'Available days:', days.value.length)
@@ -576,4 +574,15 @@ function toggleExpandAll() {
   }
   setTimelineHeight();
 }
+
+const leftside = computed(() => {
+  return `${LEFT_SIDEBAR_WIDTH}px`;
+})
 </script>
+<style scoped>
+@media (min-width: 768px) {
+  .empty-rows-filler-container {
+    transform: translateX(v-bind(leftside));
+  }
+}
+</style>

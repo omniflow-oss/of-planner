@@ -113,7 +113,7 @@ function zoom(delta: number) {
     const estimatedWeekdays = Math.floor(view.value.days * 5 / 7)
     const timelineWidth = estimatedWeekdays * newZoomLevel
     const windowWidth = window.innerWidth
-    const sidebarWidth = LEFT_SIDEBAR_WIDTH  // Left column width for labels
+    const sidebarWidth = window.innerWidth > 768 ?  LEFT_SIDEBAR_WIDTH : 0  // Left column width for labels
     const availableWidth = windowWidth - sidebarWidth
     
     // Prevent zoom out if timeline would be smaller than available width

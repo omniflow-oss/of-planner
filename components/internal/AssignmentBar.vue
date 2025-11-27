@@ -328,7 +328,7 @@ function onMouseMove(e: MouseEvent) {
       startAutoScroll(1, timelineContainer)
     }
     // Auto-scroll left when near left edge
-    else if (e.clientX < containerRect.left + DRAG_SCROLL_THRESHOLD + LEFT_SIDEBAR_WIDTH && timelineContainer.scrollLeft > 0) {
+    else if (e.clientX < containerRect.left + DRAG_SCROLL_THRESHOLD + (window.innerWidth > 768 ? LEFT_SIDEBAR_WIDTH : 0) && timelineContainer.scrollLeft > 0) {
       startAutoScroll(-1, timelineContainer)
     }
     // Stop auto-scroll when mouse is in the middle area
