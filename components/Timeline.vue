@@ -377,7 +377,9 @@ function handleScroll() {
   
   onScroll()
   updateVisibleRange()
-  setTimelineHeight()
+  if(store.isLazyLoadEnabled){
+    setTimelineHeight()
+  }
 }
 
 // Compute visible day index range from scrollArea scrollLeft and clientWidth
