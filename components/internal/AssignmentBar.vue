@@ -48,13 +48,13 @@
     <!-- Resize Handles -->
     <div
       v-if="!store.isReadOnly"
-      class="handle left"
+      class="handle left-0"
       draggable="false"
       @mousedown.stop.prevent="onResizeStart('left', $event)"
     />
     <div
       v-if="!store.isReadOnly"
-      class="handle right"
+      class="handle right-0"
       draggable="false"
       @mousedown.stop.prevent="onResizeStart('right', $event)"
     />
@@ -193,7 +193,7 @@ const barStyle = computed(() => ({
   // Semantic allocation color
   backgroundColor: isTimeOff.value ? undefined : color.value,
   // Project color as left border accent (4px)
-  borderLeft: isTimeOff.value ? undefined : `4px solid ${projectColor.value}`,
+  // borderLeft: isTimeOff.value ? undefined : `4px solid ${projectColor.value}`,
   // Subtle border for definition
   borderColor: isTimeOff.value ? undefined : 'rgba(0,0,0,0.1)'
 }))
@@ -512,25 +512,25 @@ onUnmounted(() => {
 .handle { 
   position: absolute; 
   top: 0; 
-  width: 6px; 
-  min-width: 6px;
+  width: 7px; 
+  min-width: 7px;
   height: 100%; 
   background: transparent; 
   cursor: ew-resize; 
   z-index: 10;
   border-radius: 3px;
-  transition: background-color 0.2s ease, border 0.2s ease;
+  /* transition: background-color 0.2s ease, border 0.2s ease; */
   pointer-events: auto;
 }
 
-.handle:hover {
+.assignment-bar:hover .handle {
   background: rgba(59, 130, 246, 0.2);
   border: 1px solid rgba(59, 130, 246, 0.4);
 }
-
-.left { left: -3px; }
-.right { right: -3px; }
-
+.assignment-bar:hover .handle:hover {
+  background: rgba(59, 130, 246, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.7);
+}
 /* Dragging and resizing states */
 .dragging {
   opacity: 0.9;
