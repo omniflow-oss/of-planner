@@ -1,6 +1,6 @@
 <template>
-  <SlideOverPanel :is-open="isOpen" width="w-80" @close="$emit('close')" @go-to-today="$emit('go-to-today')">
-    <div class="flex flex-col h-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border-l border-gray-200/50 dark:border-gray-800/50">
+  <SlideOverPanel :is-open="isOpen" @close="$emit('close')" @go-to-today="$emit('go-to-today')">
+    <div class="flex flex-col h-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border-l border-gray-200/50 dark:border-gray-800/50 w-[95vw] md:w-auto">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
         <h3 class="text-base font-semibold text-gray-900 dark:text-white">

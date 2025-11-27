@@ -15,8 +15,8 @@
       <AppFooter />
     </div>
     
-    <SlideOverPanel :is-open="showInsights" width="w-[420px]" @close="showInsights = false" @go-to-today="handleGoToToday">
-      <div class="flex flex-col h-full bg-white dark:bg-gray-900">
+    <SlideOverPanel :is-open="showInsights" @close="showInsights = false" @go-to-today="handleGoToToday">
+      <div class="flex flex-col h-full bg-white dark:bg-gray-900 w-[95vw] md:w-auto">
         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
           <h2 class="text-lg font-bold text-gray-900 dark:text-white">Planner Insights</h2>
           <UButton
