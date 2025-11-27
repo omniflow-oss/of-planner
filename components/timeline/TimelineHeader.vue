@@ -1,7 +1,5 @@
 <template>
   <div
-    :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
-    :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
     class="header-grid isolate md:grid sticky left-0 top-0 z-20 border-b bg-default/90 overflow-hidden md:overflow-visible"
   >
     <!-- Left spacer with timeline controls -->
@@ -34,7 +32,6 @@
     <!-- Sticky timeline header with grid overlay -->
     <div
       class="stiky-header relative top-0 z-25 flex flex-col justify-end md:translate-x-0"
-      :class="`translate-x-[${LEFT_SIDEBAR_WIDTH}px]`"
     >
       <!-- Day Row (Compressed Month + Day) -->
       <div
@@ -153,11 +150,15 @@ function getYearLabel(iso: string) {
 </script>
 
 <style scoped>
+@media (min-width: 768px) {
+  .header-grid {
+    grid-template-columns: v-bind(leftside) 1fr
+  }
+}
 @media (max-width: 768px) {
   .stiky-header {
-    transform: translateX(v-bind(leftside));
-  }
-  
+    /* transform: translateX(v-bind(leftside)); */
+  }  
 }
 .header-day.today::after {
   /* Override global style if needed, or rely on the span styling */

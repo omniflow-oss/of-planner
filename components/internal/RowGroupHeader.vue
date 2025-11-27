@@ -1,8 +1,6 @@
 <template>
   <div
     class="isolate grid border-b-1 pane-border header-row isolate"
-    :class="`grid-cols-[${LEFT_SIDEBAR_WIDTH}px 1fr]`"
-    :style="{gridTemplateColumns: `${LEFT_SIDEBAR_WIDTH}px 1fr`}"
   >
     <!-- Group header row -->
     <div
@@ -35,7 +33,7 @@
       </button>
 
       <!-- Avatar & Info -->
-      <div class="inline-flex md:flex items-center gap-2 flex-1 min-w-0 rounded-full bg-violet-300 pl-1 pr-2 md:pl-0 md:pr-0 py-1 shadow-md shadow-gray-500/50 md:rounded-none md:bg-transparent md:shadow-none md-py-0">
+      <div class="inline-flex md:flex items-center gap-2 flex-1 min-w-0 rounded-full bg-violet-300 pl-1 pr-2 md:pl-0 md:pr-0 py-1 shadow-md shadow-gray-500/50 md:rounded-none md:bg-transparent md:shadow-none md-py-0 truncate max-w-[30vw] md:max-w-none">
         <!-- Custom Avatar with Initials -->
         <div 
           :class="[
@@ -50,7 +48,7 @@
         </div>
         
         <!-- Name & Role/Team -->
-        <div class="flex flex-col truncate flex-1">
+        <div class="flex flex-col truncate ">
           <span class="font-semibold text-sm text-slate-900 md:dark:text-slate-100 truncate leading-tight">
             {{ label }}
           </span>
@@ -182,7 +180,7 @@ import { getInitials, getAvatarColor } from '@/utils/avatar'
 import { usePlannerStore } from '@/stores/usePlannerStore'
 
 const store = usePlannerStore()
-
+const leftside = computed(() => LEFT_SIDEBAR_WIDTH+ 'px')
 const selection = ref<any>(props.assignmentsOptions ?? null)
 const popoverOpen = ref(false)
 const popoverTrigger = ref<HTMLElement | null>(null)
@@ -300,8 +298,13 @@ function handleDragHandleKeydown(e: KeyboardEvent) {
   pointer-events: none;
 }
 .header-row {
-  /* background-color: var(--background-color-default); */
   border-bottom-color: rgba(0,0,0,.1);
+  grid-template-columns: 0 1fr;
+}
+@media (min-width: 768px) {
+  .header-row {
+    grid-template-columns: v-bind(leftside) 1fr
+  }  
 }
 .dark .header-row {
   border-bottom-color: rgba(255,255,255,.25);
