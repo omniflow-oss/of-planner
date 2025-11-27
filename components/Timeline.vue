@@ -385,11 +385,12 @@ function handleScroll() {
 // Compute visible day index range from scrollArea scrollLeft and clientWidth
 function updateVisibleRange() {
   if (!scrollArea.value) return
+  const spacing = 300;
   const scrollLeft = scrollArea.value.scrollLeft
   const containerWidth = scrollArea.value.clientWidth
   const timelineLeft = sidebarWidth.value // left column width
-  const visibleLeft = Math.max(0, scrollLeft - timelineLeft - 300)
-  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft + 300)
+  const visibleLeft = Math.max(0, scrollLeft - timelineLeft - spacing)
+  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft + spacing * 2)
 
   // Convert pixels to day indices using dayOffsets (which maps day index to px offset)
   // Find first visible index
@@ -403,12 +404,12 @@ function updateVisibleRange() {
 
   let endIdx = dayOffsets.value.length - 1
   for (let i = startIdx; i < dayOffsets.value.length; i++) {
-    if ((dayOffsets.value[i] ?? i * view.value.px_per_day) >= visibleRight) {
+    if ((dayOffsets.value[i] ?? i * view.value.px_per_day) >= visibleRight ) {
       endIdx = Math.max(0, i - 1)
       break
     }
   }
-
+  
   visibleStartIdx.value = startIdx
   visibleEndIdx.value = endIdx
 }
