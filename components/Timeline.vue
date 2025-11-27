@@ -320,7 +320,7 @@ const assignmentsKey = Symbol.for('assignmentsRef')
 // Viewport-based assignment filtering: only provide assignments that overlap
 // the currently visible date range so offscreen AssignmentBar components
 // are not mounted.
-const sidebarWidth = window.innerWidth > 768 ?  LEFT_SIDEBAR_WIDTH : 0  // left column width in px
+const sidebarWidth = ref(window.innerWidth > 768 ?  LEFT_SIDEBAR_WIDTH : 0)  // left column width in px
 const visibleStartIdx = ref(0)
 const visibleEndIdx = ref(Math.max(0, days.value.length - 1))
 
@@ -377,16 +377,17 @@ function handleScroll() {
   
   onScroll()
   updateVisibleRange()
+  setTimelineHeight()
 }
 
 // Compute visible day index range from scrollArea scrollLeft and clientWidth
 function updateVisibleRange() {
   if (!scrollArea.value) return
-  const scrollLeft = scrollArea.value.scrollLeft - 300
+  const scrollLeft = scrollArea.value.scrollLeft
   const containerWidth = scrollArea.value.clientWidth
-  const timelineLeft = sidebarWidth // left column width
-  const visibleLeft = Math.max(0, scrollLeft - timelineLeft)
-  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft) + 300
+  const timelineLeft = sidebarWidth.value // left column width
+  const visibleLeft = Math.max(0, scrollLeft - timelineLeft - 300)
+  const visibleRight = visibleLeft + Math.max(0, containerWidth - timelineLeft + 300)
 
   // Convert pixels to day indices using dayOffsets (which maps day index to px offset)
   // Find first visible index
@@ -497,11 +498,10 @@ watch(() => timelineEvents?.goToTodayEvent.value, async (todayIso) => {
       // Calculate scroll position to center today on screen
       const todayPosition = todayIndex * view.value.px_per_day
       const containerWidth = scrollArea.value.clientWidth
-      const sidebarWidth = window.innerWidth > 768 ?  LEFT_SIDEBAR_WIDTH : 0  // Left column width for labels
-      const timelineVisibleWidth = containerWidth - sidebarWidth
+      const timelineVisibleWidth = containerWidth - sidebarWidth.value
       const scrollPosition = todayPosition - (timelineVisibleWidth / 2) + (view.value.px_per_day / 2)
       scrollArea.value.scrollTo({
-        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition - ( sidebarWidth / 2 ) )
+        left: Math.max(0, window.innerWidth > 768 ? scrollPosition : scrollPosition - ( sidebarWidth.value / 2 ) )
       })
     } else {
       console.warn('Could not find target date in timeline:', todayIso, 'Available days:', days.value.length)
