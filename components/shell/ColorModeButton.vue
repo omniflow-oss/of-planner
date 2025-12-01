@@ -2,7 +2,7 @@
   <UButton
     size="xs"
     variant="ghost"
-    color="gray"
+    color="neutral"
     :icon="colorIcon"
     aria-label="Toggle color mode"
     @click="toggleColorMode"

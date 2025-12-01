@@ -10,12 +10,20 @@ A lightweight, single‑page capacity planner to schedule people on projects day
 - Infinite scroll feel: auto‑extend days when near edges
 - Day grid with today marker; week boundaries slightly emphasized
 - Create assignments by clicking empty timeline area (quick create popover)
-- “Add …” row opens the full creation flow (fallback via prompt in this prototype)
+- "Add …" row opens the full creation flow (fallback via prompt in this prototype)
 - Drag bars to move; resize from left/right; snap to full days
 - Allocation per day: 1, 0.75, 0.5, 0.25 with visible badge
 - Overlaps allowed; vertical lane stacking per subrow
 - Local data model in Pinia; simple demo data seeded
 - Default zoom: 56 px/day; initial window: week‑2, week‑1, current, next 4 weeks
+
+## Performance & Mobile Optimizations
+- **Viewport Virtualization**: Only renders visible assignments and days for optimal performance
+- **Mobile-Optimized Scrolling**: Debounced scroll handling prevents crashes on mobile devices
+- **Conditional Behavior**: Different scroll behavior for screens < 768px to prevent issues
+- **Touch-Aware Interactions**: Context menus disabled on touch devices
+- **Smart Centering**: "Go to Today" uses measured DOM offsets for accurate positioning
+- **Memory Efficient**: Timeline expands intelligently without memory leaks
 
 ## Tech Stack
 - Nuxt 3 (SPA), Vue 3 Composition API, TypeScript
@@ -91,15 +99,15 @@ This prototype keeps state in memory (Pinia). Add your own persistence later (AP
 - Contributor/agent guidelines: `AGENTS.md`
 
 ## Component & Composable Reference (short)
-- `Timeline.vue` — Shell for header + scroll area; wires `useTimeline`, `useTimelineScroll` and syncs `scrollLeft`.
-- `timeline/TimelineHeader.vue` — 2‑row header; accepts `scrollLeft` and uses shared `GridOverlay`.
-- `internal/RowGroup.vue` — Group header + subrows; left pane via `LeftPaneCell`; right track with `GridOverlay` and bars.
-- `internal/LeftPaneCell.vue` — Label cell and “Add …”; emits `click`.
-- `timeline/GridOverlay.vue` — Day/week grid and today marker using offsets/pxPerDay.
-- `internal/AssignmentBar.vue` — Drag/resize interactions; reads `pxPerDay`.
+- `Timeline.vue` — Shell for header + scroll area; wires `useTimeline`, `useTimelineScroll` and syncs `scrollLeft`. Implements viewport virtualization and mobile-optimized centering.
+- `timeline/TimelineHeader.vue` — 2‑row header with viewport virtualization; only renders visible day labels. Accepts `scrollLeft` and uses shared `GridOverlay`.
+- `internal/RowGroup.vue` — Group header + subrows; left pane via `LeftPaneCell`; right track with `GridOverlay` and bars. Provides filtered assignments to child components.
+- `internal/LeftPaneCell.vue` — Label cell and "Add …"; emits `click`.
+- `timeline/GridOverlay.vue` — Day/week grid and today marker using offsets/pxPerDay. Renders only visible days with buffer for performance.
+- `internal/AssignmentBar.vue` — Drag/resize interactions; reads `pxPerDay`. Touch-aware context menu handling.
 - `useTimeline.ts` — Derives `days` (weekdays), columns, segments and `weekStarts`.
-- `useTimelineScroll.ts` — Initial 7‑week window + infinite scroll near edges.
-- `useDate.ts` — Date math helpers and weekday spans.
+- `useTimelineScroll.ts` — Initial 7‑week window + infinite scroll near edges. Mobile safeguards with debounce and conditional scroll adjustment.
+- `useDate.ts` — Date math helpers and weekday spans with calendar clamping protection.
 
 ## License
 Internal project; no license specified.
