@@ -160,10 +160,6 @@ function getYearLabel(iso: string) {
     /* transform: translateX(v-bind(leftside)); */
   }  
 }
-.header-day.today::after {
-  /* Override global style if needed, or rely on the span styling */
-  display: none; 
-}
 .tracking-wider {
   background-color: var(--grid-line-week-color);
 }

@@ -56,26 +56,34 @@ Notes: Node 18+ recommended; use npm (this repo tracks `package-lock.json`).
 
 - `components/Timeline.vue`
   - Orchestrates the planner viewport: header, scroll area, and row groups.
+  - **Performance**: Implements viewport virtualization with `visibleStartIdx`/`visibleEndIdx` for rendering only visible elements.
+  - **Mobile**: Uses measured DOM offsets for accurate "go to today" centering; conditional scroll behavior for screens < 768px.
   - Uses `useTimeline` for header/columns and `useTimelineScroll` for init + infinite scroll.
   - Tracks `scrollLeft` and passes it to `TimelineHeader` so header/overlay stay aligned.
+  - Provides filtered assignments to child components via Vue provide/inject.
 
 - `components/timeline/TimelineHeader.vue`
-  - Two-line header. Top: `Month Year`. Bottom: `D MMM` labels.
+  - Two-line header with viewport virtualization. Only renders visible day labels with buffer.
+  - **Performance**: Template iterates over `visibleIndices` instead of full `days` array.
   - Uses `timeline/GridOverlay.vue` for lines/today marker. Sticky at `top-0`.
-  - Props: `days`, `dayColumns`, `monthSegments`, `monthColumns`, `todayIso`, `pxPerDay`, `dayOffsets`, `weekStarts`, `scrollLeft?`.
+  - Props: `days`, `dayColumns`, `monthSegments`, `monthColumns`, `todayIso`, `pxPerDay`, `dayOffsets`, `weekStarts`, `scrollLeft?`, `visibleStartIdx`, `visibleEndIdx`.
 
 - `components/internal/RowGroup.vue`
   - Group header lane + subrows. Left sticky column uses `internal/LeftPaneCell.vue`.
+  - **Performance**: Consumes filtered assignments from Timeline.vue via inject for virtualized rendering.
   - Right track: `timeline/GridOverlay.vue` + `AssignmentBar.vue`; lanes computed via `utils/lanes.ts`.
 
 - `components/internal/LeftPaneCell.vue`
   - Minimal left pane cell for labels and “Add …”. Props: `title`, `subtitle?`, `isAdd?`. Emits `click`.
 
 - `components/timeline/GridOverlay.vue`
+  - **Performance**: Renders only visible days with buffer using `filteredDays` computed property.
   - Renders day/weekly vertical grid and today marker using `days`, `pxPerDay`, and optional `offsets`, `weekStarts`.
+  - Props include `visibleStartIdx`/`visibleEndIdx` for virtualization.
 
 - `components/internal/AssignmentBar.vue`
   - Draggable/resizable bars; receives `assignment`, `startIso`, `pxPerDay`, `projectsMap`, and `top` (lane y).
+  - **Mobile**: Context menu disabled on touch devices via `isTouchDevice` detection.
 
 - `components/shell/AppHeader.vue` / `components/shell/AppFooter.vue`
   - Shell chrome; keep header sticky and minimal.
@@ -86,8 +94,12 @@ Notes: Node 18+ recommended; use npm (this repo tracks `package-lock.json`).
 
 - `composables/useTimelineScroll.ts`
   - Default initial window: week-2, week-1, current week, next 4 weeks (7×5 weekdays).
+  - **Performance**: Debounced scroll handling (150ms) prevents crashes on mobile.
+  - **Mobile**: Conditional scroll adjustment for screens < 768px to prevent issues during auto-prepend.
   - `init(todayIso)`: sets `view.start`, `view.days`, and aligns `scrollLeft`.
-  - `onScroll()`: appends/prepends weekdays when near edges.
+  - `onScroll()`: appends/prepends weekdays when near edges with safeguards.
+  - `prependWeekdays`/`appendWeekdays`: Preserve visual offset during timeline expansion.
 
 - `composables/useDate.ts`
   - ISO date utils, including `calendarSpanForWeekdays` for business-day spans.
+  - **Performance**: Calendar span calculation includes MAX_ITER cap and validation to prevent infinite loops.

@@ -10,7 +10,6 @@
 }
 .grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background-color: var(--grid-line-color); }
 .grid-v.week { background-color: var(--grid-line-week-color); width: 2px; }
-/* .timeline-bg { background-color: rgba(var(--background-color-muted),.6); } */
 .pane-border { border-color: var(--border-color-muted); }
 .bar-shadow { box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 6px rgba(0,0,0,.06); }
 
@@ -58,21 +57,6 @@
   width: 2px; 
   bottom: 0;
   z-index: 10;
-}
-
-/* Today dot in header */
-.header-grid .today::after { 
-  position: absolute;
-  content: ''; 
-  display: block; 
-  width: 8px;
-  height: 8px;   
-  left: -3px;
-  background-color: var(--today-indicator-color); 
-  z-index: 20;
-  bottom: -4px;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px white;
 }
 
 body{  overflow-x: hidden; }
